@@ -76,6 +76,9 @@ button.row:active{background:#E5E5EA}
 .row .chev{width:8px;height:14px;fill:none;stroke:#C7C7CC;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .sheet .row{grid-template-columns:1fr auto;min-height:52px}
 .sheet .row .spine{display:none}
+.sheet .row.dotted{grid-template-columns:10px 1fr auto}
+.sheet button.row.dotted{grid-template-columns:10px 1fr auto 8px}
+.sheet .row.dotted .spine{display:block}
 .sheet .row::before{inset-inline-start:16px}
 
 .facts div{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;padding:10px 16px;background:var(--surface)}
@@ -117,7 +120,20 @@ button.row:active{background:#E5E5EA}
 .sheet.modal{top:calc(var(--sat) + 10px);border-radius:12px 12px 0 0;overflow:hidden}
 .sheet.modal header{touch-action:none;padding-top:14px;min-height:58px}
 .grab{position:absolute;top:6px;left:0;right:0;height:5px;margin:0 auto;width:36px;border-radius:3px;background:#C7C7CC}
-#scrim{position:fixed;inset:0;background:#000;opacity:0;z-index:9;pointer-events:none}
+.scrim{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none}
+.segbar{display:flex;gap:2px;background:var(--fill);border-radius:9px;padding:2px;margin:0 4px 10px}
+.segbar button{flex:1;min-height:32px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink)}
+.segbar button[aria-selected="true"]{background:var(--surface);font-weight:600;box-shadow:0 1px 3px #0000001f}
+.chiprow{display:flex;gap:8px;overflow-x:auto;padding:0 16px 4px;margin:0 -16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chiprow::-webkit-scrollbar{display:none}
+.chiprow button{flex:none;min-height:34px;padding:0 13px;border-radius:17px;background:var(--fill);font-size:14px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.chiprow button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.chiprow .spine{width:8px;height:8px;border-radius:50%;flex:none}
+.chiprow .spine.hollow{box-shadow:inset 0 0 0 2.5px var(--c)}
+.row .spine.hollow,.chiprow .spine.hollow{background:var(--surface)!important;box-shadow:inset 0 0 0 3px var(--c)}
+.chiprow button[aria-pressed="true"] .spine.hollow{background:var(--ink)!important}
+button.row[aria-pressed="true"]{background:#E8F0FE}
+button.row[aria-pressed="true"] .nm{font-weight:600}
 #app,#tabbar{will-change:transform}
 
 .acc-head{padding:6px 20px 0}
@@ -159,7 +175,8 @@ table.cmp .d small{display:block;font-size:12px}
 .empty{text-align:center;padding:56px 28px;color:var(--muted)}
 .empty h2{font-size:22px;font-weight:700;letter-spacing:-.016em;margin:0 0 6px;color:var(--ink)}
 .empty p{margin:0 0 22px;font-size:15px}
-.lock{position:fixed;inset:0;background:var(--bg);color:var(--ink);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:12px}
+.cover{position:fixed;inset:0;background:var(--bg);z-index:38}
+.lock{position:fixed;inset:0;background:var(--bg);color:var(--ink);z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:12px}
 .lock form{display:contents}
 .lock h1{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:0}
 .lock p{margin:0 0 6px;color:var(--muted);font-size:15px;text-align:center}
@@ -208,7 +225,7 @@ let ACCOUNTS=[],FIELDS=[];
 function setConfig(list){const ok=[];for(const a of Array.isArray(list)?list:[]){if(!a||!a.id||!Array.isArray(a.fields))continue;ok.push({id:String(a.id),name:String(a.name||a.id),short:String(a.short||a.name||a.id),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#44566A',cur:a.cur==='USD'?'USD':'ILS',fields:a.fields.filter(f=>Array.isArray(f)&&f[0]).map(f=>[String(f[0]),String(f[1]||f[0]),['cur','fx','cap','sav'].includes(f[2])?f[2]:'cap',!!f[3]])})}ACCOUNTS=ok;FIELDS=ok.flatMap(a=>a.fields.map(f=>f[0]))}
 const ASSETS=[['cur','עו״ש'],['fx','עו״ש מט״ח'],['cap','שוק ההון / קרנות'],['sav','חיסכון, פיקדונות ו-IRA']];
 const KEY='ft.data.v1', META='ft.meta.v1';
-let S={updates:[]}, cryptoKey=null, encMeta=null, tab='home';
+let S={updates:[],ports:{},ptype:{},plink:{}}, cryptoKey=null, encMeta=null, tab='home';
 
 const num=v=>{const x=typeof v==='number'?v:parseFloat(String(v??'').replace(/[,\s₪$]/g,''));return Number.isFinite(x)?x:0};
 function calc(u){
@@ -246,7 +263,7 @@ function setMeta(p){try{localStorage.setItem(META,JSON.stringify({...meta(),...p
 let saveChain=Promise.resolve();
 function save(){
   saveChain=saveChain.then(async()=>{
-    const plain=JSON.stringify({v:2,accounts:ACCOUNTS,updates:S.updates});
+    const plain=JSON.stringify({v:3,accounts:ACCOUNTS,updates:S.updates,ports:S.ports,ptype:S.ptype,plink:S.plink});
     let out;
     if(cryptoKey){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},cryptoKey,new TextEncoder().encode(plain));out={enc:1,salt:encMeta.salt,iv:b64(iv),ct:b64(ct)}}
     else out={enc:0,data:JSON.parse(plain)};
@@ -254,10 +271,42 @@ function save(){
   }).catch(e=>toast('השמירה נכשלה: '+e.message));
   return saveChain;
 }
+/* iOS keeps a home-screen app alive, so a code checked only at cold start would almost never be asked for */
+const LOCK_AFTER=120000;      // ask again once the app has been away this long
+let hiddenAt=0,coverEl=null;
+function cover(on){
+  if(on){ if(!coverEl&&cryptoKey){coverEl=document.createElement('div');coverEl.className='cover';document.body.appendChild(coverEl)} }
+  else if(coverEl){coverEl.remove();coverEl=null}
+}
+function lockNow(){
+  cover(false);
+  if(!cryptoKey||document.querySelector('.lock'))return;
+  cryptoKey=null;                       // the key leaves memory until the code is re-entered
+  closeAllLayers();
+  S.updates=[];S.ports={};$('#tabbar').hidden=true;view.innerHTML='';
+  lockScreen();
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){hiddenAt=Date.now();cover(true)}
+  else if(cryptoKey&&hiddenAt&&Date.now()-hiddenAt>LOCK_AFTER){hiddenAt=0;lockNow()}
+  else {hiddenAt=0;cover(false)}
+});
+window.addEventListener('pagehide',()=>{hiddenAt=Date.now();cover(true)});
 async function unlock(pass){
   const raw=readRaw();const salt=unb64(raw.salt);const k=await deriveKey(pass,salt);
   const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},k,unb64(raw.ct));
-  const d=JSON.parse(new TextDecoder().decode(pt));setConfig(d.accounts);S.updates=clean(d.updates);cryptoKey=k;encMeta={salt:raw.salt};
+  const d=JSON.parse(new TextDecoder().decode(pt));setConfig(d.accounts);S.updates=clean(d.updates);loadPorts(d);cryptoKey=k;encMeta={salt:raw.salt};
+}
+function loadPorts(d){
+  S.ports={};S.ptype={};S.plink={};
+  const ok=new Set(ACCOUNTS.map(a=>a.id));
+  for(const id in (d.ports||{})){
+    if(!ok.has(id))continue;
+    const list=(d.ports[id]||[]).filter(p=>p&&/^\d{4}-\d{2}-\d{2}$/.test(p.date));
+    if(list.length)S.ports[id]=list;
+  }
+  for(const k in (d.ptype||{}))if(['stock','bond','fund'].includes(d.ptype[k]))S.ptype[String(k)]=d.ptype[k];
+  for(const id in (d.plink||{}))if(ok.has(id))S.plink[id]=String(d.plink[id]);
 }
 function clean(list){
   const out=[];const seen=new Set();
@@ -368,11 +417,17 @@ function openAccount(id){
   tr.forEach((f,i)=>{h+=`<section><h2>${esc(f[1])}</h2><div class="panel pad" id="ch-t${i}">${lineChart(U.map(u=>({d:u.date,v:u.vals[f[0]]})),a.color,{label:f[1]})}<p class="readout"></p></div></section>`});
   h+=`<section><h2>פירוט היתרות <small>עדכון אחרון</small></h2><div class="panel">`;
   const last=U[n-1],prev=U[n-2];const f=isUsd?usd:ils;
+  const linked=S.plink[id];
   for(const [k,nm] of a.fields){const fv=last.vals[k],d=prev?fv-prev.vals[k]:0;
-    h+=`<div class="row"><span class="spine" style="background:${a.color}"></span><span class="nm" style="font-weight:500">${esc(nm)}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,f)}</span>`:''}</span></div>`}
-  h+=`</div></section><section><h2>היסטוריה</h2><div class="panel">`;
+    const tapable=k===linked;
+    h+=`<${tapable?'button':'div'} class="row"${tapable?` data-port="${id}"`:''}><span class="spine" style="background:${a.color}"></span><span class="nm" style="font-weight:500">${esc(nm)}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,f)}</span>`:''}</span>${tapable?'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>':''}</${tapable?'button':'div'}>`}
+  h+=`</div></section>`;
+  const pl=portsOf(id),pLast=pl[pl.length-1];
+  h+=`<section><h2>תיק ניירות ערך</h2><div class="panel">
+  <button class="row dotted" data-port="${id}"><span class="spine" style="background:${a.color}"></span><span><span class="nm">${pLast?'פירוט האחזקות':'העלאת קובץ אחזקות'}</span><div class="sub">${pLast?`<span class="n">${pLast.hold?pLast.hold.length:'—'}</span> אחזקות · <span class="n">${dlong(pLast.date)}</span>`:'מקובץ ‎.xlsx‎ או ‎.csv‎ של הבנק'}</div></span>
+  <span class="val">${pLast&&pLast.hold?`<b>${ils(summarize(pLast.hold).total)}</b>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button></div></section><section><h2>היסטוריה</h2><div class="panel">`;
   for(let i=n-1;i>=0;i--){const d=i?vs[i]-vs[i-1]:0;
-    h+=`<div class="row"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
+    h+=`<div class="row dotted"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
   h+=`</div></section></div></div>`;
   openLayer(h,true);
   wireChart($('#ch-acc'),pts,ils);
@@ -391,10 +446,11 @@ function viewUpdates(){
   view.innerHTML=h+`</div></section>`;
 }
 
-function openForm(date){
+function openForm(date,pre){
   const U=sorted();const editing=date?U.find(u=>u.date===date):null;const base=editing||U[U.length-1];
-  const f={date:editing?editing.date:today(),rate:editing?editing.rate:'',vals:{}};
+  const f={date:editing?editing.date:(pre&&pre.date||today()),rate:editing?editing.rate:'',vals:{}};
   for(const k of FIELDS)f.vals[k]=base?base.vals[k]:'';
+  if(pre&&pre.vals)for(const k in pre.vals)f.vals[k]=pre.vals[k];
   let h=`<div class="sheet modal" role="dialog" aria-label="עדכון"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>${editing?'עריכת עדכון':'עדכון חדש'}</h2><span></span></header><div class="body"><form id="frm" novalidate>
   <div class="err" id="ferr" hidden role="alert"></div>
   <div class="grp"><div class="fld"><label for="f-date">תאריך העדכון</label><input id="f-date" type="date" value="${f.date}" required></div></div>`;
@@ -455,8 +511,8 @@ function viewSettings(){
   view.innerHTML=`<div class="pagehead"><h1>הגדרות</h1><p>גיבוי, נעילה ונתונים</p></div>
   <section><h2>גיבוי</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">הנתונים נשמרים רק במכשיר הזה. מחיקת האפליקציה ממסך הבית או ניקוי נתוני Safari מוחקים אותם, אז כדאי לשמור גיבוי אחרי כל עדכון.${m.lastBackup?` גיבוי אחרון: <span class="n">${new Date(m.lastBackup).toLocaleDateString('he-IL')}</span>.`:''}</p>
   <div class="stackbtns"><button class="btn" data-act="backup">שמירת גיבוי</button><button class="btn ghost" data-act="csv">ייצוא לאקסל (CSV)</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div></section>
-  <section><h2>נעילה</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">${locked?'האפליקציה נעולה בקוד, והנתונים שמורים מוצפנים במכשיר.':'אפשר לנעול את האפליקציה בקוד. הנתונים יישמרו מוצפנים, ובלי הקוד אי אפשר לשחזר אותם.'}</p>
-  <div class="stackbtns">${locked?'<button class="btn ghost" data-act="setpass">החלפת קוד</button><button class="btn ghost" data-act="rmpass">ביטול הנעילה</button>':'<button class="btn ghost" data-act="setpass">הגדרת קוד נעילה</button>'}</div></div></section>
+  <section><h2>נעילה</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">${locked?'האפליקציה נעולה בקוד, והנתונים שמורים מוצפנים במכשיר. הקוד נדרש בפתיחה, ושוב אחרי שהאפליקציה הייתה ברקע יותר משתי דקות.':'אפשר לנעול את האפליקציה בקוד. הנתונים יישמרו מוצפנים, ובלי הקוד אי אפשר לשחזר אותם.'}</p>
+  <div class="stackbtns">${locked?'<button class="btn ghost" data-act="locknow">נעילה עכשיו</button><button class="btn ghost" data-act="setpass">החלפת קוד</button><button class="btn ghost" data-act="rmpass">ביטול הנעילה</button>':'<button class="btn ghost" data-act="setpass">הגדרת קוד נעילה</button>'}</div></div></section>
   <section><h2>נתונים</h2><div class="panel pad"><button class="btn danger" data-act="wipe">מחיקת כל הנתונים מהמכשיר</button></div></section>
   <section><p style="font-size:13px;color:var(--muted);text-align:center;margin:0 12px">שום נתון לא נשלח לשרת. הפעולה היחידה שפונה לאינטרנט היא ״משיכה״ של שער הדולר, והיא שולחת רק תאריך.</p></section>`;
 }
@@ -468,7 +524,7 @@ async function shareFile(name,text,type){
   const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return true;
 }
 async function doBackup(){if(!S.updates.length){toast('אין עדיין נתונים לגיבוי');return}
-  const ok=await shareFile(`finance-backup-${today()}.json`,JSON.stringify({app:'finance-tracker',v:2,exported:new Date().toISOString(),accounts:ACCOUNTS,updates:sorted()},null,1),'application/json');
+  const ok=await shareFile(`finance-backup-${today()}.json`,JSON.stringify({app:'finance-tracker',v:3,exported:new Date().toISOString(),accounts:ACCOUNTS,updates:sorted(),ports:S.ports,ptype:S.ptype,plink:S.plink},null,1),'application/json');
   if(ok){setMeta({lastBackup:Date.now()});toast('הגיבוי נוצר');render()}}
 async function doCsv(){if(!S.updates.length){toast('אין עדיין נתונים לייצוא');return}
   const head=['תאריך',...ACCOUNTS.flatMap(a=>a.fields.map(f=>a.short+' – '+f[1])),'שער דולר','סה״כ הון (₪)'];
@@ -480,7 +536,7 @@ function openImport(){
   <section><h2>מקובץ</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">בחרו קובץ גיבוי (‎.json‎) מ״קבצים״.</p><label class="btn" style="cursor:pointer">בחירת קובץ<input id="ifile" type="file" accept=".json,application/json,text/plain" hidden></label></div></section>
   <section><h2>או בהדבקה</h2><div class="panel pad"><textarea id="itext" placeholder='{"app":"finance-tracker", ...}' aria-label="תוכן הגיבוי"></textarea><button class="btn ghost" id="ipaste" style="margin-top:10px">טעינה מהטקסט</button></div></section>
   <section><p style="font-size:13px;color:var(--muted);margin:0 6px">עדכונים מהגיבוי יתווספו לקיימים. אם קיים עדכון באותו תאריך, הגרסה מהגיבוי תחליף אותו.</p></section></div></div>`);
-  const run=async txt=>{try{const j=JSON.parse(txt);if(Array.isArray(j.accounts)&&j.accounts.length)setConfig(j.accounts);if(!ACCOUNTS.length)throw 0;S.updates=clean(S.updates);const list=clean(j.updates);if(!list.length&&!S.updates.length&&!j.accounts)throw 0;
+  const run=async txt=>{try{const j=JSON.parse(txt);if(Array.isArray(j.accounts)&&j.accounts.length)setConfig(j.accounts);if(j.ports||j.ptype||j.plink)loadPorts(j);if(!ACCOUNTS.length)throw 0;S.updates=clean(S.updates);const list=clean(j.updates);if(!list.length&&!S.updates.length&&!j.accounts)throw 0;
       const map=new Map(S.updates.map(u=>[u.date,u]));list.forEach(u=>map.set(u.date,u));S.updates=[...map.values()];await save();closeLayer();tab='home';render();toast('נטענו '+list.length+' עדכונים')}
     catch(e){const el=$('#ierr');el.textContent='הקובץ אינו גיבוי תקין של האפליקציה.';el.hidden=false}};
   $('#ifile').onchange=async e=>{const f=e.target.files[0];if(f)run(await f.text())};
@@ -516,38 +572,49 @@ function Velocity(){const h=[];return{add(p){const t=performance.now();h.push([p
   while(h.length>6||(h.length>2&&t-h[0][1]>110))h.shift()},
   get(){if(h.length<2)return 0;const a=h[0],b=h[h.length-1],dt=(b[1]-a[1])/1000;return dt>.004?(b[0]-a[0])/dt:0}}}
 
-let page=null;
-function stage(p,kind){
-  const app=$('#app'),tb=$('#tabbar'),sc=$('#scrim');
-  if(kind==='push'){const tx=`translateX(${(p*22).toFixed(2)}%)`;app.style.transform=tx;tb.style.transform=tx;sc.style.opacity=(p*.1).toFixed(3)}
-  else sc.style.opacity=(p*.4).toFixed(3);
+let stack=[];
+function underTx(el,p){
+  const t=`translateX(${(p*22).toFixed(2)}%)`;
+  if(el)el.style.transform=t; else {$('#app').style.transform=t;$('#tabbar').style.transform=t}
 }
-function clearStage(){const app=$('#app'),tb=$('#tabbar');app.style.transform='';tb.style.transform='';$('#scrim').style.opacity=0}
+function clearStage(){$('#app').style.transform='';$('#tabbar').style.transform=''}
 function openLayer(html,push){
-  if(page){page.s.stop();if(page.el.parentNode)page.el.remove();page=null}
-  layer.innerHTML=html;
-  const el=layer.firstElementChild;if(!el)return;
   const kind=push?'push':'modal';
-  const set=p=>{el.style.transform=kind==='push'?`translateX(${(-(1-p)*100).toFixed(3)}%)`:`translateY(${((1-p)*100).toFixed(3)}%)`;stage(p,kind)};
+  const sc=document.createElement('div');sc.className='scrim';
+  const box=document.createElement('div');box.innerHTML=html;
+  const el=box.firstElementChild;if(!el)return;
+  layer.append(sc,el);
+  const under=stack.length?stack[stack.length-1].el:null;
+  const set=p=>{
+    el.style.transform=kind==='push'?`translateX(${(-(1-p)*100).toFixed(3)}%)`:`translateY(${((1-p)*100).toFixed(3)}%)`;
+    sc.style.opacity=(p*(kind==='push'?.1:.4)).toFixed(3);
+    if(kind==='push')underTx(under,p);
+  };
   const s=Spring(set);s.jump(0);
-  page={el,kind,s,set};
-  s.to(1,kind==='push'?{damping:1,response:.42}:{damping:1,response:.4});
-  grab(el,kind,s,set);
+  const L={el,sc,s,set,kind,under};stack.push(L);
+  s.to(1,{damping:1,response:kind==='push'?.42:.4});
+  grab(L);
   const body=el.querySelector('.body'),head=el.querySelector('header');
   if(body&&head)body.addEventListener('scroll',()=>head.classList.toggle('edge',body.scrollTop>2),{passive:true});
+  return L;
 }
 function closeLayer(vel){
-  if(!page)return;
-  const {el,s,kind}=page;page=null;
-  s.to(0,{damping:1,response:kind==='push'?.36:.34,velocity:vel||0},()=>{if(el.parentNode)el.remove();clearStage()});
+  const L=stack.pop();if(!L)return;
+  L.s.to(0,{damping:1,response:L.kind==='push'?.36:.34,velocity:vel||0},()=>{
+    L.el.remove();L.sc.remove();
+    if(!stack.length)clearStage();
+  });
 }
+function closeAllLayers(){stack.forEach(L=>{L.s.stop();L.el.remove();L.sc.remove()});stack=[];clearStage();layer.innerHTML=''}
 /* edge-swipe back on a pushed page; drag-down on a sheet. 1:1 with the finger, then momentum. */
-function grab(el,kind,s,set){
-  const area=kind==='push'?el:el.querySelector('header');if(!area)return;
+function grab(L){
+  const {el,kind,s}=L,area=kind==='push'?el:el.querySelector('header');if(!area)return;
   let armed=false,on=false,sx=0,sy=0,start=0,base=0,vt=null,pid=0;
   const dim=()=>kind==='push'?innerWidth:(el.offsetHeight||innerHeight);
+  const top=()=>stack[stack.length-1]===L;
   area.addEventListener('pointerdown',e=>{
     if(e.pointerType==='mouse'&&e.button!==0)return;
+    if(!top())return;
     if(kind==='push'&&e.clientX<innerWidth-28)return;
     armed=true;on=false;sx=e.clientX;sy=e.clientY;pid=e.pointerId;
   });
@@ -603,21 +670,309 @@ function setPass(){
 }
 async function rmPass(){if(!confirm('לבטל את הנעילה? הנתונים יישמרו במכשיר בלי הצפנה.'))return;cryptoKey=null;encMeta=null;await save();render();toast('הנעילה בוטלה')}
 
+/* ---------- reading a spreadsheet: .xlsx unzipped by the browser itself, or .csv ---------- */
+const TD=new TextDecoder();
+async function inflateRaw(bytes){
+  if(!('DecompressionStream' in window))throw new Error('הדפדפן הזה לא יודע לפתוח קובץ Excel. ייצאו את הקובץ כ-CSV.');
+  const st=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(st).arrayBuffer());
+}
+async function unzip(buf){
+  const u=new Uint8Array(buf),dv=new DataView(buf),out={};
+  let eo=-1;
+  for(let i=u.length-22;i>=0&&i>u.length-66000;i--)if(dv.getUint32(i,true)===0x06054b50){eo=i;break}
+  if(eo<0)throw new Error('הקובץ אינו קובץ Excel תקין.');
+  let n=dv.getUint16(eo+10,true),off=dv.getUint32(eo+16,true);
+  for(let k=0;k<n&&off+46<=u.length;k++){
+    if(dv.getUint32(off,true)!==0x02014b50)break;
+    const method=dv.getUint16(off+10,true),csize=dv.getUint32(off+20,true);
+    const nl=dv.getUint16(off+28,true),el=dv.getUint16(off+30,true),cl=dv.getUint16(off+32,true);
+    const lho=dv.getUint32(off+42,true),name=TD.decode(u.subarray(off+46,off+46+nl));
+    const start=lho+30+dv.getUint16(lho+26,true)+dv.getUint16(lho+28,true);
+    out[name]={method,data:u.subarray(start,start+csize)};
+    off+=46+nl+el+cl;
+  }
+  return out;
+}
+async function zipText(z,name){const e=z[name];if(!e)return null;return TD.decode(e.method===0?e.data:await inflateRaw(e.data))}
+const colOf=ref=>{let n=0;for(const ch of ref){const c=ch.charCodeAt(0);if(c<65||c>90)break;n=n*26+(c-64)}return n-1};
+function parseCsv(txt){
+  const rows=[];let row=[],f='',q=false;
+  txt=txt.replace(/^﻿/,'');
+  for(let i=0;i<txt.length;i++){
+    const c=txt[i];
+    if(q){ if(c==='"'){ if(txt[i+1]==='"'){f+='"';i++} else q=false } else f+=c }
+    else if(c==='"')q=true;
+    else if(c===','||c==='\t'){row.push(f);f=''}
+    else if(c==='\n'){row.push(f);rows.push(row);row=[];f=''}
+    else if(c!=='\r')f+=c;
+  }
+  if(f!==''||row.length){row.push(f);rows.push(row)}
+  return rows.map(r=>r.map(v=>{const t=v.trim();if(t==='')return null;const n=+t.replace(/,/g,'');return Number.isFinite(n)&&/^[-+]?[\d,]*\.?\d+$/.test(t)?n:t}));
+}
+async function readSheet(file){
+  if(/\.(csv|txt|tsv)$/i.test(file.name))return parseCsv(await file.text());
+  const z=await unzip(await file.arrayBuffer());
+  let target='xl/worksheets/sheet1.xml';
+  try{
+    const wb=new DOMParser().parseFromString(await zipText(z,'xl/workbook.xml'),'application/xml');
+    const sh=wb.getElementsByTagName('sheet')[0];
+    const rid=sh.getAttribute('r:id')||sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');
+    const rl=new DOMParser().parseFromString(await zipText(z,'xl/_rels/workbook.xml.rels'),'application/xml');
+    for(const r of rl.getElementsByTagName('Relationship'))if(r.getAttribute('Id')===rid){
+      let t=r.getAttribute('Target');target=t.replace(/^\//,'').replace(/^\.\//,'');if(!target.startsWith('xl/'))target='xl/'+target;
+    }
+  }catch(e){}
+  const ss=[],ssx=await zipText(z,'xl/sharedStrings.xml');
+  if(ssx){const d=new DOMParser().parseFromString(ssx,'application/xml');
+    for(const si of d.getElementsByTagName('si')){let s='';for(const t of si.getElementsByTagName('t'))s+=t.textContent;ss.push(s)}}
+  const sx=await zipText(z,target);
+  if(!sx)throw new Error('לא נמצא גיליון בקובץ.');
+  const d=new DOMParser().parseFromString(sx,'application/xml'),rows=[];
+  for(const row of d.getElementsByTagName('row')){
+    const arr=[];
+    for(const c of row.getElementsByTagName('c')){
+      const i=colOf(c.getAttribute('r')||''),t=c.getAttribute('t');let v=null;
+      if(t==='inlineStr'){const e=c.getElementsByTagName('t')[0];v=e?e.textContent:''}
+      else{const e=c.getElementsByTagName('v')[0];if(e){v=e.textContent;if(t==='s')v=ss[+v]??'';else if(t!=='str'&&t!=='e')v=+v}}
+      if(i>=0)arr[i]=v;
+    }
+    rows.push(arr);
+  }
+  return rows;
+}
+
+/* ---------- turning those rows into holdings ---------- */
+const PF={num:['מס.ניע','מס ניע','מספר נייר','מס נ"ע'],name:['שם ניע','שם נייר','שם נ"ע'],price:['שער אחרון','שער'],
+  value:['שווי אחזקה','שווי בשח','שווי'],qty:['כמות'],cur:['מטבע'],valueCur:['שווי במטבע'],sym:['סימבול'],
+  gain:['שינוי מרכישה'],taxGain:['רוון הון תיאורטי','רווח הון תיאורטי'],tax:['מס תיאורטי'],sub:['מס. משני','מס משני']};
+const norm=s=>String(s??'').replace(/[‎‏‪-‮]/g,'').replace(/["'״׳]/g,'"').replace(/\s+/g,' ').trim();
+function mapHeader(rows){
+  for(let r=0;r<Math.min(rows.length,25);r++){
+    const m={},seen={};
+    (rows[r]||[]).forEach((cell,i)=>{
+      const h=norm(cell);if(!h)return;
+      for(const k in PF)if(!(k in m)&&PF[k].some(x=>norm(x)===h)){m[k]=i;seen[k]=1}
+    });
+    if(m.num!=null&&m.name!=null&&m.value!=null&&Object.keys(m).length>=5)return {row:r,map:m};
+  }
+  return null;
+}
+const ETFWORDS=/ISHARES|SHARES|SPDR|VANGUARD|INVESCO|FIRST TRUST|\bFT\b|ROUNDHILL|SELECT|\bSEL\b|\bTRUST\b|\bETF\b|INDEX|NASDAQ/i;
+function guessType(h){
+  const n=norm(h.name);
+  if(/אג"ח|אגח|ממשל|ממשלתית|מלווה/.test(n))return 'bond';
+  if(/\d+\.\d+\s*\d*\/?\d*$|\d+\.\d+\s/.test(n)&&!/[א-ת]/.test(n))return 'bond';
+  if(/(?:^|[^א-ת])סל(?:[^א-ת]|$)|תעודת|מחקה|קרן סל|תכלית|קסם|פסגות סל|MTF|הראל סל/.test(n))return 'fund';
+  if(ETFWORDS.test(n))return 'fund';
+  return 'stock';
+}
+const TYPES={stock:'מניות',bond:'אג״ח',fund:'קרנות ו-ETF'};
+const TYPECOL={stock:'#3B82F6',bond:'#2F9E6E',fund:'#E2571C'};
+function parsePortfolio(rows){
+  const hit=mapHeader(rows);
+  if(!hit)throw new Error('לא זיהיתי את הכותרות בקובץ. ודאו שזו שורת האחזקות המקורית מהבנק.');
+  const m=hit.map,out=[];
+  const num=v=>{const x=typeof v==='number'?v:parseFloat(String(v??'').replace(/[,\s₪$]/g,''));return Number.isFinite(x)?x:0};
+  for(let r=hit.row+1;r<rows.length;r++){
+    const row=rows[r]||[];const id=row[m.num];
+    if(id==null||id==='')continue;
+    const name=norm(row[m.name]);if(!name)continue;
+    const v=num(row[m.value]);
+    out.push({id:String(id),name,sym:m.sym!=null?norm(row[m.sym]):'',qty:num(row[m.qty]),price:num(row[m.price]),
+      v,vc:m.valueCur!=null?num(row[m.valueCur]):v,cur:m.cur!=null?norm(row[m.cur])||'שקל':'שקל',
+      gain:m.gain!=null?num(row[m.gain]):0,tg:m.taxGain!=null?num(row[m.taxGain]):0,tx:m.tax!=null?num(row[m.tax]):0});
+  }
+  if(!out.length)throw new Error('לא נמצאו אחזקות בקובץ.');
+  return out;
+}
+const ptypeOf=h=>S.ptype[h.id]||guessType(h);
+function summarize(hold){
+  const s={total:0,cur:{},type:{},cat:{},count:{},gain:0,loss:0,tax:0,shield:0};
+  for(const h of hold){
+    s.total+=h.v;
+    s.cur[h.cur]=(s.cur[h.cur]||0)+h.v;
+    const t=ptypeOf(h);s.type[t]=(s.type[t]||0)+h.v;
+    const c=catOf(h);s.cat[c]=(s.cat[c]||0)+h.v;s.count[c]=(s.count[c]||0)+1;
+    if(h.tg>0)s.gain+=h.tg;else s.loss+=h.tg;
+    if(h.tx>0)s.tax+=h.tx;else s.shield+=h.tx;
+  }
+  return s;
+}
+const portsOf=id=>(S.ports[id]||[]).slice().sort((a,b)=>a.date<b.date?-1:1);
+const KEEP_ROWS=24;
+function addSnapshot(accId,date,hold){
+  const list=(S.ports[accId]||[]).filter(p=>p.date!==date);
+  list.push({date,hold});
+  list.sort((a,b)=>a.date<b.date?-1:1);
+  list.forEach((p,i)=>{if(i<list.length-KEEP_ROWS&&p.hold){p.sum=p.sum||summarize(p.hold);delete p.hold}});
+  S.ports[accId]=list;
+}
+
+/* ---------- portfolio page, reached from the account it belongs to ---------- */
+/* colour carries the asset type only; Israel vs abroad is carried by the label and a hollow dot,
+   so the six buckets stay apart for anyone, including colour-blind readers */
+const marketOf=h=>/[א-ת]/.test(h.name)?'il':(h.cur==='שקל'?'il':'intl');
+const catOf=h=>ptypeOf(h)+'-'+marketOf(h);
+const CATS=[['bond-il','אג״ח ישראלי'],['bond-intl','אג״ח חו״ל'],['stock-il','מניות ישראל'],
+            ['stock-intl','מניות חו״ל'],['fund-il','קרנות סל'],['fund-intl','ETF חו״ל']];
+const CATLBL=Object.fromEntries(CATS);
+const catCol=c=>TYPECOL[c.split('-')[0]]||'#6C6C70';
+const catHollow=c=>c.endsWith('-intl');
+const dot=(c,extra='')=>`<span class="spine${catHollow(c)?' hollow':''}" style="--c:${catCol(c)};background:${catCol(c)}"${extra}></span>`;
+
+function openPortfolio(accId){
+  const a=ACCOUNTS.find(x=>x.id===accId);if(!a)return;
+  openPortfolio.filt=null;
+  openLayer(`<div class="sheet push" role="dialog" aria-label="תיק ניירות ערך"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>${esc(a.short)}</span></button><h2>תיק ניירות ערך</h2><span></span></header><div class="body"></div></div>`,true);
+  paintPortfolio(accId);
+}
+function paintPortfolio(accId,keep){
+  const L=stack[stack.length-1];if(!L)return;
+  const body=L.el.querySelector('.body');if(!body)return;
+  const y=keep?body.scrollTop:0;
+  body.innerHTML=portfolioBody(accId);
+  body.scrollTop=y;
+  wirePortfolio(accId);
+}
+function portfolioBody(accId){
+  const a=ACCOUNTS.find(x=>x.id===accId);
+  const list=portsOf(accId),last=list[list.length-1],prev=list[list.length-2];
+  const inp=`<input type="file" id="pfile" accept=".xlsx,.csv,.txt" hidden>`;
+  if(!last||!last.hold)
+    return inp+`<div class="empty"><h2>${last?'אין פירוט לצילום הזה':'עוד לא הועלה קובץ'}</h2><p>העלו את קובץ האחזקות שייצאתם מ${esc(a.short)} (‎.xlsx‎ או ‎.csv‎). הקובץ נקרא במכשיר ולא נשלח לשום מקום.</p><label class="btn" style="cursor:pointer" for="pfile">בחירת קובץ</label></div>`;
+  const hold=last.hold,s=summarize(hold),ps=prev&&prev.hold?summarize(prev.hold):null;
+  const d=ps?s.total-ps.total:0;
+  const filt=openPortfolio.filt,srt=openPortfolio.sort||(openPortfolio.sort='v');
+  let h=inp+`<div class="acc-head"><h1>תיק ניירות ערך</h1><div class="big">${ils(s.total)}</div>
+  <div class="meta"><span class="n">${hold.length}</span> אחזקות · נכון ל-<span class="n">${dlong(last.date)}</span></div></div>`;
+  if(ps)h+=`<div class="chips"><div><small>מהצילום הקודם</small><b class="${cls(d)}">${arrow(d)} ${signedIls(d)}</b> <span class="n ${cls(d)}">${ps.total?pct(d/ps.total,2):''}</span></div>
+  <div><small>רווח על הנייר</small><b class="${cls(s.gain+s.loss)}">${signedIls(s.gain+s.loss)}</b></div></div>`;
+  // allocation — tapping a row filters the list below
+  const cats=CATS.filter(([k])=>s.cat[k]);
+  h+=`<section><h2>לפי סוג נכס <small>לחיצה מסננת</small></h2><div class="panel">
+  <div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי סוג נכס">${cats.map(([k])=>`<i style="flex:${s.cat[k]} 0 0;background:${catCol(k)};${catHollow(k)?'opacity:.55':''}"></i>`).join('')}</div></div>`;
+  for(const [k,lbl] of cats)
+    h+=`<button class="row dotted" data-filt="${k}" aria-pressed="${filt===k}">${dot(k)}<span><span class="nm">${lbl}</span><div class="sub"><span class="n">${s.count[k]}</span> אחזקות</div></span><span class="val"><b>${ils(s.cat[k])}</b><span class="n flat">${(s.cat[k]/s.total*100).toFixed(1)}%</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
+  h+=`</div></section>`;
+  const CURCOL={'שקל':'#2F9E6E','דולר':'#3B82F6'};
+  const curs=Object.keys(s.cur).sort((x,y)=>s.cur[y]-s.cur[x]);
+  h+=`<section><h2>לפי מטבע</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי מטבע">${curs.map(k=>`<i style="flex:${s.cur[k]} 0 0;background:${CURCOL[k]||'#8A2D0C'}"></i>`).join('')}</div></div>`;
+  for(const k of curs)h+=`<div class="row dotted"><span class="spine" style="background:${CURCOL[k]||'#8A2D0C'}"></span><span class="nm">${esc(k)}</span><span class="val"><b>${ils(s.cur[k])}</b><span class="n flat">${(s.cur[k]/s.total*100).toFixed(1)}%</span></span></div>`;
+  h+=`</div></section>`;
+  h+=`<section><h2>מס על הנייר <small>לפי חישוב הבנק</small></h2><div class="panel facts">
+  <div><small>רווח שטרם מומש</small><b class="up">${signedIls(s.gain)}</b></div>
+  <div><small>הפסד שטרם מומש</small><b class="${s.loss?'down':''}">${signedIls(s.loss)}</b></div>
+  <div><small>מס תיאורטי על הרווח</small><b>${ils(s.tax)}</b></div>
+  <div><small>מגן מס מההפסד</small><b>${ils(Math.abs(s.shield))}</b></div></div>
+  <p class="hint">הסכומים הם על הנייר. הפסד מקוזז לצורכי מס רק אחרי מכירה בפועל.</p></section>`;
+  // holdings, filtered
+  const shown=filt?hold.filter(x=>catOf(x)===filt):hold;
+  const sub=filt?shown.reduce((t,x)=>t+x.v,0):s.total;
+  const sorters={v:(x,y)=>y.v-x.v,g:(x,y)=>y.tg-x.tg,l:(x,y)=>x.tg-y.tg};
+  h+=`<section id="holds"><h2>אחזקות</h2>
+  <div class="chiprow">${[['','הכול']].concat(cats).map(([k,lbl])=>`<button data-filt="${k}" aria-pressed="${(filt||'')===k}">${k?dot(k):''}${esc(lbl||'הכול')}</button>`).join('')}</div>
+  <div class="segbar" role="tablist">${[['v','לפי שווי'],['g','הרווחים'],['l','ההפסדים']].map(([k,t])=>`<button role="tab" data-sort="${k}" aria-selected="${k===srt}">${t}</button>`).join('')}</div>
+  <p class="hint" style="padding:0 4px 8px">${filt?`<span class="n">${shown.length}</span> מתוך <span class="n">${hold.length}</span> אחזקות · <b class="n">${ils(sub)}</b> · <span class="n">${(sub/s.total*100).toFixed(1)}%</span> מהתיק`:`<span class="n">${hold.length}</span> אחזקות`}</p>
+  <div class="panel">`;
+  if(!shown.length)h+=`<div class="row"><span class="nm flat">אין אחזקות בקטגוריה הזו</span></div>`;
+  for(const x of shown.slice().sort(sorters[srt])){
+    const c=catOf(x);
+    h+=`<button class="row dotted" data-hold="${esc(x.id)}">${dot(c)}<span><span class="nm">${esc(x.name)}</span><div class="sub">${esc(CATLBL[c])} · <span class="n">${(x.v/s.total*100).toFixed(1)}%</span>${x.cur!=='שקל'?' · '+esc(x.cur):''}</div></span>
+    <span class="val"><b>${ils(x.v)}</b><span class="n ${cls(x.tg)}">${x.tg?arrow(x.tg)+' '+signedIls(x.tg):''}</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
+  }
+  h+=`</div></section>`;
+  if(list.length>1){
+    h+=`<section><h2>צילומים קודמים</h2><div class="panel">`;
+    const tot=p=>p.hold?summarize(p.hold).total:(p.sum?p.sum.total:0);
+    for(let i=list.length-1;i>=0;i--){
+      const dd=i?tot(list[i])-tot(list[i-1]):0;
+      h+=`<div class="row dotted"><span class="spine" style="background:${i?(dd>0?'var(--up)':dd<0?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n">${dlong(list[i].date)}</span><span class="val"><b>${ils(tot(list[i]))}</b>${i?`<span class="n ${cls(dd)}">${arrow(dd)} ${signedIls(dd)}</span>`:'<span class="flat">ראשון</span>'}</span></div>`;
+    }
+    h+=`</div></section>`;
+  }
+  return h+`<section class="stackbtns"><label class="btn" style="cursor:pointer" for="pfile">העלאת קובץ חדש</label></section>`;
+}
+function wirePortfolio(accId){
+  const f=$('#pfile');
+  if(f)f.onchange=async e=>{const file=e.target.files[0];f.value='';if(file)await importPortfolio(accId,file)};
+  layer.querySelectorAll('[data-sort]').forEach(b=>b.onclick=()=>{openPortfolio.sort=b.dataset.sort;paintPortfolio(accId,true)});
+  layer.querySelectorAll('[data-filt]').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.filt||null;
+    const fromList=b.classList.contains('row');
+    openPortfolio.filt=(openPortfolio.filt===k)?null:k;
+    paintPortfolio(accId,!fromList);
+    if(fromList){const el=$('#holds');if(el)el.scrollIntoView({block:'start',behavior:calm()?'auto':'smooth'})}
+  });
+  layer.querySelectorAll('[data-hold]').forEach(b=>b.onclick=()=>openHolding(accId,b.dataset.hold));
+}
+function openHolding(accId,id){
+  const list=portsOf(accId),last=list[list.length-1];if(!last||!last.hold)return;
+  const x=last.hold.find(y=>y.id===id);if(!x)return;
+  const prev=list[list.length-2],old=prev&&prev.hold?prev.hold.find(y=>y.id===id):null;
+  const t=ptypeOf(x),c=catOf(x),f=x.cur==='שקל'?ils:v=>nf0.format(Math.round(v))+' '+x.cur;
+  openLayer(`<div class="sheet modal" role="dialog" aria-label="${esc(x.name)}"><header><span class="grab" aria-hidden="true"></span><button data-close>סגירה</button><h2>${esc(x.name)}</h2><span></span></header><div class="body">
+  <div class="acc-head"><div class="big">${ils(x.v)}</div><div class="meta">${esc(CATLBL[c])} · <span class="n">${(x.v/summarize(last.hold).total*100).toFixed(1)}%</span> מהתיק${x.sym?' · '+esc(x.sym):''}</div></div>
+  <section><div class="panel facts">
+  <div><small>כמות</small><b>${nf0.format(x.qty)}</b></div>
+  <div><small>שער אחרון</small><b>${nf0.format(Math.round(x.price*100)/100)}</b></div>
+  ${x.cur!=='שקל'?`<div><small>שווי במטבע</small><b>${f(x.vc)}</b></div>`:''}
+  <div><small>רווח מרכישה</small><b class="${cls(x.gain)}">${signedIls(x.gain)}</b></div>
+  <div><small>רווח הון על הנייר</small><b class="${cls(x.tg)}">${signedIls(x.tg)}</b></div>
+  <div><small>מס תיאורטי</small><b class="${cls(x.tx)}">${signedIls(x.tx)}</b></div>
+  ${old?`<div><small>שינוי מהצילום הקודם</small><b class="${cls(x.v-old.v)}">${signedIls(x.v-old.v)}</b></div>`:''}
+  </div></section>
+  <section><h2>סיווג</h2><div class="segbar">${Object.entries(TYPES).map(([k,v])=>`<button data-type="${k}" aria-selected="${k===t}">${v}</button>`).join('')}</div>
+  <p class="hint">הסיווג נקבע אוטומטית לפי שם הנייר, והשיוך לישראל או לחו״ל לפי שפת השם והמטבע. שינוי כאן נשמר לנייר הזה בכל הצילומים.</p></section></div></div>`);
+  layer.querySelectorAll('[data-type]').forEach(b=>b.onclick=async()=>{
+    S.ptype[id]=b.dataset.type;await save();closeLayer();
+    setTimeout(()=>paintPortfolio(accId,true),340);
+  });
+}
+async function importPortfolio(accId,file){
+  const a=ACCOUNTS.find(x=>x.id===accId);
+  try{
+    const hold=parsePortfolio(await readSheet(file));
+    const s=summarize(hold);
+    const fields=a.fields.map(([k,nm])=>[k,nm]);
+    const guess=S.plink[accId]||(fields.find(([k,nm])=>/שוק ההון|קרנות|השקעות/.test(nm))||fields[fields.length-1])[0];
+    openLayer(`<div class="sheet modal" role="dialog" aria-label="קובץ חדש"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>קובץ נקרא</h2><span></span></header><div class="body">
+    <div class="acc-head"><div class="big">${ils(s.total)}</div><div class="meta"><span class="n">${hold.length}</span> אחזקות ב${esc(a.short)}</div></div>
+    <div class="grp"><div class="fld"><label for="pdate">תאריך הצילום</label><input id="pdate" type="date" value="${today()}"></div>
+    <div class="fld"><label for="pfld">ממלא את השדה</label><select id="pfld" style="height:40px;border:0;background:transparent;color:var(--tint);font-size:17px">${fields.map(([k,nm])=>`<option value="${k}" ${k===guess?'selected':''}>${esc(nm)}</option>`).join('')}</select></div></div>
+    <p class="hint">הצילום יישמר בתיק של ${esc(a.short)}, והסכום יוצע לעדכון היתרות של אותו תאריך.</p>
+    <section><button class="btn" id="psave">שמירה</button></section></div></div>`);
+    $('#psave').onclick=async()=>{
+      const date=$('#pdate').value,fld=$('#pfld').value;
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast('בחרו תאריך');return}
+      addSnapshot(accId,date,hold);S.plink[accId]=fld;await save();
+      closeLayer();
+      const u=S.updates.find(x=>x.date===date);
+      setTimeout(async()=>{
+        if(u){ if(confirm('לעדכן את היתרה בעדכון מ-'+dlong(date)+' ל-'+ils(s.total)+'?')){u.vals[fld]=Math.round(s.total);await save();toast('היתרה עודכנה')} }
+        else if(confirm('אין עדכון יתרות בתאריך הזה. ליצור אחד עם הסכום?')){closeLayer();setTimeout(()=>openForm(null,{date,vals:{[fld]:Math.round(s.total)}}),330);return}
+        openPortfolio.filt=null;paintPortfolio(accId);
+      },260);
+    };
+  }catch(err){toast(err.message||'לא הצלחתי לקרוא את הקובץ')}
+}
+
 /* ---------- events / boot ---------- */
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-tab],[data-act],[data-acc],[data-edit],[data-close]');if(!t)return;
+  const t=e.target.closest('[data-tab],[data-act],[data-acc],[data-edit],[data-close],[data-port]');if(!t)return;
   if(t.dataset.tab){tab=t.dataset.tab;render()}
   else if(t.dataset.acc)openAccount(t.dataset.acc);
+  else if(t.dataset.port)openPortfolio(t.dataset.port);
   else if(t.dataset.edit)openForm(t.dataset.edit);
   else if('close' in t.dataset)closeLayer();
-  else ({new:()=>ACCOUNTS.length?openForm():openImport(),backup:doBackup,csv:doCsv,import:openImport,setpass:setPass,rmpass:rmPass,
-    wipe:async()=>{if(!confirm('למחוק את כל הנתונים מהמכשיר? אי אפשר לבטל את הפעולה.'))return;if(!confirm('בטוחים? ודאו שיש לכם גיבוי.'))return;S.updates=[];setConfig([]);await save();tab='home';render();toast('הנתונים נמחקו')}})[t.dataset.act]?.();
+  else ({new:()=>ACCOUNTS.length?openForm():openImport(),backup:doBackup,csv:doCsv,import:openImport,setpass:setPass,rmpass:rmPass,locknow:lockNow,
+    wipe:async()=>{if(!confirm('למחוק את כל הנתונים מהמכשיר? אי אפשר לבטל את הפעולה.'))return;if(!confirm('בטוחים? ודאו שיש לכם גיבוי.'))return;S.updates=[];S.ports={};S.ptype={};S.plink={};setConfig([]);await save();tab='home';render();toast('הנתונים נמחקו')}})[t.dataset.act]?.();
 });
 function start(){$('#tabbar').hidden=false;render()}
 (function boot(){
   const raw=readRaw();
   if(raw&&raw.enc){lockScreen();return}
-  if(raw&&raw.data){setConfig(raw.data.accounts);S.updates=clean(raw.data.updates)}
+  if(raw&&raw.data){setConfig(raw.data.accounts);S.updates=clean(raw.data.updates);loadPorts(raw.data)}
   start();
 })();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
