@@ -222,7 +222,8 @@ const sorted=()=>[...S.updates].sort((a,b)=>a.date<b.date?-1:1);
 const nf0=new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
 const ils=v=>'₪'+nf0.format(Math.round(v));
 const usd=v=>'$'+nf0.format(Math.round(v));
-const signed=v=>(v>0?'+':v<0?'−':'')+nf0.format(Math.abs(Math.round(v)));
+const signedBy=(v,f)=>(v>0?'+':v<0?'−':'')+f(Math.abs(v));   // e.g. +₪40,873 / −$1,989
+const signedIls=v=>signedBy(v,ils);
 const pct=(v,d=1)=>(v>0?'+':v<0?'−':'')+Math.abs(v*100).toFixed(d)+'%';
 const cls=v=>v>0.5?'up':v<-0.5?'down':'flat';
 const arrow=v=>v>0.5?'▲':v<-0.5?'▼':'●';
@@ -282,12 +283,12 @@ function tickFmt(ticks){const span=ticks[ticks.length-1]-ticks[0];const mx=Math.
   return v=>nf0.format(v)}
 /* line with point markers; y-axis hugs the data (a bit below the lowest, a bit above the highest) */
 function lineChart(pts,color,o={}){
-  const W=340,H=o.h||170,L=8,R=44,T=14,B=24,dark=!!o.dark;
+  const W=340,H=o.h||170,AX=46,PR=10,T=14,B=24,dark=!!o.dark;   // AX: width reserved for the value axis, on the left
   const vs=pts.map(p=>p.v);const {min,max,ticks}=niceTicks(Math.min(...vs),Math.max(...vs));const tf=tickFmt(ticks);
-  const x=i=>pts.length===1?(L+(W-R-L)/2):L+10+i*(W-R-L-20)/(pts.length-1);const y=v=>T+(max-v)*(H-T-B)/(max-min);
+  const x=i=>pts.length===1?(AX+(W-PR-AX)/2):AX+10+i*(W-PR-AX-20)/(pts.length-1);const y=v=>T+(max-v)*(H-T-B)/(max-min);
   const grid=dark?'#2A4257':'#E5E5EA',ring=dark?'#0E2233':'#FFFFFF';
   let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label||'גרף')}">`;
-  for(const t of ticks){s+=`<line x1="${L}" x2="${W-R}" y1="${y(t)}" y2="${y(t)}" stroke="${grid}" stroke-width="1"/><text x="${W-R+6}" y="${y(t)+3.5}">${tf(t)}</text>`}
+  for(const t of ticks){s+=`<line x1="${AX}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke="${grid}" stroke-width="1"/><text x="${AX-7}" y="${y(t)+3.5}" text-anchor="end">${tf(t)}</text>`}
   const step=Math.max(1,Math.ceil(pts.length/5));
   pts.forEach((p,i)=>{if(i%step===0||i===pts.length-1){if(i!==pts.length-1&&(pts.length-1-i)<step*0.6)return;s+=`<text x="${x(i)}" y="${H-7}" text-anchor="middle">${dshort(p.d)}</text>`}});
   s+=`<line class="cross" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="${dark?'#6C8196':'#9AA8B4'}" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
@@ -301,7 +302,7 @@ function spark(vs,color){if(vs.length<2)return '';const lo=Math.min(...vs),hi=Ma
   const p=vs.map((v,i)=>(3+i*54/(vs.length-1)).toFixed(1)+','+(19-(v-lo)*16/sp).toFixed(1)).join(' ');
   const last=p.split(' ').pop().split(',');
   return `<svg class="spark" viewBox="0 0 60 22" aria-hidden="true"><polyline fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${p}"/><circle cx="${last[0]}" cy="${last[1]}" r="2.6" fill="${color}"/></svg>`}
-function readoutText(p,prev,fmt){let t=`<span class="n">${dlong(p.d)}</span> · <b class="n">${fmt(p.v)}</b>`;if(prev){const d=p.v-prev.v;t+=` · <span class="n ${cls(d)}">${arrow(d)} ${signed(d)}</span>`}return t}
+function readoutText(p,prev,fmt){let t=`<span class="n">${dlong(p.d)}</span> · <b class="n">${fmt(p.v)}</b>`;if(prev){const d=p.v-prev.v;t+=` · <span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,fmt)}</span>`}return t}
 function wireChart(box,pts,fmt){
   const svg=box.querySelector('svg.chart'),out=box.querySelector('.readout');if(!svg||!out)return;
   const hit=svg.querySelector('.hit'),cross=svg.querySelector('.cross');const xs=hit.dataset.xs.split(',').map(Number);
@@ -332,18 +333,17 @@ function viewHome(){
   const dPrev=prev?last.total-prev.total:0,dFirst=last.total-first.total;
   const win=U.slice(-12),winC=C.slice(-12);
   let h=`<div class="hero"><h1>הון כולל</h1><div class="total">${ils(last.total)}</div><div class="asof">נכון ל-<span class="n">${dlong(U[n-1].date)}</span></div>
-  <div class="deltas"><div><small>מהעדכון הקודם</small>${prev?`<b class="${cls(dPrev)}">${arrow(dPrev)} ${signed(dPrev)}</b> <span class="n ${cls(dPrev)}">${pct(dPrev/prev.total,2)}</span>`:'<b class="flat">—</b>'}</div>
-  <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dFirst)}">${arrow(dFirst)} ${signed(dFirst)}</b> <span class="n ${cls(dFirst)}">${pct(dFirst/first.total,2)}</span>`:'<b class="flat">—</b>'}</div></div>
+  <div class="deltas"><div><small>מהעדכון הקודם</small>${prev?`<b class="${cls(dPrev)}">${arrow(dPrev)} ${signedIls(dPrev)}</b> <span class="n ${cls(dPrev)}">${pct(dPrev/prev.total,2)}</span>`:'<b class="flat">—</b>'}</div>
+  <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dFirst)}">${arrow(dFirst)} ${signedIls(dFirst)}</b> <span class="n ${cls(dFirst)}">${pct(dFirst/first.total,2)}</span>`:'<b class="flat">—</b>'}</div></div>
   <div id="ch-total" class="panel pad">${lineChart(win.map((u,i)=>({d:u.date,v:winC[i].total})),'#1C1C1E',{label:'סה״כ הון לאורך זמן',anim:firstPaint})}<p class="readout"></p></div></div>`;
   const m=meta();const days=m.lastBackup?Math.floor((Date.now()-m.lastBackup)/864e5):null;
   if(days===null||days>30)h+=`<div class="note"><span>${days===null?'עוד לא נשמר גיבוי.':'עברו '+days+' ימים מהגיבוי האחרון.'} הנתונים קיימים רק במכשיר הזה.</span><button data-act="backup">גיבוי עכשיו</button></div>`;
   h+=`<section><h2>לפי חשבון</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="חלוקת ההון לפי חשבון">${ACCOUNTS.map(a=>`<i style="flex:${Math.max(last.acc[a.id],0)} 0 0;background:${a.color}" title="${esc(a.name)}"></i>`).join('')}</div></div>`;
   for(const a of ACCOUNTS){const v=last.acc[a.id],d=prev?v-prev.acc[a.id]:0;
-    h+=`<button class="row" data-acc="${a.id}"><span class="spine" style="background:${a.color}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${(v/last.total*100).toFixed(1)}%</span> מההון${a.cur==='USD'?` · <span class="n">${usd(last.usdAcc[a.id]||0)}</span>`:''}</div></span>
-    <span class="val"><b>${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signed(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
-  const lu=U[n-1];const hasUsd=ACCOUNTS.some(a=>a.cur==='USD');const trk=ACCOUNTS.flatMap(a=>a.fields).find(f=>f[3]);const span=Math.round((new Date(U[n-1].date)-new Date(U[0].date))/864e5);
-  h+=`</div></section><section><h2>נתוני מפתח</h2><div class="panel facts">${hasUsd?`<div><small>שער דולר אחרון</small><b>${lu.rate?'₪'+lu.rate.toFixed(3):'—'}</b></div><div><small>יתרות בדולרים</small><b>${usd(last.usd)}</b></div>`:''}
-  ${trk?`<div><small>${esc(trk[1])}</small><b>${ils(lu.vals[trk[0]])}</b></div>`:''}<div><small>שיא הון</small><b>${ils(Math.max(...C.map(c=>c.total)))}</b></div>
+    h+=`<button class="row" data-acc="${a.id}"><span class="spine" style="background:${a.color}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${(v/last.total*100).toFixed(1)}%</span> מההון</div></span>
+    <span class="val"><b>${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
+  const span=Math.round((new Date(U[n-1].date)-new Date(U[0].date))/864e5);
+  h+=`</div></section><section><h2>נתוני מפתח</h2><div class="panel facts">
   <div><small>מספר עדכונים</small><b>${n}</b></div><div><small>תקופת המעקב</small><b>${span} ימים</b></div></div></section>
   <section><button class="btn" data-act="new">עדכון חדש</button></section>`;
   view.innerHTML=h;
@@ -358,21 +358,21 @@ function openAccount(id){
   let h=`<div class="sheet push" role="dialog" aria-label="${esc(a.name)}"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>סקירה</span></button><h2>${esc(a.short)}</h2><span></span></header><div class="body">
   <div class="acc-head"><h1><span style="color:${a.color}">●</span> ${esc(a.name)}</h1><div class="big">${ils(v)}</div>
   <div class="meta"><span class="n">${(v/C[n-1].total*100).toFixed(1)}%</span> מההון · נכון ל-<span class="n">${dlong(U[n-1].date)}</span>${isUsd?` · <span class="n">${usd(C[n-1].usdAcc[id]||0)}</span>`:''}</div></div>
-  <div class="chips"><div><small>מהעדכון הקודם</small>${n>1?`<b class="${cls(dP)}">${arrow(dP)} ${signed(dP)}</b> <span class="n ${cls(dP)}">${vs[n-2]?pct(dP/vs[n-2],2):''}</span>`:'<b class="flat">—</b>'}</div>
-  <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dF)}">${arrow(dF)} ${signed(dF)}</b> <span class="n ${cls(dF)}">${vs[0]?pct(dF/vs[0],2):''}</span>`:'<b class="flat">—</b>'}</div></div>
+  <div class="chips"><div><small>מהעדכון הקודם</small>${n>1?`<b class="${cls(dP)}">${arrow(dP)} ${signedIls(dP)}</b> <span class="n ${cls(dP)}">${vs[n-2]?pct(dP/vs[n-2],2):''}</span>`:'<b class="flat">—</b>'}</div>
+  <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dF)}">${arrow(dF)} ${signedIls(dF)}</b> <span class="n ${cls(dF)}">${vs[0]?pct(dF/vs[0],2):''}</span>`:'<b class="flat">—</b>'}</div></div>
   <section><h2>שינוי בין העדכונים</h2><div class="panel pad" id="ch-acc">${lineChart(pts,a.color,{label:a.name,anim:1})}<p class="readout"></p></div></section>
   <section><div class="panel facts"><div><small>הגבוה ביותר</small><b>${ils(hi)}</b></div><div><small>הנמוך ביותר</small><b>${ils(lo)}</b></div>
-  <div><small>שינוי ממוצע לעדכון</small><b class="${cls(n>1?dF/(n-1):0)}">${n>1?signed(dF/(n-1)):'—'}</b></div><div><small>מספר עדכונים</small><b>${n}</b></div></div></section>`;
+  <div><small>שינוי ממוצע לעדכון</small><b class="${cls(n>1?dF/(n-1):0)}">${n>1?signedIls(dF/(n-1)):'—'}</b></div><div><small>מספר עדכונים</small><b>${n}</b></div></div></section>`;
   if(isUsd){h+=`<section><h2>שווי בדולרים</h2><div class="panel pad" id="ch-usd">${lineChart(U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),a.color,{label:'שווי בדולרים'})}<p class="readout"></p></div></section>`}
   const tr=a.fields.filter(f=>f[3]);
   tr.forEach((f,i)=>{h+=`<section><h2>${esc(f[1])}</h2><div class="panel pad" id="ch-t${i}">${lineChart(U.map(u=>({d:u.date,v:u.vals[f[0]]})),a.color,{label:f[1]})}<p class="readout"></p></div></section>`});
   h+=`<section><h2>פירוט היתרות <small>עדכון אחרון</small></h2><div class="panel">`;
   const last=U[n-1],prev=U[n-2];const f=isUsd?usd:ils;
   for(const [k,nm] of a.fields){const fv=last.vals[k],d=prev?fv-prev.vals[k]:0;
-    h+=`<div class="row"><span class="spine" style="background:${a.color}"></span><span class="nm" style="font-weight:500">${esc(nm)}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signed(d)}</span>`:''}</span></div>`}
+    h+=`<div class="row"><span class="spine" style="background:${a.color}"></span><span class="nm" style="font-weight:500">${esc(nm)}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,f)}</span>`:''}</span></div>`}
   h+=`</div></section><section><h2>היסטוריה</h2><div class="panel">`;
   for(let i=n-1;i>=0;i--){const d=i?vs[i]-vs[i-1]:0;
-    h+=`<div class="row"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signed(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
+    h+=`<div class="row"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
   h+=`</div></section></div></div>`;
   openLayer(h,true);
   wireChart($('#ch-acc'),pts,ils);
@@ -387,7 +387,7 @@ function viewUpdates(){
   h+=`<section><button class="btn" data-act="new">עדכון חדש</button></section><section><div class="panel">`;
   for(let i=U.length-1;i>=0;i--){const d=i?C[i].total-C[i-1].total:0;
     h+=`<button class="row" data-edit="${U[i].date}"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span><span class="nm n">${dlong(U[i].date)}</span><div class="sub">שער דולר <span class="n">${U[i].rate?U[i].rate.toFixed(3):'—'}</span></div></span>
-    <span class="val"><b>${ils(C[i].total)}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signed(d)} (${pct(d/C[i-1].total,2)})</span>`:'<span class="flat">עדכון ראשון</span>'}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
+    <span class="val"><b>${ils(C[i].total)}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)} (${pct(d/C[i-1].total,2)})</span>`:'<span class="flat">עדכון ראשון</span>'}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
   view.innerHTML=h+`</div></section>`;
 }
 
@@ -442,8 +442,8 @@ function viewCompare(){
   h+=`<section><div class="pick"><div><label for="ca">תאריך בסיס</label><select id="ca">${opts(st.a)}</select></div><div><label for="cb">תאריך להשוואה</label><select id="cb">${opts(st.b)}</select></div></div></section>`;
   const tbl=(title,rows)=>{let t=`<section><h2>${title}</h2><div class="panel"><table class="cmp"><thead><tr><th></th><th class="n">${dshort(A.date)}</th><th class="n">${dshort(B.date)}</th><th>שינוי</th></tr></thead><tbody>`;
     let sa=0,sb=0;for(const [nm,va,vb,col] of rows){sa+=va;sb+=vb;const d=vb-va;
-      t+=`<tr><td>${col?`<span style="color:${col}">●</span> `:''}${nm}</td><td class="n">${compact(va)}</td><td class="n">${compact(vb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${signed(d)}</span><small class="n ${cls(d)}">${va?pct(d/va):''}</small></td></tr>`}
-    const d=sb-sa;return t+`<tr class="tot"><td>סה״כ</td><td class="n">${compact(sa)}</td><td class="n">${compact(sb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${signed(d)}</span><small class="n ${cls(d)}">${sa?pct(d/sa,2):''}</small></td></tr></tbody></table></div></section>`};
+      t+=`<tr><td>${col?`<span style="color:${col}">●</span> `:''}${nm}</td><td class="n">${compact(va)}</td><td class="n">${compact(vb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span><small class="n ${cls(d)}">${va?pct(d/va):''}</small></td></tr>`}
+    const d=sb-sa;return t+`<tr class="tot"><td>סה״כ</td><td class="n">${compact(sa)}</td><td class="n">${compact(sb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span><small class="n ${cls(d)}">${sa?pct(d/sa,2):''}</small></td></tr></tbody></table></div></section>`};
   h+=tbl('לפי חשבון',ACCOUNTS.map(a=>[esc(a.short),ca.acc[a.id],cb.acc[a.id],a.color]));
   h+=`<section><div class="panel facts"><div><small>ימים בין התאריכים</small><b>${Math.round((new Date(B.date)-new Date(A.date))/864e5)}</b></div><div><small>שער דולר</small><b>${A.rate?A.rate.toFixed(3):'—'} → ${B.rate?B.rate.toFixed(3):'—'}</b></div></div></section>`;
   view.innerHTML=h;
