@@ -159,8 +159,6 @@ button.row[aria-pressed="true"] .nm{font-weight:600}
 .fld .inl{display:flex;gap:4px;align-items:center}
 .fld .inl button{white-space:nowrap;font-size:15px;color:var(--tint);padding:0 4px;min-height:44px}
 .fld .inl button:active{opacity:.4}
-.fld .inl .atbtn{color:var(--tint);font-size:15px;min-height:44px;display:flex;align-items:center;cursor:pointer;white-space:nowrap}
-.fld .inl .atbtn.on{color:var(--up);font-weight:600;font-size:13.5px}
 .hint{font-size:13px;color:var(--muted);padding:6px 16px 12px;margin:0}
 .err{margin:16px 16px 0;background:#FFE5E7;color:#A1000F;border-radius:12px;padding:11px 14px;font-size:15px}
 
@@ -178,32 +176,13 @@ table.cmp .d small{display:block;font-size:12px}
 .empty h2{font-size:22px;font-weight:700;letter-spacing:-.016em;margin:0 0 6px;color:var(--ink)}
 .empty p{margin:0 0 22px;font-size:15px}
 .cover{position:fixed;inset:0;background:var(--bg);z-index:38}
-.lock{position:fixed;inset:0;background:var(--bg);color:var(--ink);z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:12px;padding:calc(var(--sat) + 24px) 20px calc(var(--sab) + 26px)}
-.lock .top{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;width:100%;padding-bottom:4vh}
-.lock .mark{width:62px;height:62px;border-radius:15px;margin-bottom:6px}
-.lock h1{font-size:24px;font-weight:700;letter-spacing:-.02em;margin:0}
-.lock .sub{margin:0;color:var(--muted);font-size:16px;text-align:center}
-.lock .msg,.lockish .msg{color:var(--down);min-height:20px;font-size:14px;text-align:center}
-.lock .lnk,.lockish .lnk{color:var(--tint);font-size:16px;min-height:44px}
-.lock form{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+.lock{position:fixed;inset:0;background:var(--bg);color:var(--ink);z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:12px}
+.lock form{display:contents}
+.lock h1{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:0}
+.lock p{margin:0 0 6px;color:var(--muted);font-size:15px;text-align:center}
 .lock input{width:240px;height:52px;border-radius:12px;border:0;background:var(--surface);font-size:22px;text-align:center;direction:ltr}
-.lock .btn,.lockish .btn{max-width:260px;margin:0 auto}
-.dots{display:flex;gap:20px;direction:ltr;margin:10px 0 2px;min-height:14px}
-.dots i{width:13px;height:13px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--ink2);transition:background .12s ease-out,transform .12s ease-out}
-.dots i.on{background:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink);transform:scale(1.08)}
-.pad{display:grid;grid-template-columns:repeat(3,74px);gap:14px 24px;justify-content:center;direction:ltr;margin:6px 0 14px}
-.pad button{width:74px;height:74px;border-radius:50%;background:var(--fill);font-family:var(--num);font-size:30px;font-weight:400;color:var(--ink);display:flex;align-items:center;justify-content:center;transition:background .08s ease-out,transform .08s ease-out}
-.pad button:active{background:#C7C7CC;transform:scale(.95)}
-.pad button.del{background:transparent}
-.pad button.del svg{width:27px;height:19px;fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.lock.busy .pad,.lock.busy .dots{opacity:.45;pointer-events:none}
-.lockish .body{display:flex;flex-direction:column;align-items:center;padding-bottom:calc(16px + var(--sab))}
-.lockish .top{display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:14px}
-.lockish .padhint{font-size:13px;color:var(--muted);text-align:center;max-width:320px;margin:2px 0 4px;padding:0 10px}
-@media (prefers-reduced-motion:no-preference){
-  .dots.shake{animation:shk .42s cubic-bezier(.36,.07,.19,.97)}
-  @keyframes shk{10%,90%{transform:translateX(-5px)}20%,80%{transform:translateX(8px)}30%,50%,70%{transform:translateX(-11px)}40%,60%{transform:translateX(11px)}}
-}
+.lock .btn{width:240px}
+.lock .msg{color:var(--down);min-height:20px;font-size:15px}
 textarea{width:100%;min-height:120px;border:0;border-radius:10px;background:var(--bg);padding:10px;font-size:13px;direction:ltr;font-family:ui-monospace,Menlo,monospace}
 svg.chart{display:block;width:100%;height:auto;touch-action:pan-y;direction:ltr}
 svg.chart text{font-family:var(--num);font-size:10.5px;fill:#8E8E93}
@@ -246,7 +225,7 @@ let ACCOUNTS=[],FIELDS=[];
 function setConfig(list){const ok=[];for(const a of Array.isArray(list)?list:[]){if(!a||!a.id||!Array.isArray(a.fields))continue;ok.push({id:String(a.id),name:String(a.name||a.id),short:String(a.short||a.name||a.id),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#44566A',cur:a.cur==='USD'?'USD':'ILS',fields:a.fields.filter(f=>Array.isArray(f)&&f[0]).map(f=>[String(f[0]),String(f[1]||f[0]),['cur','fx','cap','sav'].includes(f[2])?f[2]:'cap',!!f[3]])})}ACCOUNTS=ok;FIELDS=ok.flatMap(a=>a.fields.map(f=>f[0]))}
 const ASSETS=[['cur','עו״ש'],['fx','עו״ש מט״ח'],['cap','שוק ההון / קרנות'],['sav','חיסכון, פיקדונות ו-IRA']];
 const KEY='ft.data.v1', META='ft.meta.v1';
-let S={updates:[],ports:{},ptype:{},plink:{}}, dataKey=null, encMeta=null, tab='home';
+let S={updates:[],ports:{},ptype:{},plink:{}}, cryptoKey=null, encMeta=null, tab='home';
 
 const num=v=>{const x=typeof v==='number'?v:parseFloat(String(v??'').replace(/[,\s₪$]/g,''));return Number.isFinite(x)?x:0};
 function calc(u){
@@ -271,87 +250,53 @@ const today=()=>{const t=new Date();return t.getFullYear()+'-'+String(t.getMonth
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const compact=v=>{const a=Math.abs(v);return a>=1e6?(v/1e6).toFixed(a>=1e7?1:2)+'M':a>=1e4?(v/1e3).toFixed(a>=1e5?0:1)+'K':nf0.format(v)};
 
-/* ---------- storage: a random data key encrypts the file, and that key is wrapped
-   twice — once by Face ID (WebAuthn PRF) and once by a passcode kept as the way back in ---------- */
+/* ---------- storage (optionally encrypted on device) ---------- */
 const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
 const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-const PRF_SALT=new TextEncoder().encode('finance-tracker-prf-v1');
-async function pbkdf(pass,salt){
+async function deriveKey(pass,salt){
   const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']);
   return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
 }
-async function hkdf(raw){
-  const base=await crypto.subtle.importKey('raw',raw,'HKDF',false,['deriveKey']);
-  return crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt:new Uint8Array(32),info:new TextEncoder().encode('ft-kek-v1')},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
-}
-async function seal(key,bytes){
-  const iv=crypto.getRandomValues(new Uint8Array(12));
-  return {iv:b64(iv),ct:b64(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,bytes))};
-}
-const open_=(key,o)=>crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(o.iv)},key,unb64(o.ct));
-const importDK=raw=>crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},true,['encrypt','decrypt']);
-const newDK=()=>crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt','decrypt']);
-const rawOf=k=>crypto.subtle.exportKey('raw',k);
-
 function readRaw(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
 function meta(){try{return JSON.parse(localStorage.getItem(META)||'{}')}catch(e){return {}}}
 function setMeta(p){try{localStorage.setItem(META,JSON.stringify({...meta(),...p}))}catch(e){}}
-const hasLock=()=>{const r=readRaw();return !!(r&&r.enc)};
 let saveChain=Promise.resolve();
 function save(){
   saveChain=saveChain.then(async()=>{
-    const plain=new TextEncoder().encode(JSON.stringify({v:3,accounts:ACCOUNTS,updates:S.updates,ports:S.ports,ptype:S.ptype,plink:S.plink}));
+    const plain=JSON.stringify({v:3,accounts:ACCOUNTS,updates:S.updates,ports:S.ports,ptype:S.ptype,plink:S.plink});
     let out;
-    if(dataKey&&encMeta){out={enc:2,wrap:encMeta.wrap,...await seal(dataKey,plain)}}
-    else out={enc:0,data:JSON.parse(new TextDecoder().decode(plain))};
+    if(cryptoKey){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},cryptoKey,new TextEncoder().encode(plain));out={enc:1,salt:encMeta.salt,iv:b64(iv),ct:b64(ct)}}
+    else out={enc:0,data:JSON.parse(plain)};
     localStorage.setItem(KEY,JSON.stringify(out));
   }).catch(e=>toast('השמירה נכשלה: '+e.message));
   return saveChain;
 }
-async function applyPlain(bytes){
-  const d=JSON.parse(new TextDecoder().decode(bytes));
-  setConfig(d.accounts);S.updates=clean(d.updates);loadPorts(d);
-}
-async function unlockPass(pass){
-  const raw=readRaw();
-  if(raw.enc===1){                                   // older file: the passcode key encrypted the data itself
-    const k=await pbkdf(pass,unb64(raw.salt));
-    await applyPlain(await open_(k,raw));
-    dataKey=await newDK();encMeta={wrap:{}};
-    await wrapForPass(pass);await save();return;
-  }
-  const w=raw.wrap.pass;if(!w)throw new Error('no-pass');
-  const kek=await pbkdf(pass,unb64(w.salt));
-  dataKey=await importDK(await open_(kek,w));
-  encMeta={wrap:raw.wrap};delete encMeta.wrap.bio;   // Face ID was dropped; clear any leftover credential wrap
-  await applyPlain(await open_(dataKey,raw));
-}
-async function wrapForPass(pass){
-  const salt=crypto.getRandomValues(new Uint8Array(16));
-  const kek=await pbkdf(pass,salt);
-  encMeta.wrap.pass={salt:b64(salt),...await seal(kek,await rawOf(dataKey))};
-}
-/* iOS keeps a home-screen app alive, so a lock checked only at cold start would almost never be asked for */
-const LOCK_AFTER=120000;
+/* iOS keeps a home-screen app alive, so a code checked only at cold start would almost never be asked for */
+const LOCK_AFTER=120000;      // ask again once the app has been away this long
 let hiddenAt=0,coverEl=null;
 function cover(on){
-  if(on){if(!coverEl&&dataKey){coverEl=document.createElement('div');coverEl.className='cover';document.body.appendChild(coverEl)}}
+  if(on){ if(!coverEl&&cryptoKey){coverEl=document.createElement('div');coverEl.className='cover';document.body.appendChild(coverEl)} }
   else if(coverEl){coverEl.remove();coverEl=null}
 }
 function lockNow(){
   cover(false);
-  if(!dataKey||document.querySelector('.lock'))return;
-  dataKey=null;
+  if(!cryptoKey||document.querySelector('.lock'))return;
+  cryptoKey=null;                       // the key leaves memory until the code is re-entered
   closeAllLayers();
   S.updates=[];S.ports={};$('#tabbar').hidden=true;view.innerHTML='';
   lockScreen();
 }
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){hiddenAt=Date.now();cover(true)}
-  else if(dataKey&&hiddenAt&&Date.now()-hiddenAt>LOCK_AFTER){hiddenAt=0;lockNow()}
+  else if(cryptoKey&&hiddenAt&&Date.now()-hiddenAt>LOCK_AFTER){hiddenAt=0;lockNow()}
   else {hiddenAt=0;cover(false)}
 });
 window.addEventListener('pagehide',()=>{hiddenAt=Date.now();cover(true)});
+async function unlock(pass){
+  const raw=readRaw();const salt=unb64(raw.salt);const k=await deriveKey(pass,salt);
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},k,unb64(raw.ct));
+  const d=JSON.parse(new TextDecoder().decode(pt));setConfig(d.accounts);S.updates=clean(d.updates);loadPorts(d);cryptoKey=k;encMeta={salt:raw.salt};
+}
 function loadPorts(d){
   S.ports={};S.ptype={};S.plink={};
   const ok=new Set(ACCOUNTS.map(a=>a.id));
@@ -446,7 +391,9 @@ function viewHome(){
   for(const a of ACCOUNTS){const v=last.acc[a.id],d=prev?v-prev.acc[a.id]:0;
     h+=`<button class="row" data-acc="${a.id}"><span class="spine" style="background:${a.color}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${(v/last.total*100).toFixed(1)}%</span> מההון</div></span>
     <span class="val"><b>${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
-  h+=`</div></section>
+  const span=Math.round((new Date(U[n-1].date)-new Date(U[0].date))/864e5);
+  h+=`</div></section><section><h2>נתוני מפתח</h2><div class="panel facts">
+  <div><small>מספר עדכונים</small><b>${n}</b></div><div><small>תקופת המעקב</small><b>${span} ימים</b></div></div></section>
   <section><button class="btn" data-act="new">עדכון חדש</button></section>`;
   view.innerHTML=h;
   wireChart($('#ch-total'),win.map((u,i)=>({d:u.date,v:winC[i].total})),ils);
@@ -496,12 +443,7 @@ function viewUpdates(){
   for(let i=U.length-1;i>=0;i--){const d=i?C[i].total-C[i-1].total:0;
     h+=`<button class="row" data-edit="${U[i].date}"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span><span class="nm n">${dlong(U[i].date)}</span><div class="sub">שער דולר <span class="n">${U[i].rate?U[i].rate.toFixed(3):'—'}</span></div></span>
     <span class="val"><b>${ils(C[i].total)}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)} (${pct(d/C[i-1].total,2)})</span>`:'<span class="flat">עדכון ראשון</span>'}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
-  const span=Math.round((new Date(U[U.length-1].date)-new Date(U[0].date))/864e5);
-  h+=`</div></section><section><h2>נתוני מפתח</h2><div class="panel facts">
-  <div><small>מספר עדכונים</small><b>${U.length}</b></div><div><small>תקופת המעקב</small><b>${span} ימים</b></div>
-  <div><small>שער דולר נוכחי</small><b id="liverate" class="flat">—</b></div></div></section>`;
-  view.innerHTML=h;
-  showLiveRate('#liverate');
+  view.innerHTML=h+`</div></section>`;
 }
 
 function openForm(date,pre){
@@ -517,8 +459,7 @@ function openForm(date,pre){
   for(const a of ACCOUNTS){
     h+=`<div class="grp" style="--c:${a.color}"><h3>${esc(a.name)}${a.cur==='USD'?'<small>בדולרים</small>':'<small>בש״ח</small>'}</h3>`;
     for(const [k,nm] of a.fields)h+=`<div class="fld"><label for="f-${k}">${esc(nm)}</label><input id="f-${k}" data-k="${k}" inputmode="decimal" autocomplete="off" value="${f.vals[k]===''?'':f.vals[k]}" placeholder="0"></div>`;
-    if(a.id===rateAcc)h+=`<div class="fld"><label for="f-rate">שער דולר<small>USD/ILS ביום העדכון</small></label><div class="inl"><input id="f-rate" inputmode="decimal" autocomplete="off" value="${f.rate||''}" placeholder="3.160"><button type="button" id="getrate">רענון</button></div></div><p class="hint" id="ratehint">השער נמשך לבד לפי התאריך. שער נוכחי: <b id="liverate2" class="n">—</b></p>`;
-    if(S.plink[a.id])h+=`<input type="file" id="af-${a.id}" accept=".xlsx,.csv,.txt" hidden><div class="fld"><label for="af-${a.id}">קובץ אחזקות<small>לא חובה</small></label><div class="inl"><label class="atbtn" for="af-${a.id}" id="al-${a.id}">צירוף קובץ</label></div></div>`;
+    if(a.id===rateAcc)h+=`<div class="fld"><label for="f-rate">שער דולר<small>USD/ILS ביום העדכון</small></label><div class="inl"><input id="f-rate" inputmode="decimal" autocomplete="off" value="${f.rate||''}" placeholder="3.160"><button type="button" id="getrate">משיכה</button></div></div><p class="hint" id="ratehint">״משיכה״ מביאה את השער לתאריך שנבחר מהאינטרנט. אפשר תמיד להקליד ידנית.</p>`;
     h+=`</div>`}
   if(editing)h+=`<section><button type="button" class="btn danger" id="del">מחיקת העדכון</button></section>`;
   h+=`</form></div><footer><div class="sum"><small>סה״כ הון בעדכון הזה</small><b id="fsum">—</b></div><button class="btn" id="fsave">שמירה</button></footer></div>`;
@@ -526,38 +467,9 @@ function openForm(date,pre){
   const read=()=>{const u={date:$('#f-date').value,rate:$('#f-rate')?num($('#f-rate').value):0,vals:{}};layer.querySelectorAll('input[data-k]').forEach(i=>u.vals[i.dataset.k]=num(i.value));return u};
   const upd=()=>{$('#fsum').textContent=ils(calc(read()).total)};upd();
   layer.querySelector('#frm').addEventListener('input',upd);
-  showLiveRate('#liverate2');
-  let rateTouched=!!f.rate;
-  const rateInput=$('#f-rate');
-  if(rateInput)rateInput.addEventListener('input',()=>{rateTouched=true});
-  const pullRate=async force=>{
-    const d=$('#f-date').value,hint=$('#ratehint');if(!rateInput||!d)return;
-    if(rateTouched&&!force)return;
-    hint.innerHTML='מושך שער…';
-    try{const r=await fetchRate(d);rateInput.value=String(Math.round(r.rate*1e4)/1e4);rateTouched=false;
-      hint.innerHTML=`שער ${esc(r.src)} ל-<span class="n">${dlong(r.date||d)}</span> · שער נוכחי: <b id="liverate2" class="n">—</b>`;upd()}
-    catch(e){hint.innerHTML='לא הצלחתי למשוך שער. הקלידו אותו ידנית · שער נוכחי: <b id="liverate2" class="n">—</b>'}
-    showLiveRate('#liverate2');
-  };
-  if($('#getrate'))$('#getrate').onclick=()=>pullRate(true);
-  const dateEl=$('#f-date');
-  if(dateEl)dateEl.addEventListener('change',()=>pullRate(false));
-  if(rateInput&&!f.rate)pullRate(false);
-  const attach={};                                  // optional holdings file, per account that has a portfolio
-  for(const a of ACCOUNTS){
-    const inp=$('#af-'+a.id);if(!inp)continue;
-    inp.onchange=async e=>{
-      const file=e.target.files[0];inp.value='';if(!file)return;
-      const lab=$('#al-'+a.id);lab.textContent='קורא…';
-      try{
-        const hold=parsePortfolio(await readSheet(file));
-        attach[a.id]=hold;
-        const tot=summarize(hold).total,fld=S.plink[a.id];
-        if(fld&&$('#f-'+fld)){$('#f-'+fld).value=Math.round(tot);upd()}
-        lab.textContent=hold.length+' אחזקות · '+ils(tot);lab.classList.add('on');
-      }catch(err){lab.textContent='צירוף קובץ';toast(err.message||'לא הצלחתי לקרוא את הקובץ')}
-    };
-  }
+  if($('#getrate'))$('#getrate').onclick=async()=>{const d=$('#f-date').value,hint=$('#ratehint');if(!d)return;hint.textContent='מושך שער…';
+    try{const r=await fetchRate(d);$('#f-rate').value=r.rate.toFixed(4).replace(/0$/,'');hint.textContent=`שער ${r.src} ל-${dlong(r.date||d)}. כדאי לוודא שהוא סביר.`;upd()}
+    catch(e){hint.textContent='לא הצלחתי למשוך שער (אין חיבור או שהשירות לא זמין). הקלידו את השער ידנית.'}};
   $('#fsave').onclick=async()=>{const u=read(),err=$('#ferr');let msg='';
     const usdSum=ACCOUNTS.filter(a=>a.cur==='USD').flatMap(a=>a.fields).reduce((s,[k])=>s+u.vals[k],0);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(u.date))msg='בחרו תאריך לעדכון.';
@@ -566,17 +478,8 @@ function openForm(date,pre){
     else if(layer.querySelector('input[data-k]')&&[...layer.querySelectorAll('input[data-k]')].some(i=>i.value.trim()!==''&&!/^-?[\d,]*\.?\d*$/.test(i.value.trim())))msg='באחד השדות יש ערך שאינו מספר.';
     if(msg){err.textContent=msg;err.hidden=false;layer.querySelector('.body').scrollTo({top:0,behavior:'smooth'});return}
     if(editing)S.updates=S.updates.filter(x=>x.date!==editing.date);
-    S.updates.push(u);for(const id in attach)addSnapshot(id,u.date,attach[id]);await save();closeLayer();tab='home';render();toast(Object.keys(attach).length?'העדכון והאחזקות נשמרו':'העדכון נשמר')};
+    S.updates.push(u);await save();closeLayer();tab='home';render();toast('העדכון נשמר')};
   if(editing)$('#del').onclick=async()=>{if(!confirm('למחוק את העדכון מ-'+dlong(editing.date)+'?'))return;S.updates=S.updates.filter(x=>x.date!==editing.date);await save();closeLayer();render();toast('העדכון נמחק')};
-}
-let liveRate=null,liveAt=0;
-async function showLiveRate(sel){
-  const el=$(sel);if(!el)return;
-  if(liveRate&&Date.now()-liveAt<3600000){el.textContent='₪'+liveRate.toFixed(3);el.classList.remove('flat');return}
-  el.textContent='…';
-  try{const r=await fetchRate(today());liveRate=r.rate;liveAt=Date.now();
-    const e2=$(sel);if(e2){e2.textContent='₪'+r.rate.toFixed(3);e2.classList.remove('flat')}}
-  catch(e){const e2=$(sel);if(e2)e2.textContent='לא זמין'}
 }
 function findRate(j){let found=null;(function walk(o,key){if(found!==null||o==null)return;if(typeof o==='number'){if(o>=2&&o<=6&&(/rate|ils|value/i.test(key||'')))found=o;return}if(typeof o==='object')for(const k in o)walk(o[k],k)})(j,'');return found}
 async function fetchRate(d){
@@ -604,11 +507,11 @@ function viewCompare(){
 }
 
 function viewSettings(){
-  const m=meta();const locked=!!dataKey;
+  const m=meta();const locked=!!cryptoKey;
   view.innerHTML=`<div class="pagehead"><h1>הגדרות</h1><p>גיבוי, נעילה ונתונים</p></div>
   <section><h2>גיבוי</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">הנתונים נשמרים רק במכשיר הזה. מחיקת האפליקציה ממסך הבית או ניקוי נתוני Safari מוחקים אותם, אז כדאי לשמור גיבוי אחרי כל עדכון.${m.lastBackup?` גיבוי אחרון: <span class="n">${new Date(m.lastBackup).toLocaleDateString('he-IL')}</span>.`:''}</p>
   <div class="stackbtns"><button class="btn" data-act="backup">שמירת גיבוי</button><button class="btn ghost" data-act="csv">ייצוא לאקסל (CSV)</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div></section>
-  <section><h2>נעילה</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:15px;color:var(--ink2)">${locked?'האפליקציה נעולה בקוד והנתונים מוצפנים במכשיר. הקוד נדרש בפתיחה, ושוב אחרי שתי דקות ברקע.':'אפשר לנעול את האפליקציה בקוד. הנתונים יישמרו מוצפנים, ובלי הקוד אי אפשר לשחזר אותם.'}</p>
+  <section><h2>נעילה</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">${locked?'האפליקציה נעולה בקוד, והנתונים שמורים מוצפנים במכשיר. הקוד נדרש בפתיחה, ושוב אחרי שהאפליקציה הייתה ברקע יותר משתי דקות.':'אפשר לנעול את האפליקציה בקוד. הנתונים יישמרו מוצפנים, ובלי הקוד אי אפשר לשחזר אותם.'}</p>
   <div class="stackbtns">${locked?'<button class="btn ghost" data-act="locknow">נעילה עכשיו</button><button class="btn ghost" data-act="setpass">החלפת קוד</button><button class="btn ghost" data-act="rmpass">ביטול הנעילה</button>':'<button class="btn ghost" data-act="setpass">הגדרת קוד נעילה</button>'}</div></div></section>
   <section><h2>נתונים</h2><div class="panel pad"><button class="btn danger" data-act="wipe">מחיקת כל הנתונים מהמכשיר</button></div></section>
   <section><p style="font-size:13px;color:var(--muted);text-align:center;margin:0 12px">שום נתון לא נשלח לשרת. הפעולה היחידה שפונה לאינטרנט היא ״משיכה״ של שער הדולר, והיא שולחת רק תאריך.</p></section>`;
@@ -746,100 +649,26 @@ function grab(L){
 }
 
 /* ---------- passcode ---------- */
-/* a code screen built like the one iOS shows: dots and a round keypad, no system keyboard */
-const PAD_KEYS=[1,2,3,4,5,6,7,8,9,null,0,'del'];
-const DEL_SVG='<svg viewBox="0 0 26 18" aria-hidden="true"><path d="M8.6 1.2h14.9a1.6 1.6 0 0 1 1.6 1.6v12.4a1.6 1.6 0 0 1-1.6 1.6H8.6L1.2 9z"/><path d="M11.8 6.4l5.6 5.2M17.4 6.4l-5.6 5.2"/></svg>';
-function makePad(o){
-  let buf='';
-  const paint=()=>{
-    const n=o.len||Math.max(buf.length+1,4);
-    o.dots.innerHTML=Array.from({length:n},(_,i)=>`<i class="${i<buf.length?'on':''}"></i>`).join('');
-    if(o.btn)o.btn.disabled=buf.length<4;
-  };
-  o.pad.innerHTML=PAD_KEYS.map(k=>k===null?'<span></span>':
-    k==='del'?`<button type="button" data-k="del" class="del" aria-label="מחיקה">${DEL_SVG}</button>`
-             :`<button type="button" data-k="${k}">${k}</button>`).join('');
-  const api={
-    get value(){return buf},
-    clear(){buf='';paint()},
-    shake(msg){
-      if(o.msg)o.msg.textContent=msg||'';
-      o.dots.classList.remove('shake');void o.dots.offsetWidth;o.dots.classList.add('shake');
-      buf='';setTimeout(paint,170);
-    }
-  };
-  o.pad.addEventListener('click',e=>{
-    const b=e.target.closest('button[data-k]');if(!b)return;
-    if(o.msg)o.msg.textContent='';
-    if(b.dataset.k==='del')buf=buf.slice(0,-1);
-    else if(buf.length<12)buf+=b.dataset.k;
-    paint();
-    if(o.len&&buf.length===o.len)o.onSubmit(buf,api);
-  });
-  if(o.btn)o.btn.onclick=()=>{if(buf.length>=4)o.onSubmit(buf,api)};
-  paint();
-  return api;
-}
-const MARK='<svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#122619"/><path d="M11 43 L23 35.5 L34 39 L51.5 20" fill="none" stroke="#30D158" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="51.5" cy="20" r="5" fill="#fff"/></svg>';
 function lockScreen(){
-  const plen=meta().plen||0;
-  const el=document.createElement('div');el.className='lock';
-  el.innerHTML=`<div class="top">${MARK}<h1>מעקב כספים</h1><p class="sub">הזינו את הקוד</p>
-    <div class="dots${plen?'':' free'}" id="kdots"></div><div class="msg" role="alert"></div></div>
-    ${plen?'':'<button type="button" class="lnk" id="ktxt">הקוד שלי כולל אותיות</button>'}
-    <div class="pad" id="kpad"></div>
-    ${plen?'':'<button class="btn" id="kgo">פתיחה</button>'}`;
+  const el=document.createElement('div');el.className='lock';el.innerHTML=`<h1>מעקב כספים</h1><p>הקלידו את קוד הנעילה</p><form><input id="lp" type="password" inputmode="numeric" autocomplete="current-password" aria-label="קוד נעילה" autofocus><div class="msg" role="alert"></div><button class="btn">פתיחה</button></form>`;
   document.body.appendChild(el);
-  const tryCode=async(code,api)=>{
-    el.classList.add('busy');
-    try{await unlockPass(code);el.remove();start()}
-    catch(e){el.classList.remove('busy');api.shake('הקוד שגוי. נסו שוב.')}
-  };
-  makePad({dots:el.querySelector('#kdots'),pad:el.querySelector('#kpad'),msg:el.querySelector('.msg'),
-    len:plen,btn:el.querySelector('#kgo'),onSubmit:tryCode});
-  const txt=el.querySelector('#ktxt');
-  if(txt)txt.onclick=()=>{
-    el.innerHTML=`<div class="top">${MARK}<h1>מעקב כספים</h1><p class="sub">הזינו את הקוד</p>
-      <form id="lform"><input id="lp" type="password" autocomplete="current-password" aria-label="קוד נעילה">
-      <div class="msg" role="alert"></div><button class="btn">פתיחה</button></form></div>`;
-    el.querySelector('#lp').focus();
-    el.querySelector('#lform').onsubmit=async e=>{
-      e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;
-      try{await unlockPass(el.querySelector('#lp').value);el.remove();start()}
-      catch(err){el.querySelector('.msg').textContent='הקוד שגוי. נסו שוב.';el.querySelector('#lp').value='';b.disabled=false}
-    };
-  };
+  el.querySelector('form').onsubmit=async e=>{e.preventDefault();const b=el.querySelector('button');b.disabled=true;
+    try{await unlock(el.querySelector('#lp').value);el.remove();start()}catch(err){el.querySelector('.msg').textContent='הקוד שגוי. נסו שוב.';el.querySelector('#lp').value='';b.disabled=false}};
 }
-function askCode(title,note,cb){
-  let first='';
-  openLayer(`<div class="sheet modal lockish" role="dialog" aria-label="${title}"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>${title}</h2><span></span></header>
-  <div class="body"><div class="top"><p class="sub">בחרו קוד בן 4 עד 6 ספרות</p>
-  <div class="dots free" id="kdots"></div><div class="msg" role="alert"></div></div>
-  <p class="padhint">${note}</p><div class="pad" id="kpad"></div><button class="btn" id="kgo">המשך</button></div></div>`);
-  const el=layer.querySelector('.sheet'),sub=el.querySelector('.sub');
-  makePad({dots:el.querySelector('#kdots'),pad:el.querySelector('#kpad'),msg:el.querySelector('.msg'),
-    btn:el.querySelector('#kgo'),
-    onSubmit:(code,api)=>{
-      if(code.length<4||code.length>6)return api.shake('הקוד צריך להיות בן 4 עד 6 ספרות.');
-      if(!first){first=code;sub.textContent='הזינו את הקוד שוב';el.querySelector('#kgo').textContent='אישור';api.clear();return}
-      if(code!==first){first='';sub.textContent='בחרו קוד בן 4 עד 6 ספרות';el.querySelector('#kgo').textContent='המשך';return api.shake('הקודים לא זהים. נתחיל מחדש.')}
-      setMeta({plen:code.length});closeLayer();setTimeout(()=>cb(code),320);
-    }});
+function setPass(){
+  if(!(window.crypto&&crypto.subtle)){toast('נעילה בקוד זמינה רק כשהאפליקציה נטענת ב-https');return}
+  openLayer(`<div class="sheet modal" role="dialog" aria-label="קוד נעילה"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>קוד נעילה</h2><span></span></header><div class="body"><form id="pfrm">
+  <div class="err" id="perr" hidden role="alert"></div>
+  <div class="grp"><div class="fld"><label for="p1">קוד חדש<small>לפחות 4 תווים</small></label><input id="p1" type="password" inputmode="numeric" autocomplete="new-password"></div>
+  <div class="fld"><label for="p2">הקוד שוב</label><input id="p2" type="password" inputmode="numeric" autocomplete="new-password"></div></div>
+  <p class="hint" style="padding-top:10px">בלי הקוד אי אפשר לפתוח את האפליקציה או לשחזר את הנתונים. שמרו גיבוי לפני שמפעילים נעילה.</p>
+  <section><button class="btn">הפעלת נעילה</button></section></form></div></div>`);
+  $('#pfrm').onsubmit=async e=>{e.preventDefault();const a=$('#p1').value,b=$('#p2').value,err=$('#perr');
+    const msg=a.length<4?'הקוד קצר מדי. צריך לפחות 4 תווים.':a!==b?'שני הקודים לא זהים.':'';
+    if(msg){err.textContent=msg;err.hidden=false;return}
+    const salt=crypto.getRandomValues(new Uint8Array(16));cryptoKey=await deriveKey(a,salt);encMeta={salt:b64(salt)};await save();closeLayer();render();toast('הנעילה הופעלה')};
 }
-async function ensureKey(pass){
-  if(!dataKey){dataKey=await newDK();encMeta={wrap:{}}}
-  if(pass)await wrapForPass(pass);
-}
-function setupLock(){
-  if(!(window.crypto&&crypto.subtle)){toast('נעילה זמינה רק כשהאפליקציה נטענת ב-https');return}
-  askCode('קוד נעילה','בלי הקוד אי אפשר לפתוח את האפליקציה או לשחזר את הנתונים. שמרו גיבוי לפני שמפעילים.',async pass=>{
-    await ensureKey(pass);await save();render();toast('הנעילה הופעלה');
-  });
-}
-async function rmLock(){
-  if(!confirm('לבטל את הנעילה? הנתונים יישמרו במכשיר בלי הצפנה.'))return;
-  dataKey=null;encMeta=null;setMeta({plen:0});await save();render();toast('הנעילה בוטלה');
-}
+async function rmPass(){if(!confirm('לבטל את הנעילה? הנתונים יישמרו במכשיר בלי הצפנה.'))return;cryptoKey=null;encMeta=null;await save();render();toast('הנעילה בוטלה')}
 
 /* ---------- reading a spreadsheet: .xlsx unzipped by the browser itself, or .csv ---------- */
 const TD=new TextDecoder();
@@ -1136,7 +965,7 @@ document.addEventListener('click',e=>{
   else if(t.dataset.port)openPortfolio(t.dataset.port);
   else if(t.dataset.edit)openForm(t.dataset.edit);
   else if('close' in t.dataset)closeLayer();
-  else ({new:()=>ACCOUNTS.length?openForm():openImport(),backup:doBackup,csv:doCsv,import:openImport,setpass:setupLock,rmpass:rmLock,locknow:lockNow,
+  else ({new:()=>ACCOUNTS.length?openForm():openImport(),backup:doBackup,csv:doCsv,import:openImport,setpass:setPass,rmpass:rmPass,locknow:lockNow,
     wipe:async()=>{if(!confirm('למחוק את כל הנתונים מהמכשיר? אי אפשר לבטל את הפעולה.'))return;if(!confirm('בטוחים? ודאו שיש לכם גיבוי.'))return;S.updates=[];S.ports={};S.ptype={};S.plink={};setConfig([]);await save();tab='home';render();toast('הנתונים נמחקו')}})[t.dataset.act]?.();
 });
 function start(){$('#tabbar').hidden=false;render()}
