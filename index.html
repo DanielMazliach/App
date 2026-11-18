@@ -70,6 +70,14 @@ section{margin:28px 16px 0}
 section>h2{font-size:22px;font-weight:700;letter-spacing:-.016em;line-height:1.2;margin:0 4px 10px}
 section>h2 small{font-weight:400;font-size:15px;letter-spacing:0;color:var(--muted);margin-inline-start:6px}
 .panel{background:var(--surface);border-radius:14px;overflow:hidden}
+.foldh{display:flex;align-items:center;gap:8px;width:100%;background:0;border:0;padding:0;margin:0 4px 10px;
+  font:inherit;color:inherit;text-align:start;-webkit-tap-highlight-color:transparent}
+.foldh h2{font-size:22px;font-weight:700;letter-spacing:-.016em;line-height:1.2;margin:0}
+.foldh .chev{width:9px;height:15px;flex:0 0 auto;fill:none;stroke:var(--tint);stroke-width:2.6;
+  stroke-linecap:round;stroke-linejoin:round;transform:rotate(-90deg);transition:transform .22s var(--ease)}
+.foldh[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.foldh:active h2{opacity:.5}
+@media(prefers-reduced-motion:reduce){.foldh .chev{transition:none}}
 .pad{padding:14px 16px}
 
 .stack{display:flex;gap:2px;height:10px;direction:ltr;margin:2px 0}
@@ -636,8 +644,7 @@ function openAccount(id,from){
   <div class="chips"><div><small>מהעדכון הקודם</small>${n>1?`<b class="${cls(dP)}">${arrow(dP)} ${signedIls(dP)}</b> <span class="n ${cls(dP)}">${vs[n-2]?pct(dP/vs[n-2],2):''}</span>`:'<b class="flat">—</b>'}</div>
   <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dF)}">${arrow(dF)} ${signedIls(dF)}</b> <span class="n ${cls(dF)}">${vs[0]?pct(dF/vs[0],2):''}</span>`:'<b class="flat">—</b>'}</div></div>
   <section><h2>שינוי בין העדכונים</h2><div class="panel pad" id="ch-acc">${lineChart(pts,acol(a.color),{label:a.name})}<p class="readout"></p></div></section>
-  <section><div class="panel facts"><div><small>הגבוה ביותר</small><b>${ils(hi)}</b></div><div><small>הנמוך ביותר</small><b>${ils(lo)}</b></div>
-</div></section>`;
+`;
   if(isUsd){h+=`<section><h2>שווי בדולרים</h2><div class="panel pad" id="ch-usd">${lineChart(U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),acol(a.color),{label:'שווי בדולרים'})}<p class="readout"></p></div></section>`}
   const tr=a.fields.filter(f=>f[3]);
   tr.forEach((f,i)=>{h+=`<section><h2>${esc(f[1])}</h2><div class="panel pad" id="ch-t${i}">${lineChart(U.map(u=>({d:u.date,v:u.vals[f[0]]*q})),acol(a.color),{label:f[1]})}<p class="readout"></p></div></section>`});
@@ -651,11 +658,20 @@ function openAccount(id,from){
       :'<div class="sub">העלאת קובץ אחזקות מהבנק</div>';
     h+=`<${tapable?'button':'div'} class="row${tapable?' link':''}"${tapable?` data-port="${id}"`:''}><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm"${tapable?'':' style="font-weight:500"'}>${esc(nm)}</span>${sub}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,f)}</span>`:''}</span>${tapable?'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>':''}</${tapable?'button':'div'}>`}
   h+=`</div></section>`;
-  h+=`<section><h2>היסטוריה</h2><div class="panel">`;
+  h+=`<section><div class="panel facts"><div><small>הגבוה ביותר</small><b>${ils(hi)}</b></div><div><small>הנמוך ביותר</small><b>${ils(lo)}</b></div></div></section>`;
+  h+=`<section><button class="foldh" id="histh" aria-expanded="false" aria-controls="hist"><h2>היסטוריה</h2><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button><div class="panel" id="hist" hidden>`;
   for(let i=n-1;i>=0;i--){const d=i?vs[i]-vs[i-1]:0;
     h+=`<div class="row dotted"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
   h+=`</div></section></div></div>`;
   openLayer(h,true,origin);
+  const hh=$('#histh'),hp=$('#hist');
+  if(hh)hh.onclick=()=>{
+    const open=hh.getAttribute('aria-expanded')==='true';
+    hh.setAttribute('aria-expanded',!open);
+    hp.hidden=open;
+    if(!open&&!calm())hp.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],
+      {duration:200,easing:'cubic-bezier(.32,.72,0,1)'});
+  };
   wireChart($('#ch-acc'),pts,ils);
   if($('#ch-usd'))wireChart($('#ch-usd'),U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),usd);
   tr.forEach((f,i)=>wireChart($('#ch-t'+i),U.map(u=>({d:u.date,v:u.vals[f[0]]*q})),isUsd?usd:ils));
