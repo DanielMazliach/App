@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="color-scheme" content="light">
-<meta name="theme-color" content="#F2F2F7">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="מעקב כספים">
 <meta name="robots" content="noindex,nofollow">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -18,9 +19,22 @@
 :root{
   --bg:#F2F2F7; --surface:#FFFFFF; --ink:#1C1C1E; --ink2:#48484A; --muted:#6C6C70; --sep:#3C3C4329; --line:#E5E5EA; --fill:#7676801F;
   --up:#248A3D; --down:#D70015; --tint:#007AFF; --focus:#007AFF; --ease:cubic-bezier(.32,.72,0,1);
-  --num: ui-rounded, "SF Pro Rounded", -apple-system, "SF Hebrew", "Arial Hebrew", Arial, sans-serif;
-  --txt: -apple-system, "SF Hebrew", "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+  --chev:#C7C7CC; --knob:#FFFFFF; --onTint:#FFFFFF; --bar:#F9F9F9D9; --barsheet:#F2F2F7CC; --grab:#C7C7CC;
+  --press:#E8F0FE; --errbg:#FFE5E7; --errink:#A1000F; --toast:#3A3A3CF2; --ontoast:#FFFFFF;
+  --cline:#1C1C1E; --cgrid:#E5E5EA; --cring:#FFFFFF; --ccross:#9AA8B4; --knobshadow:rgba(0,0,0,.16);
+  --num: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "SF Hebrew", "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
+  --txt: -apple-system, system-ui, "SF Hebrew", "Segoe UI", "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
   --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#000000; --surface:#1C1C1E; --ink:#FFFFFF; --ink2:#D1D1D6; --muted:#98989F;
+    --sep:#54545899; --line:#38383A; --fill:#7676803D;
+    --up:#30D158; --down:#FF453A; --tint:#0A84FF; --focus:#0A84FF;
+    --chev:#48484A; --knob:#FFFFFF; --onTint:#FFFFFF; --bar:#1C1C1ED9; --barsheet:#1C1C1ECC; --grab:#48484A;
+    --press:#0A84FF2E; --errbg:#3A1216; --errink:#FF6A6A; --toast:#48484AF2; --ontoast:#FFFFFF;
+    --cline:#F2F2F7; --cgrid:#2C2C2E; --cring:#1C1C1E; --ccross:#636366; --knobshadow:rgba(0,0,0,.5);
+  }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg)}
@@ -73,10 +87,10 @@ section>h2 small{font-weight:400;font-size:15px;letter-spacing:0;color:var(--mut
 .row .val span{font-size:13px}
 button.row{grid-template-columns:10px 1fr auto 8px}
 button.row:active{background:#E5E5EA}
-.row .chev{width:8px;height:14px;fill:none;stroke:#C7C7CC;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.row .chev{width:8px;height:14px;fill:none;stroke:var(--chev);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .sw{width:51px;height:31px;border-radius:16px;background:var(--line);border:0;padding:0;position:relative;flex:0 0 auto;transition:background .28s cubic-bezier(.32,.72,0,1);-webkit-tap-highlight-color:transparent}
 .sw[aria-checked="true"]{background:var(--up)}
-.sw i{position:absolute;top:2px;right:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.16),0 0 0 .5px rgba(0,0,0,.04);transition:transform .28s cubic-bezier(.32,.72,0,1)}
+.sw i{position:absolute;top:2px;right:2px;width:27px;height:27px;border-radius:50%;background:var(--knob);box-shadow:0 2px 6px var(--knobshadow),0 0 0 .5px rgba(0,0,0,.04);transition:transform .28s cubic-bezier(.32,.72,0,1)}
 .sw[aria-checked="true"] i{transform:translateX(-20px)}
 .sw:active i{width:29px}
 .pmk{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;opacity:.4;vertical-align:-1px}
@@ -86,7 +100,7 @@ button.row:active{background:#E5E5EA}
 .pick1{height:40px;border:0;background:transparent;color:var(--tint);font-size:17px;text-align:start}
 .row .lblin{width:100%;border:0;background:transparent;font:inherit;font-size:17px;color:var(--ink);padding:3px 0;border-radius:6px;transition:background .15s}
 .row .lblin:focus{background:var(--bg);outline:0;padding:3px 7px;margin:0 -7px}
-.row .lblin::placeholder{color:#C7C7CC}
+.row .lblin::placeholder{color:var(--chev)}
 @media(prefers-reduced-motion:reduce){.sw,.sw i{transition:none}}
 .sheet .row{grid-template-columns:1fr auto;min-height:52px}
 .row.plain{grid-template-columns:1fr auto}
@@ -107,14 +121,14 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 .note{font-size:15px;color:var(--ink2);background:var(--surface);border-radius:14px;padding:12px 16px;margin:18px 16px 0;display:flex;gap:12px;align-items:center;justify-content:space-between}
 .note button{color:var(--tint);font-weight:600;white-space:nowrap;min-height:32px}
 
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;border-radius:14px;background:var(--tint);color:#fff;font-weight:600;font-size:17px;padding:0 18px;transition:opacity .09s ease-out,transform .09s ease-out}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;border-radius:14px;background:var(--tint);color:var(--onTint);font-weight:600;font-size:17px;padding:0 18px;transition:opacity .09s ease-out,transform .09s ease-out}
 .btn.ghost{background:var(--fill);color:var(--tint)}
 .btn.danger{background:var(--fill);color:var(--down)}
 .btn:active{opacity:.7;transform:scale(.985)}
 .btn[disabled]{opacity:.4}
 .stackbtns{display:grid;gap:10px}
 
-.tabbar{position:fixed;inset:auto 0 0 0;background:#F9F9F9D9;backdrop-filter:saturate(1.8) blur(22px);-webkit-backdrop-filter:saturate(1.8) blur(22px);box-shadow:0 -.5px 0 var(--sep);display:flex;justify-content:center;padding-bottom:var(--sab);z-index:5}
+.tabbar{position:fixed;inset:auto 0 0 0;background:var(--bar);backdrop-filter:saturate(1.8) blur(22px);-webkit-backdrop-filter:saturate(1.8) blur(22px);box-shadow:0 -.5px 0 var(--sep);display:flex;justify-content:center;padding-bottom:var(--sab);z-index:5}
 .tabbar div{display:flex;width:100%;max-width:560px}
 .tabbar button{flex:1;height:52px;font-size:10.5px;font-weight:500;color:#8E8E93;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .tabbar svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -122,21 +136,21 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 
 /* pages: a detail page pushes in from the side, a form rises as a sheet */
 .sheet{position:fixed;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column;touch-action:pan-y;will-change:transform}
-.sheet header{position:relative;background:#F2F2F7CC;backdrop-filter:saturate(1.8) blur(22px);-webkit-backdrop-filter:saturate(1.8) blur(22px);box-shadow:0 .5px 0 transparent;transition:box-shadow .2s;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:calc(var(--sat) + 4px) 10px 4px;min-height:calc(var(--sat) + 48px)}
+.sheet header{position:relative;background:var(--barsheet);backdrop-filter:saturate(1.8) blur(22px);-webkit-backdrop-filter:saturate(1.8) blur(22px);box-shadow:0 .5px 0 transparent;transition:box-shadow .2s;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:calc(var(--sat) + 4px) 10px 4px;min-height:calc(var(--sat) + 48px)}
 .sheet header.edge{box-shadow:0 .5px 0 var(--sep)}
 .sheet header h2{margin:0;font-size:17px;font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw}
 .sheet header button{color:var(--tint);font-size:17px;min-height:44px;padding:0 6px;justify-self:start;display:flex;align-items:center;gap:3px}
 .sheet header button:active{opacity:.4}
 .sheet header button svg{width:12px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .sheet .body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(28px + var(--sab))}
-.sheet footer{background:#F9F9F9D9;backdrop-filter:saturate(1.8) blur(22px);-webkit-backdrop-filter:saturate(1.8) blur(22px);box-shadow:0 -.5px 0 var(--sep);padding:10px 16px calc(10px + var(--sab));display:flex;align-items:center;gap:14px}
-.sheet footer .sum{flex:1}
+.sheet footer{background:var(--bar);backdrop-filter:saturate(1.8) blur(22px);-webkit-backdrop-filter:saturate(1.8) blur(22px);box-shadow:0 -.5px 0 var(--sep);padding:10px 16px calc(10px + var(--sab));display:flex;align-items:center;gap:14px}
+.sheet footer .sum{flex:1;min-width:0}
 .sheet footer .sum small{display:block;color:var(--muted);font-size:13px}
 .sheet footer .sum b{font-family:var(--num);font-size:22px;font-weight:600;letter-spacing:-.01em;direction:ltr;display:inline-block}
 .sheet footer .btn{width:auto;min-width:120px}
 .sheet.modal{top:calc(var(--sat) + 10px);border-radius:12px 12px 0 0;overflow:hidden}
 .sheet.modal header{touch-action:none;padding-top:14px;min-height:58px}
-.grab{position:absolute;top:6px;left:0;right:0;height:5px;margin:0 auto;width:36px;border-radius:3px;background:#C7C7CC}
+.grab{position:absolute;top:6px;left:0;right:0;height:5px;margin:0 auto;width:36px;border-radius:3px;background:var(--grab)}
 .scrim{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none}
 .segbar{display:flex;gap:2px;background:var(--fill);border-radius:9px;padding:2px;margin:0 4px 10px}
 .segbar button{flex:1;min-height:32px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink)}
@@ -144,12 +158,12 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 .chiprow{display:flex;gap:8px;overflow-x:auto;padding:0 16px 4px;margin:0 -16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .chiprow::-webkit-scrollbar{display:none}
 .chiprow button{flex:none;min-height:34px;padding:0 13px;border-radius:17px;background:var(--fill);font-size:14px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap}
-.chiprow button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.chiprow button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .chiprow .spine{width:8px;height:8px;border-radius:50%;flex:none}
 .chiprow .spine.hollow{box-shadow:inset 0 0 0 2.5px var(--c)}
 .row .spine.hollow,.chiprow .spine.hollow{background:var(--surface)!important;box-shadow:inset 0 0 0 3px var(--c)}
 .chiprow button[aria-pressed="true"] .spine.hollow{background:var(--ink)!important}
-button.row[aria-pressed="true"]{background:#E8F0FE}
+button.row[aria-pressed="true"]{background:var(--press)}
 button.row[aria-pressed="true"] .nm{font-weight:600}
 #app,#tabbar{will-change:transform}
 
@@ -170,7 +184,7 @@ button.row[aria-pressed="true"] .nm{font-weight:600}
 .fld label{font-size:17px}
 .fld label small{display:block;color:var(--muted);font-size:13px;direction:rtl}
 .fld input{width:100%;height:40px;border:0;border-radius:8px;padding:0 8px;font-family:var(--num);font-size:17px;direction:ltr;text-align:left;background:transparent;color:var(--ink);font-variant-numeric:tabular-nums;transition:background .15s}
-.fld input::placeholder{color:#C7C7CC}
+.fld input::placeholder{color:var(--chev)}
 .fld input:focus{background:var(--bg);outline:0}
 .fld input[type=date]{-webkit-appearance:none;appearance:none}
 .fld.wide{grid-template-columns:96px 1fr}
@@ -181,7 +195,7 @@ button.row[aria-pressed="true"] .nm{font-weight:600}
 .fld .inl .atbtn{color:var(--tint);font-size:15px;min-height:44px;display:flex;align-items:center;cursor:pointer;white-space:nowrap}
 .fld .inl .atbtn.on{color:var(--up);font-weight:600;font-size:13.5px}
 .hint{font-size:13px;color:var(--muted);padding:6px 16px 12px;margin:0}
-.err{margin:16px 16px 0;background:#FFE5E7;color:#A1000F;border-radius:12px;padding:11px 14px;font-size:15px}
+.err{margin:16px 16px 0;background:var(--errbg);color:var(--errink);border-radius:12px;padding:11px 14px;font-size:15px}
 
 table.cmp{width:100%;border-collapse:collapse;font-size:15px}
 table.cmp th{font-weight:400;color:var(--muted);font-size:13px;text-align:left;padding:12px 8px 6px}
@@ -207,7 +221,34 @@ table.cmp .d small{display:block;font-size:12px}
 textarea{width:100%;min-height:120px;border:0;border-radius:10px;background:var(--bg);padding:10px;font-size:13px;direction:ltr;font-family:ui-monospace,Menlo,monospace}
 svg.chart{display:block;width:100%;height:auto;touch-action:pan-y;direction:ltr}
 svg.chart text{font-family:var(--num);font-size:10.5px;fill:#8E8E93}
-.toast{position:fixed;inset:auto 0 calc(76px + var(--sab)) 0;width:max-content;max-width:calc(100% - 40px);margin:0 auto;background:#3A3A3CF2;color:#fff;border-radius:22px;padding:11px 20px;text-align:center;z-index:30;font-size:15px}
+svg.chart .g{stroke:var(--cgrid)}
+svg.chart .cross{stroke:var(--ccross)}
+svg.chart circle{stroke:var(--cring)}
+.roll .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.roll{display:inline-flex;direction:ltr;font-variant-numeric:tabular-nums;white-space:nowrap}
+.roll .dig,.roll .sep{display:inline-block;height:1em;line-height:1;vertical-align:bottom}
+.roll .dig{overflow:hidden}
+.roll .dig u{display:block;text-decoration:none;will-change:transform}
+.roll .dig u b{display:block!important;font-weight:inherit;font-size:inherit;height:1em;line-height:1;letter-spacing:inherit}
+#topbar{position:fixed;inset:0 0 auto 0;z-index:6;padding:var(--sat) 16px 0;height:calc(var(--sat) + 44px);
+  display:flex;align-items:center;justify-content:center;background:var(--bar);
+  backdrop-filter:saturate(1.8) blur(22px);-webkit-backdrop-filter:saturate(1.8) blur(22px);
+  box-shadow:0 .5px 0 var(--sep);opacity:0;transform:translateY(-8px);pointer-events:none;
+  transition:opacity .2s ease-out,transform .2s var(--ease)}
+#topbar.on{opacity:1;transform:none}
+#topbar span{font-size:16px;font-weight:600;letter-spacing:-.01em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#topbar span.n{font-family:var(--num);direction:ltr}
+#pull{position:fixed;inset:calc(var(--sat) + 2px) 0 auto 0;z-index:4;display:flex;flex-direction:column;align-items:center;gap:4px;
+  opacity:0;pointer-events:none;color:var(--muted);font-size:13px}
+#pull .ring{width:20px;height:20px;border-radius:50%;border:2.2px solid var(--line);border-top-color:var(--muted)}
+#pull.go .ring{animation:ringspin .75s linear infinite}
+#pull .txt{font-family:var(--num);direction:ltr}
+@keyframes ringspin{to{transform:rotate(360deg)}}
+.swipe{position:relative;overflow:hidden;background:var(--down)}
+.swipe>.row{position:relative;z-index:1;will-change:transform}
+.swipe>.act{position:absolute;top:0;bottom:0;left:0;width:92px;border:0;background:var(--down);color:#fff;
+  font:inherit;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;z-index:0}
+.toast{position:fixed;inset:auto 0 calc(76px + var(--sab)) 0;width:max-content;max-width:calc(100% - 40px);margin:0 auto;background:var(--toast);color:var(--ontoast);border-radius:22px;padding:11px 20px;text-align:center;z-index:30;font-size:15px}
 
 @media (prefers-reduced-transparency:reduce){
   .tabbar,.sheet header,.sheet footer{background:var(--bg)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
@@ -229,6 +270,8 @@ svg.chart text{font-family:var(--num);font-size:10.5px;fill:#8E8E93}
 </style>
 </head>
 <body>
+<div id="pull" aria-hidden="true"><span class="ring"></span><span class="txt"></span></div>
+<div id="topbar" aria-hidden="true"><span></span></div>
 <div id="app"><div class="view" id="view"></div></div>
 <div id="scrim" aria-hidden="true"></div>
 <nav class="tabbar" id="tabbar" hidden><div>
@@ -269,6 +312,36 @@ function calcAt(u,raw){
 const calc=u=>calcAt(u,false);     /* what the screen shows */
 const calcRaw=u=>calcAt(u,true);   /* what leaves the app */
 const sorted=()=>[...S.updates].sort((a,b)=>a.date<b.date?-1:1);
+
+/* ---------- colour ----------
+   account colours are chosen by the person, so some of them are too dark to read on a dark
+   surface. rather than overriding their choice, the same hue is lifted to a readable lightness
+   while the scheme is dark, and handed back untouched while it is light. */
+const DARK=()=>matchMedia('(prefers-color-scheme: dark)').matches;
+const hex2hsl=h=>{
+  const n=parseInt(h.slice(1),16),r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn;
+  if(!d)return[0,0,l];
+  const s=l>.5?d/(2-mx-mn):d/(mx+mn);
+  let hh=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;
+  return[hh*60,s,l];
+};
+const hsl2hex=(h,s,l)=>{
+  const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;
+  const t=h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];
+  return '#'+t.map(v=>Math.round((v+m)*255).toString(16).padStart(2,'0')).join('');
+};
+const colCache={};
+function acol(hex){
+  if(!DARK()||!/^#[0-9a-f]{6}$/i.test(hex))return hex;
+  const k=hex.toLowerCase();if(colCache[k])return colCache[k];
+  const [h,sa,l]=hex2hsl(k);
+  /* lift, don't level: raising every colour to the same lightness would merge two accounts
+     whose hues are close and whose only difference was how dark they were. */
+  const nl=Math.max(.42,Math.min(.82,l+.20*(1-l)));
+  return colCache[k]=nl<=l+.005?hex:hsl2hex(h,Math.min(sa,.85),nl);
+}
+const chartInk=()=>DARK()?'#F2F2F7':'#1C1C1E';
 
 /* ---------- format ---------- */
 const nf0=new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
@@ -390,15 +463,15 @@ function lineChart(pts,color,o={}){
   const W=340,H=o.h||170,AX=46,PR=10,T=14,B=24,dark=!!o.dark;   // AX: width reserved for the value axis, on the left
   const vs=pts.map(p=>p.v);const {min,max,ticks}=niceTicks(Math.min(...vs),Math.max(...vs));const tf=tickFmt(ticks);
   const x=i=>pts.length===1?(AX+(W-PR-AX)/2):AX+10+i*(W-PR-AX-20)/(pts.length-1);const y=v=>T+(max-v)*(H-T-B)/(max-min);
-  const grid=dark?'#2A4257':'#E5E5EA',ring=dark?'#0E2233':'#FFFFFF';
+  const grid='var(--cgrid)',ring='var(--cring)';
   let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label||'גרף')}">`;
-  for(const t of ticks){s+=`<line x1="${AX}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke="${grid}" stroke-width="1"/><text x="${AX-7}" y="${y(t)+3.5}" text-anchor="end">${tf(t)}</text>`}
+  for(const t of ticks){s+=`<line class="g" x1="${AX}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke-width="1"/><text x="${AX-7}" y="${y(t)+3.5}" text-anchor="end">${tf(t)}</text>`}
   const step=Math.max(1,Math.ceil(pts.length/5));
   pts.forEach((p,i)=>{if(i%step===0||i===pts.length-1){if(i!==pts.length-1&&(pts.length-1-i)<step*0.6)return;s+=`<text x="${x(i)}" y="${H-7}" text-anchor="middle">${dshort(p.d)}</text>`}});
-  s+=`<line class="cross" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="${dark?'#6C8196':'#9AA8B4'}" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
+  s+=`<line class="cross" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
   if(pts.length>1)s+=`<polyline ${o.anim?'class="draw" pathLength="1"':''} fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${pts.map((p,i)=>x(i)+','+y(p.v)).join(' ')}"/>`;
   const r=pts.length>30?0:pts.length>16?3:4.5;
-  if(r)pts.forEach((p,i)=>{s+=`<circle ${o.anim?`class="pop" style="animation-delay:${(.25+.75*i/Math.max(pts.length-1,1)).toFixed(2)}s"`:''} cx="${x(i)}" cy="${y(p.v)}" r="${r}" fill="${color}" stroke="${ring}" stroke-width="2"/>`});
+  if(r)pts.forEach((p,i)=>{s+=`<circle ${o.anim?`class="pop" style="animation-delay:${(.25+.75*i/Math.max(pts.length-1,1)).toFixed(2)}s"`:''} cx="${x(i)}" cy="${y(p.v)}" r="${r}" fill="${color}" stroke-width="2"/>`});
   s+=`<rect class="hit" x="0" y="0" width="${W}" height="${H}" fill="transparent" data-xs="${pts.map((p,i)=>x(i).toFixed(1)).join(',')}"/></svg>`;
   return s;
 }
@@ -417,75 +490,148 @@ function wireChart(box,pts,fmt){
   hit.addEventListener('pointerdown',move);hit.addEventListener('pointermove',move);
 }
 
+/* ---------- rolling numbers ----------
+   a total that jumps has no relation to the one before it. each digit column is a strip that
+   springs to its new face, and only the columns that actually changed move. the springs are
+   interruptible, so a second change mid-flight redirects rather than queues. */
+const rollMem={};
+function roll(el,id,val,fmt,o={}){
+  const next=fmt(val),prev=rollMem[id];
+  rollMem[id]=val;
+  if(prev===undefined||prev===val||calm()||PRIV()){el.classList.remove('roll');el.textContent=next;return}
+  const a=[...fmt(prev)],b=[...next];
+  el.textContent='';el.classList.add('roll');
+  /* the strips spell out every digit face, so the value is carried separately for a screen reader */
+  const sr=document.createElement('span');sr.className='sr';sr.textContent=next;el.appendChild(sr);
+  const cells=document.createElement('span');cells.setAttribute('aria-hidden','true');el.appendChild(cells);
+  const moves=[];
+  b.forEach((ch,i)=>{
+    const cell=document.createElement('span');
+    if(/\d/.test(ch)){
+      cell.className='dig';
+      const strip=document.createElement('u');
+      for(let d=0;d<=9;d++){const f=document.createElement('b');f.textContent=d;strip.appendChild(f)}
+      cell.appendChild(strip);
+      const j=a.length-(b.length-i);                 // line the two numbers up from the right
+      const from=(j>=0&&/\d/.test(a[j]))?+a[j]:+ch;
+      const sp=Spring(y=>{strip.style.transform=`translateY(${-y*10}%)`});
+      sp.jump(from);
+      if(from!==+ch)moves.push([sp,+ch]);
+    }else{cell.className='sep';cell.textContent=ch}
+    cells.appendChild(cell);
+  });
+  const gap=o.stagger!=null?o.stagger:34,res=o.response||.5;
+  moves.forEach(([sp,target],k)=>{
+    const go=()=>sp.to(target,{damping:.8,response:res});
+    gap?setTimeout(go,k*gap):go();
+  });
+}
+const ILSROLL=v=>ils(v);
+function paintRolls(){
+  document.querySelectorAll('[data-roll]').forEach(el=>roll(el,el.dataset.roll,+el.dataset.rv,ILSROLL));
+}
+
 /* ---------- views ---------- */
 const $=s=>document.querySelector(s);const view=$('#view'),layer=$('#layer');
 function toast(msg){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
-let firstPaint=true;
+let firstPaint=true,shownTab=null,topText='',topNum=false;
+/* the large title scrolls away; a compact one takes over so the figure stays reachable */
+function syncTop(){
+  const bar=$('#topbar');if(!bar)return;
+  const anchor=document.querySelector('.hero .total')||document.querySelector('.pagehead h1');
+  if(!anchor||!topText){bar.classList.remove('on');return}
+  const limit=(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat'))||0)+44;
+  bar.classList.toggle('on',anchor.getBoundingClientRect().bottom<limit);
+}
+function setTop(text,isNum){
+  topText=text;topNum=!!isNum;
+  const sp=$('#topbar').firstElementChild;
+  sp.textContent=text;sp.className=isNum?'n':'';
+  syncTop();
+}
+addEventListener('scroll',syncTop,{passive:true});
+const TABS=['home','updates','compare','settings'];
 function render(){
   document.querySelectorAll('.tabbar button').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===tab?'page':'false'));
+  const dir=shownTab&&shownTab!==tab?Math.sign(TABS.indexOf(tab)-TABS.indexOf(shownTab)):0;
   ({home:viewHome,updates:viewUpdates,compare:viewCompare,settings:viewSettings})[tab]();
-  window.scrollTo(0,0);firstPaint=false;
-  view.classList.remove('fade');void view.offsetWidth;view.classList.add('fade');
+  window.scrollTo(0,0);firstPaint=false;shownTab=tab;
+  /* the tabs sit in a fixed order, so the page arrives from the side it lives on */
+  if(dir&&!calm()){
+    view.classList.remove('fade');
+    view.animate([{transform:`translateX(${-dir*34}px)`,opacity:0},{transform:'none',opacity:1}],
+      {duration:380,easing:'cubic-bezier(.32,.72,0,1)'});
+  }else{view.classList.remove('fade');void view.offsetWidth;view.classList.add('fade')}
+  syncTop();
 }
 function emptyState(){return ACCOUNTS.length?`<div class="empty"><h2>אין עדיין עדכונים</h2><p>הוסיפו את העדכון הראשון, או טענו גיבוי קיים.</p><div class="stackbtns"><button class="btn" data-act="new">עדכון חדש</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div>`
   :`<div class="empty"><h2>בואו נתחיל</h2><p>הגדירו את החשבונות שלכם — לכל אחד שם, מטבע ומה יש בו. הכול נשמר רק במכשיר הזה. אם יש לכם כבר קובץ גיבוי, אפשר לטעון אותו במקום.</p><div class="stackbtns"><button class="btn" data-act="accnew">הוספת חשבון</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div>`}
 
 function viewHome(){
   const U=sorted();
-  if(!U.length){view.innerHTML=`<div class="pagehead"><h1>מעקב כספים</h1><p>הנתונים נשמרים במכשיר הזה בלבד</p></div>`+emptyState();return}
+  if(!U.length){view.innerHTML=`<div class="pagehead"><h1>מעקב כספים</h1><p>הנתונים נשמרים במכשיר הזה בלבד</p></div>`+emptyState();setTop('מעקב כספים');return}
   const C=U.map(calc),n=U.length,last=C[n-1],prev=C[n-2],first=C[0];
   const dPrev=prev?last.total-prev.total:0,dFirst=last.total-first.total;
   const win=U.slice(-12),winC=C.slice(-12);
-  let h=`<div class="hero"><h1>הון כולל${PRIV()?' '+PMARK:''}</h1><div class="total">${ils(last.total)}</div><div class="asof">נכון ל-<span class="n">${dlong(U[n-1].date)}</span></div>
+  let h=`<div class="hero"><h1>הון כולל${PRIV()?' '+PMARK:''}</h1><div class="total" data-roll="total" data-rv="${last.total}">${ils(last.total)}</div><div class="asof">נכון ל-<span class="n">${dlong(U[n-1].date)}</span></div>
   <div class="deltas"><div><small>מהעדכון הקודם</small>${prev?`<b class="${cls(dPrev)}">${arrow(dPrev)} ${signedIls(dPrev)}</b> <span class="n ${cls(dPrev)}">${prev.total?pct(dPrev/prev.total,2):''}</span>`:'<b class="flat">—</b>'}</div>
   <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dFirst)}">${arrow(dFirst)} ${signedIls(dFirst)}</b> <span class="n ${cls(dFirst)}">${first.total?pct(dFirst/first.total,2):''}</span>`:'<b class="flat">—</b>'}</div></div>
-  <div id="ch-total" class="panel pad">${lineChart(win.map((u,i)=>({d:u.date,v:winC[i].total})),'#1C1C1E',{label:'סה״כ הון לאורך זמן',anim:firstPaint})}<p class="readout"></p></div></div>`;
+  <div id="ch-total" class="panel pad">${lineChart(win.map((u,i)=>({d:u.date,v:winC[i].total})),chartInk(),{label:'סה״כ הון לאורך זמן',anim:firstPaint})}<p class="readout"></p></div></div>`;
   const m=meta();const days=m.lastBackup?Math.floor((Date.now()-m.lastBackup)/864e5):null;
   if(days===null||days>30)h+=`<div class="note"><span>${days===null?'עוד לא נשמר גיבוי.':'עברו '+days+' ימים מהגיבוי האחרון.'} הנתונים קיימים רק במכשיר הזה.</span><button data-act="backup">גיבוי עכשיו</button></div>`;
-  h+=`<section><h2>לפי חשבון</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="חלוקת ההון לפי חשבון">${visAcc().map(a=>`<i style="flex:${Math.max(last.acc[a.id],0)} 0 0;background:${a.color}" title="${esc(a.name)}"></i>`).join('')}</div></div>`;
+  h+=`<section><h2>לפי חשבון</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="חלוקת ההון לפי חשבון">${visAcc().map(a=>`<i style="flex:${Math.max(last.acc[a.id],0)} 0 0;background:${acol(a.color)}" title="${esc(a.name)}"></i>`).join('')}</div></div>`;
   for(const a of visAcc()){const v=last.acc[a.id],d=prev?v-prev.acc[a.id]:0;
-    h+=`<button class="row" data-acc="${a.id}"><span class="spine" style="background:${a.color}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${share(v,last.total)}%</span> מההון</div></span>
-    <span class="val"><b>${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
+    h+=`<button class="row" data-acc="${a.id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${share(v,last.total)}%</span> מההון</div></span>
+    <span class="val"><b data-roll="acc:${a.id}" data-rv="${v}">${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
   h+=`</div></section>`;
   h+=PRIV()?'':`<section><button class="btn" data-act="new">עדכון חדש</button></section>`;
+  const moved=rollMem.total!==undefined&&rollMem.total!==last.total;
   view.innerHTML=h;
+  paintRolls();
+  if(moved&&!calm()&&!PRIV())view.querySelectorAll('.hero .deltas>div').forEach((el,i)=>
+    el.animate([{opacity:0,transform:`translateY(${dPrev<0?-7:7}px)`},{opacity:1,transform:'none'}],
+      {duration:400,delay:90+i*55,easing:'cubic-bezier(.32,.72,0,1)',fill:'backwards'}));
   wireChart($('#ch-total'),win.map((u,i)=>({d:u.date,v:winC[i].total})),ils);
+  setTop(ils(last.total),true);
 }
 
-function openAccount(id){
+function openAccount(id,from){
   const a=ACCOUNTS.find(x=>x.id===id);if(!a||isHidden(id))return;
+  let origin=null;
+  if(from&&!calm()){const r=from.getBoundingClientRect();
+    if(r.width>40&&r.height>10)origin={x:r.left,y:r.top,w:r.width,h:r.height}}
   const q=facOf(id),U=sorted(),C=U.map(calc),n=U.length;
   const pts=U.map((u,i)=>({d:u.date,v:C[i].acc[id]}));const vs=pts.map(p=>p.v);
   const v=vs[n-1],dP=n>1?v-vs[n-2]:0,dF=v-vs[0];const isUsd=a.cur==='USD';
   const hi=Math.max(...vs),lo=Math.min(...vs);
   let h=`<div class="sheet push" role="dialog" aria-label="${esc(a.name)}"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>סקירה</span></button><h2>${esc(a.short)}</h2><span></span></header><div class="body">
-  <div class="acc-head"><h1><span style="color:${a.color}">●</span> ${esc(a.name)}</h1><div class="big">${ils(v)}</div>
+  <div class="acc-head"><h1><span style="color:${acol(a.color)}">●</span> ${esc(a.name)}</h1><div class="big">${ils(v)}</div>
   <div class="meta"><span class="n">${share(v,C[n-1].total)}%</span> מההון · נכון ל-<span class="n">${dlong(U[n-1].date)}</span>${isUsd?` · <span class="n">${usd(C[n-1].usdAcc[id]||0)}</span>`:''}</div></div>
   <div class="chips"><div><small>מהעדכון הקודם</small>${n>1?`<b class="${cls(dP)}">${arrow(dP)} ${signedIls(dP)}</b> <span class="n ${cls(dP)}">${vs[n-2]?pct(dP/vs[n-2],2):''}</span>`:'<b class="flat">—</b>'}</div>
   <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dF)}">${arrow(dF)} ${signedIls(dF)}</b> <span class="n ${cls(dF)}">${vs[0]?pct(dF/vs[0],2):''}</span>`:'<b class="flat">—</b>'}</div></div>
-  <section><h2>שינוי בין העדכונים</h2><div class="panel pad" id="ch-acc">${lineChart(pts,a.color,{label:a.name,anim:1})}<p class="readout"></p></div></section>
+  <section><h2>שינוי בין העדכונים</h2><div class="panel pad" id="ch-acc">${lineChart(pts,acol(a.color),{label:a.name,anim:1})}<p class="readout"></p></div></section>
   <section><div class="panel facts"><div><small>הגבוה ביותר</small><b>${ils(hi)}</b></div><div><small>הנמוך ביותר</small><b>${ils(lo)}</b></div>
   <div><small>שינוי ממוצע לעדכון</small><b class="${cls(n>1?dF/(n-1):0)}">${n>1?signedIls(dF/(n-1)):'—'}</b></div><div><small>מספר עדכונים</small><b>${n}</b></div></div></section>`;
-  if(isUsd){h+=`<section><h2>שווי בדולרים</h2><div class="panel pad" id="ch-usd">${lineChart(U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),a.color,{label:'שווי בדולרים'})}<p class="readout"></p></div></section>`}
+  if(isUsd){h+=`<section><h2>שווי בדולרים</h2><div class="panel pad" id="ch-usd">${lineChart(U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),acol(a.color),{label:'שווי בדולרים'})}<p class="readout"></p></div></section>`}
   const tr=a.fields.filter(f=>f[3]);
-  tr.forEach((f,i)=>{h+=`<section><h2>${esc(f[1])}</h2><div class="panel pad" id="ch-t${i}">${lineChart(U.map(u=>({d:u.date,v:u.vals[f[0]]*q})),a.color,{label:f[1]})}<p class="readout"></p></div></section>`});
+  tr.forEach((f,i)=>{h+=`<section><h2>${esc(f[1])}</h2><div class="panel pad" id="ch-t${i}">${lineChart(U.map(u=>({d:u.date,v:u.vals[f[0]]*q})),acol(a.color),{label:f[1]})}<p class="readout"></p></div></section>`});
   h+=`<section><h2>פירוט היתרות <small>עדכון אחרון</small></h2><div class="panel">`;
   const last=U[n-1],prev=U[n-2];const f=isUsd?usd:ils;
   const linked=S.plink[id];
   for(const [k,nm] of a.fields){const fv=last.vals[k]*q,d=prev?fv-prev.vals[k]*q:0;
     const tapable=k===linked;
-    h+=`<${tapable?'button':'div'} class="row"${tapable?` data-port="${id}"`:''}><span class="spine" style="background:${a.color}"></span><span class="nm" style="font-weight:500">${esc(nm)}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,f)}</span>`:''}</span>${tapable?'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>':''}</${tapable?'button':'div'}>`}
+    h+=`<${tapable?'button':'div'} class="row"${tapable?` data-port="${id}"`:''}><span class="spine" style="background:${acol(a.color)}"></span><span class="nm" style="font-weight:500">${esc(nm)}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,f)}</span>`:''}</span>${tapable?'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>':''}</${tapable?'button':'div'}>`}
   h+=`</div></section>`;
   if(S.plink[id]){
   const pl=portsOf(id),pLast=pl[pl.length-1];
   h+=`<section><h2>תיק ניירות ערך</h2><div class="panel">
-  <button class="row dotted" data-port="${id}"><span class="spine" style="background:${a.color}"></span><span><span class="nm">${pLast?'פירוט האחזקות':'העלאת קובץ אחזקות'}</span><div class="sub">${pLast?`<span class="n">${pLast.hold?pLast.hold.length:'—'}</span> אחזקות · <span class="n">${dlong(pLast.date)}</span>`:'מקובץ ‎.xlsx‎ או ‎.csv‎ של הבנק'}</div></span>
+  <button class="row dotted" data-port="${id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${pLast?'פירוט האחזקות':'העלאת קובץ אחזקות'}</span><div class="sub">${pLast?`<span class="n">${pLast.hold?pLast.hold.length:'—'}</span> אחזקות · <span class="n">${dlong(pLast.date)}</span>`:'מקובץ ‎.xlsx‎ או ‎.csv‎ של הבנק'}</div></span>
   <span class="val">${pLast&&pLast.hold?`<b>${ils(summarize(pLast.hold).total)}</b>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button></div></section>`;}
   h+=`<section><h2>היסטוריה</h2><div class="panel">`;
   for(let i=n-1;i>=0;i--){const d=i?vs[i]-vs[i-1]:0;
     h+=`<div class="row dotted"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
   h+=`</div></section></div></div>`;
-  openLayer(h,true);
+  openLayer(h,true,origin);
   wireChart($('#ch-acc'),pts,ils);
   if($('#ch-usd'))wireChart($('#ch-usd'),U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),usd);
   tr.forEach((f,i)=>wireChart($('#ch-t'+i),U.map(u=>({d:u.date,v:u.vals[f[0]]*q})),isUsd?usd:ils));
@@ -499,13 +645,17 @@ function viewUpdates(){
   h+=`<section><div class="panel">`;
   const EL=PRIV()?'div':'button';
   for(let i=U.length-1;i>=0;i--){const d=i?C[i].total-C[i-1].total:0;
+    if(!PRIV())h+=`<div class="swipe"><button class="act" data-del="${U[i].date}" tabindex="-1">מחיקה</button>`;
     h+=`<${EL} class="row${PRIV()?' dotted':''}"${PRIV()?'':` data-edit="${U[i].date}"`}><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span><span class="nm n">${dlong(U[i].date)}</span><div class="sub">שער דולר <span class="n">${U[i].rate?U[i].rate.toFixed(3):'—'}</span></div></span>
-    <span class="val"><b>${ils(C[i].total)}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${C[i-1].total?' ('+pct(d/C[i-1].total,2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span>${PRIV()?'':'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>'}</${EL}>`}
+    <span class="val"><b>${ils(C[i].total)}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${C[i-1].total?' ('+pct(d/C[i-1].total,2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span>${PRIV()?'':'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>'}</${EL}>`;
+    if(!PRIV())h+=`</div>`}
   const span=Math.round((new Date(U[U.length-1].date)-new Date(U[0].date))/864e5);
   h+=`</div></section><section><h2>נתוני מפתח</h2><div class="panel facts">
   <div><small>מספר עדכונים</small><b>${U.length}</b></div><div><small>תקופת המעקב</small><b>${span} ימים</b></div>
   <div><small>שער דולר נוכחי</small><b id="liverate" class="flat">—</b></div></div></section>`;
   view.innerHTML=h;
+  wireSwipes();
+  setTop('עדכונים');
   showLiveRate('#liverate');
 }
 
@@ -521,7 +671,7 @@ function openForm(date,pre){
   if(!editing&&base)h+=`<p class="hint" style="padding-top:10px">השדות מולאו מהעדכון הקודם (<span class="n">${dlong(base.date)}</span>). שנו רק את מה שהשתנה.</p>`;
   const rateAcc=(ACCOUNTS.find(a=>a.cur==='USD')||{}).id;
   for(const a of ACCOUNTS){
-    h+=`<div class="grp" style="--c:${a.color}"><h3>${esc(a.name)}${a.cur==='USD'?'<small>בדולרים</small>':'<small>בש״ח</small>'}</h3>`;
+    h+=`<div class="grp" style="--c:${acol(a.color)}"><h3>${esc(a.name)}${a.cur==='USD'?'<small>בדולרים</small>':'<small>בש״ח</small>'}</h3>`;
     for(const [k,nm] of a.fields)h+=`<div class="fld"><label for="f-${k}">${esc(nm)}</label><input id="f-${k}" data-k="${k}" inputmode="decimal" autocomplete="off" value="${f.vals[k]===''?'':f.vals[k]}" placeholder="0"></div>`;
     if(a.id===rateAcc)h+=`<div class="fld"><label for="f-rate">שער דולר<small>USD/ILS ביום העדכון</small></label><div class="inl"><input id="f-rate" inputmode="decimal" autocomplete="off" value="${f.rate||''}" placeholder="3.160"><button type="button" id="getrate">רענון</button></div></div><p class="hint" id="ratehint">השער נמשך לבד לפי התאריך. שער נוכחי: <b id="liverate2" class="n">—</b></p>`;
     if(S.plink[a.id])h+=`<input type="file" id="af-${a.id}" accept=".xlsx,.csv,.txt" hidden><div class="fld"><label for="af-${a.id}">קובץ אחזקות<small>לא חובה</small></label><div class="inl"><label class="atbtn" for="af-${a.id}" id="al-${a.id}">צירוף קובץ</label></div></div>`;
@@ -530,7 +680,8 @@ function openForm(date,pre){
   h+=`</form></div><footer><div class="sum"><small>סה״כ הון בעדכון הזה</small><b id="fsum">—</b></div><button class="btn" id="fsave">שמירה</button></footer></div>`;
   openLayer(h);
   const read=()=>{const u={date:$('#f-date').value,rate:$('#f-rate')?num($('#f-rate').value):0,vals:{}};layer.querySelectorAll('input[data-k]').forEach(i=>u.vals[i.dataset.k]=num(i.value));return u};
-  const upd=()=>{$('#fsum').textContent=ils(calc(read()).total)};upd();
+  const upd=()=>roll($('#fsum'),'fsum',calc(read()).total,ILSROLL,{stagger:0,response:.34});
+  rollMem.fsum=undefined;upd();
   layer.querySelector('#frm').addEventListener('input',upd);
   showLiveRate('#liverate2');
   let rateTouched=!!f.rate;
@@ -603,9 +754,10 @@ function viewCompare(){
     let sa=0,sb=0;for(const [nm,va,vb,col] of rows){sa+=va;sb+=vb;const d=vb-va;
       t+=`<tr><td>${col?`<span style="color:${col}">●</span> `:''}${nm}</td><td class="n">${compact(va)}</td><td class="n">${compact(vb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span><small class="n ${cls(d)}">${va?pct(d/va):''}</small></td></tr>`}
     const d=sb-sa;return t+`<tr class="tot"><td>סה״כ</td><td class="n">${compact(sa)}</td><td class="n">${compact(sb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span><small class="n ${cls(d)}">${sa?pct(d/sa,2):''}</small></td></tr></tbody></table></div></section>`};
-  h+=tbl('לפי חשבון',visAcc().map(a=>[esc(a.short),ca.acc[a.id],cb.acc[a.id],a.color]));
+  h+=tbl('לפי חשבון',visAcc().map(a=>[esc(a.short),ca.acc[a.id],cb.acc[a.id],acol(a.color)]));
   h+=`<section><div class="panel facts"><div><small>ימים בין התאריכים</small><b>${Math.round((new Date(B.date)-new Date(A.date))/864e5)}</b></div><div><small>שער דולר</small><b>${A.rate?A.rate.toFixed(3):'—'} → ${B.rate?B.rate.toFixed(3):'—'}</b></div></div></section>`;
   view.innerHTML=h;
+  setTop('השוואה');
   $('#ca').onchange=e=>{st.a=e.target.value;viewCompare()};$('#cb').onchange=e=>{st.b=e.target.value;viewCompare()};
 }
 
@@ -712,7 +864,7 @@ function openPrivCfg(){
   const opt=[['full','רגיל'],['half','חצי'],['hide','מוסתר']];
   openLayer(`<div class="sheet modal" role="dialog" aria-label="מה מוסתר"><header><span class="grab" aria-hidden="true"></span><button data-close>סגירה</button><h2>מה מוסתר</h2><span></span></header><div class="body">
   <section><p class="hint" style="padding:0 4px 12px">לכל חשבון אפשר לקבוע מה יוצג כשמצב פרטי מופעל. ההגדרה נשמרת, והיא לא משנה דבר כל עוד המצב כבוי.</p>
-  ${ACCOUNTS.map(a=>`<div class="panel" style="margin-bottom:10px"><div class="row dotted"><span class="spine" style="background:${a.color}"></span><span class="nm">${esc(a.name)}</span></div>
+  ${ACCOUNTS.map(a=>`<div class="panel" style="margin-bottom:10px"><div class="row dotted"><span class="spine" style="background:${acol(a.color)}"></span><span class="nm">${esc(a.name)}</span></div>
   <div class="pad" style="padding-top:2px"><div class="segbar" role="tablist" aria-label="${esc(a.short)}">${opt.map(([k,t])=>`<button role="tab" data-pm="${a.id}|${k}" aria-selected="${maskOf(a.id)===k}">${t}</button>`).join('')}</div></div></div>`).join('')}
   </section></div></div>`);
   layer.querySelectorAll('[data-pm]').forEach(b=>b.onclick=async()=>{
@@ -723,6 +875,7 @@ function openPrivCfg(){
   });
 }
 function viewSettings(){
+  setTop('הגדרות');
   const m=meta();const locked=!!cryptoKey;const p=PRIV();
   view.innerHTML=`<div class="pagehead"><h1>הגדרות</h1><p>גיבוי, נעילה ונתונים</p></div>
   <section><h2>מצב פרטי</h2><div class="panel">
@@ -731,7 +884,7 @@ function viewSettings(){
   ${p?'':`<button class="row plain" data-act="privcfg"><span><span class="nm">מה מוסתר</span></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
   </div></section>
   ${p?'':`<section><h2>חשבונות</h2><div class="panel">
-  ${ACCOUNTS.map(a=>`<button class="row" data-acced="${a.id}"><span class="spine" style="background:${a.color}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub">${a.fields.length===1?'רכיב אחד':a.fields.length+' רכיבים'}${a.cur==='USD'?' · דולר':''}${S.plink[a.id]?' · קובץ מהבנק':''}</div></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`).join('')}
+  ${ACCOUNTS.map(a=>`<button class="row" data-acced="${a.id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub">${a.fields.length===1?'רכיב אחד':a.fields.length+' רכיבים'}${a.cur==='USD'?' · דולר':''}${S.plink[a.id]?' · קובץ מהבנק':''}</div></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`).join('')}
   ${ACCOUNTS.length?'':'<div class="row plain"><span class="nm flat">עוד לא הוגדרו חשבונות</span></div>'}
   </div><div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="accnew">הוספת חשבון</button></div></section>`}
   <section><h2>גיבוי</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">הנתונים נשמרים רק במכשיר הזה. מחיקת האפליקציה ממסך הבית או ניקוי נתוני Safari מוחקים אותם, אז כדאי לשמור גיבוי אחרי כל עדכון.${m.lastBackup?` גיבוי אחרון: <span class="n">${new Date(m.lastBackup).toLocaleDateString('he-IL')}</span>.`:''}</p>
@@ -740,6 +893,62 @@ function viewSettings(){
   <div class="stackbtns">${locked?'<button class="btn ghost" data-act="locknow">נעילה עכשיו</button><button class="btn ghost" data-act="setpass">החלפת קוד</button><button class="btn ghost" data-act="rmpass">ביטול הנעילה</button>':'<button class="btn ghost" data-act="setpass">הגדרת קוד נעילה</button>'}</div></div></section>
   <section><h2>נתונים</h2><div class="panel pad"><button class="btn danger" data-act="wipe">מחיקת כל הנתונים מהמכשיר</button></div></section>
   <section><p style="font-size:13px;color:var(--muted);text-align:center;margin:0 12px">שום נתון לא נשלח לשרת. הפעולה היחידה שפונה לאינטרנט היא ״משיכה״ של שער הדולר, והיא שולחת רק תאריך.</p></section>`;
+}
+
+/* ---------- swipe an update aside ----------
+   the row rides a spring, so it follows the finger and can be flung either way. only one row
+   is ever open, and a tap anywhere else puts it back. */
+const OPENW=92;
+let openSwipe=null;
+function closeSwipe(){if(openSwipe){openSwipe.sp.to(0,{damping:1,response:.34});openSwipe=null}}
+function wireSwipes(){
+  view.querySelectorAll('.swipe').forEach(box=>{
+    const row=box.querySelector('.row');if(!row)return;
+    const sp=Spring(x=>{row.style.transform=`translateX(${x.toFixed(2)}px)`});
+    const rec={sp,row};
+    let armed=false,on=false,sx=0,sy=0,base=0,vt=null,pid=0,swallow=false;
+    row.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='mouse'&&e.button!==0)return;
+      armed=true;on=false;sx=e.clientX;sy=e.clientY;pid=e.pointerId;base=sp.value;
+    });
+    row.addEventListener('pointermove',e=>{
+      if(!armed||e.pointerId!==pid)return;
+      const dx=e.clientX-sx,dy=e.clientY-sy;
+      if(!on){
+        if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){armed=false;return}
+        if(Math.abs(dx)<8)return;
+        on=true;sp.stop();vt=Velocity();vt.add(e.clientX);
+        if(openSwipe&&openSwipe!==rec)closeSwipe();
+        try{row.setPointerCapture(pid)}catch(err){}
+      }
+      vt.add(e.clientX);
+      let x=base+dx;
+      if(x<0)x=rubber(x,OPENW*2);               /* the other way gives, but leads nowhere */
+      if(x>OPENW)x=OPENW+rubber(x-OPENW,OPENW);
+      sp.jump(x);
+    });
+    const up=e=>{
+      if(!armed||(e&&e.pointerId!==pid))return;
+      armed=false;if(!on){return}
+      on=false;
+      const v=vt?vt.get():0,land=sp.value+project(v)*.3;
+      const open=land>OPENW/2;
+      sp.to(open?OPENW:0,{damping:1,response:.36,velocity:v});
+      openSwipe=open?rec:(openSwipe===rec?null:openSwipe);
+      swallow=true;            /* the click that ends the drag is part of the drag, not a tap */
+    };
+    row.addEventListener('pointerup',up);row.addEventListener('pointercancel',up);
+    row.addEventListener('click',e=>{
+      if(swallow){swallow=false;e.preventDefault();e.stopPropagation();return}
+      if(openSwipe){e.preventDefault();e.stopPropagation();closeSwipe()}
+    },true);
+  });
+}
+async function delUpdate(date){
+  if(!confirm('למחוק את העדכון של '+dlong(date)+'?'))return;
+  S.updates=S.updates.filter(u=>u.date!==date);
+  openSwipe=null;
+  await save();render();toast('העדכון נמחק');
 }
 
 /* ---------- backup ---------- */
@@ -802,22 +1011,51 @@ function underTx(el,p){
   const t=`translateX(${(p*22).toFixed(2)}%)`;
   if(el)el.style.transform=t; else {$('#app').style.transform=t;$('#tabbar').style.transform=t}
 }
-function clearStage(){$('#app').style.transform='';$('#tabbar').style.transform=''}
-function openLayer(html,push){
+function clearStage(){for(const n of [$('#app'),$('#tabbar')]){n.style.transform='';n.style.opacity=''}}
+function underZoom(el,p){
+  const t=`scale(${(1-.05*p).toFixed(4)})`,o=(1-.6*p).toFixed(3);
+  const put=n=>{if(n){n.style.transform=t;n.style.opacity=o}};
+  if(el)put(el); else {put($('#app'));put($('#tabbar'))}
+}
+function openLayer(html,push,origin){
   const kind=push?'push':'modal';
   const sc=document.createElement('div');sc.className='scrim';
   const box=document.createElement('div');box.innerHTML=html;
   const el=box.firstElementChild;if(!el)return;
   layer.append(sc,el);
   const under=stack.length?stack[stack.length-1].el:null;
+  /* a zoom matches the row's rectangle at p=0 and the screen at p=1. the box is opaque the
+     whole way, so what you see is that rectangle growing; the contents fade in once it is
+     nearly there, which is what hides the squash of the early frames. */
+  const parts=origin?[el.querySelector('header'),el.querySelector('.body')].filter(Boolean):[];
   const set=p=>{
+    if(origin){
+      const vw=innerWidth||1,vh=innerHeight||1;
+      const e=p<0?0:p>1?1:p;
+      if(e>=.9995){
+        el.style.transform='';el.style.borderRadius='';el.style.transformOrigin='';el.style.overflow='';
+        for(const n of parts)n.style.opacity='';
+        sc.style.opacity='.1';underZoom(under,1);return;
+      }
+      const sx=origin.w/vw+(1-origin.w/vw)*e, sy=origin.h/vh+(1-origin.h/vh)*e;
+      el.style.transformOrigin='0 0';
+      el.style.transform=`translate(${(origin.x*(1-e)).toFixed(2)}px,${(origin.y*(1-e)).toFixed(2)}px) scale(${sx.toFixed(4)},${sy.toFixed(4)})`;
+      el.style.borderRadius=(14*(1-e)).toFixed(1)+'px';
+      /* the squash is worst early, so the contents stay out until the box is nearly there */
+      const fade=Math.max(0,Math.min(1,(e-.46)/.32)).toFixed(3);
+      for(const n of parts)n.style.opacity=fade;
+      sc.style.opacity=(p*.1).toFixed(3);
+      underZoom(under,e);
+      return;
+    }
     el.style.transform=kind==='push'?`translateX(${(-(1-p)*100).toFixed(3)}%)`:`translateY(${((1-p)*100).toFixed(3)}%)`;
     sc.style.opacity=(p*(kind==='push'?.1:.4)).toFixed(3);
     if(kind==='push')underTx(under,p);
   };
   const s=Spring(set);s.jump(0);
-  const L={el,sc,s,set,kind,under};stack.push(L);
-  s.to(1,{damping:1,response:kind==='push'?.42:.4});
+  if(origin)el.style.overflow='hidden';
+  const L={el,sc,s,set,kind,under,origin};stack.push(L);
+  s.to(1,{damping:1,response:origin?.46:kind==='push'?.42:.4});
   grab(L);
   const body=el.querySelector('.body'),head=el.querySelector('header');
   if(body&&head)body.addEventListener('scroll',()=>head.classList.toggle('edge',body.scrollTop>2),{passive:true});
@@ -847,6 +1085,7 @@ function grab(L){
     if(!armed||e.pointerId!==pid)return;
     const x=e.clientX,y=e.clientY;
     if(!on){
+      if(L.origin&&!el.style.transform)el.style.overflow='hidden';
       const dx=Math.abs(x-sx),dy=Math.abs(y-sy);
       if(kind==='push'){if(dy>10&&dy>dx){armed=false;return}if(dx<8)return}
       else {if(dx>10&&dx>dy){armed=false;return}if(dy<6)return}
@@ -1054,7 +1293,7 @@ const catOf=h=>ptypeOf(h)+'-'+marketOf(h);
 const CATS=[['bond-il','אג״ח ישראלי'],['bond-intl','אג״ח חו״ל'],['stock-il','מניות ישראל'],
             ['stock-intl','מניות חו״ל'],['fund-il','קרנות סל'],['fund-intl','ETF חו״ל']];
 const CATLBL=Object.fromEntries(CATS);
-const catCol=c=>TYPECOL[c.split('-')[0]]||'#6C6C70';
+const catCol=c=>acol(TYPECOL[c.split('-')[0]]||'#6C6C70');
 const catHollow=c=>c.endsWith('-intl');
 const dot=(c,extra='')=>`<span class="spine${catHollow(c)?' hollow':''}" style="--c:${catCol(c)};background:${catCol(c)}"${extra}></span>`;
 
@@ -1092,10 +1331,10 @@ function portfolioBody(accId){
   for(const [k,lbl] of cats)
     h+=`<button class="row dotted" data-filt="${k}" aria-pressed="${filt===k}">${dot(k)}<span><span class="nm">${lbl}</span><div class="sub"><span class="n">${s.count[k]}</span> אחזקות</div></span><span class="val"><b>${ils(s.cat[k])}</b><span class="n flat">${(s.cat[k]/s.total*100).toFixed(1)}%</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
   h+=`</div></section>`;
-  const CURCOL={'שקל':'#2F9E6E','דולר':'#3B82F6'};
+  const CURCOL={'שקל':acol('#2F9E6E'),'דולר':acol('#3B82F6')};
   const curs=Object.keys(s.cur).sort((x,y)=>s.cur[y]-s.cur[x]);
-  h+=`<section><h2>לפי מטבע</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי מטבע">${curs.map(k=>`<i style="flex:${s.cur[k]} 0 0;background:${CURCOL[k]||'#8A2D0C'}"></i>`).join('')}</div></div>`;
-  for(const k of curs)h+=`<div class="row dotted"><span class="spine" style="background:${CURCOL[k]||'#8A2D0C'}"></span><span class="nm">${esc(k)}</span><span class="val"><b>${ils(s.cur[k])}</b><span class="n flat">${(s.cur[k]/s.total*100).toFixed(1)}%</span></span></div>`;
+  h+=`<section><h2>לפי מטבע</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי מטבע">${curs.map(k=>`<i style="flex:${s.cur[k]} 0 0;background:${CURCOL[k]||acol('#8A2D0C')}"></i>`).join('')}</div></div>`;
+  for(const k of curs)h+=`<div class="row dotted"><span class="spine" style="background:${CURCOL[k]||acol('#8A2D0C')}"></span><span class="nm">${esc(k)}</span><span class="val"><b>${ils(s.cur[k])}</b><span class="n flat">${(s.cur[k]/s.total*100).toFixed(1)}%</span></span></div>`;
   h+=`</div></section>`;
   h+=`<section><h2>מס על הנייר <small>לפי חישוב הבנק</small></h2><div class="panel facts">
   <div><small>רווח שטרם מומש</small><b class="up">${signedIls(s.gain)}</b></div>
@@ -1194,12 +1433,56 @@ async function importPortfolio(accId,file){
   }catch(err){toast(err.message||'לא הצלחתי לקרוא את הקובץ')}
 }
 
+/* ---------- pull down for the rate ----------
+   the page itself gives under the finger and resists further the further it goes, which is the
+   same rubber the sheets use. letting go past the mark fetches today's rate. */
+(function pullToRefresh(){
+  const ind=$('#pull'),app=$('#app'),txt=ind.querySelector('.txt');
+  const TRIG=62;let y0=null,on=false,busy=false,pid=0;
+  const sp=Spring(y=>{
+    app.style.transform=y?`translateY(${y.toFixed(1)}px)`:'';
+    ind.style.opacity=Math.min(1,y/38).toFixed(2);
+    ind.style.transform=`translateY(${(Math.min(y,TRIG)-30).toFixed(1)}px)`;
+  });
+  const atTop=()=>(document.scrollingElement||document.documentElement).scrollTop<=0;
+  addEventListener('pointerdown',e=>{
+    if(busy||stack.length||document.querySelector('.lock')||e.pointerType==='mouse'&&e.button!==0)return;
+    if(!atTop())return;
+    y0=e.clientY;on=false;pid=e.pointerId;
+  },{passive:true});
+  addEventListener('pointermove',e=>{
+    if(y0===null||e.pointerId!==pid||busy)return;
+    const dy=e.clientY-y0;
+    if(!on){if(dy<10||!atTop()){if(dy<-6)y0=null;return}on=true;sp.stop()}
+    sp.jump(rubber(Math.max(0,dy),innerHeight*.9));
+  },{passive:true});
+  const release=async()=>{
+    if(y0===null)return;const was=on;y0=null;on=false;
+    if(!was)return;
+    if(sp.value<TRIG*.8){sp.to(0,{damping:1,response:.4});return}
+    busy=true;ind.classList.add('go');txt.textContent='';
+    sp.to(TRIG,{damping:1,response:.36});
+    try{
+      const r=await Promise.race([fetchRate(today()),
+        new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),6000))]);  /* don't hang on a dead connection */
+      liveRate=r.rate;liveAt=Date.now();
+      txt.textContent='₪'+r.rate.toFixed(3);
+      const el=$('#liverate');if(el){el.textContent='₪'+r.rate.toFixed(3);el.classList.remove('flat')}
+    }catch(e){txt.textContent='לא זמין'}
+    ind.classList.remove('go');
+    setTimeout(()=>{sp.to(0,{damping:1,response:.42});busy=false;setTimeout(()=>{txt.textContent=''},300)},850);
+  };
+  addEventListener('pointerup',release);addEventListener('pointercancel',release);
+})();
+
 /* ---------- events / boot ---------- */
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-tab],[data-act],[data-acc],[data-acced],[data-edit],[data-close],[data-port]');if(!t)return;
+  const t=e.target.closest('[data-tab],[data-act],[data-acc],[data-acced],[data-edit],[data-close],[data-port],[data-del]');if(!t)return;
+  if(t.dataset.del!==undefined){delUpdate(t.dataset.del);return}
+  if(openSwipe&&!t.closest('.swipe'))closeSwipe();
   if(t.dataset.tab){tab=t.dataset.tab;render()}
   else if(t.dataset.acced!==undefined)openAccEditor(t.dataset.acced);
-  else if(t.dataset.acc)openAccount(t.dataset.acc);
+  else if(t.dataset.acc)openAccount(t.dataset.acc,t);
   else if(t.dataset.port)openPortfolio(t.dataset.port);
   else if(t.dataset.edit)openForm(t.dataset.edit);
   else if('close' in t.dataset)closeLayer();
@@ -1219,6 +1502,10 @@ function start(){$('#tabbar').hidden=false;render()}
   if(raw&&raw.data){setConfig(raw.data.accounts);S.updates=clean(raw.data.updates);loadPorts(raw.data)}
   start();
 })();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{
+  for(const k in colCache)delete colCache[k];
+  if(cryptoKey||!readRaw()||!readRaw().enc)render();
+});
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
