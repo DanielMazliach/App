@@ -248,10 +248,6 @@ svg.chart circle{stroke:var(--cring)}
 @keyframes ringspin{to{transform:rotate(360deg)}}
 .moving .tabbar,.moving .sheet header,.moving .sheet footer,.moving #topbar.on{
   backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-.swipe{position:relative;overflow:hidden;background:var(--down)}
-.swipe>.row{position:relative;z-index:1;will-change:transform}
-.swipe>.act{position:absolute;top:0;bottom:0;left:0;width:92px;border:0;background:var(--down);color:#fff;
-  font:inherit;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;z-index:0}
 .toast{position:fixed;inset:auto 0 calc(76px + var(--sab)) 0;width:max-content;max-width:calc(100% - 40px);margin:0 auto;background:var(--toast);color:var(--ontoast);border-radius:22px;padding:11px 20px;text-align:center;z-index:30;font-size:15px}
 
 @media (prefers-reduced-transparency:reduce){
@@ -669,16 +665,13 @@ function viewUpdates(){
   h+=`<section><div class="panel">`;
   const EL=PRIV()?'div':'button';
   for(let i=U.length-1;i>=0;i--){const d=i?C[i].total-C[i-1].total:0;
-    if(!PRIV())h+=`<div class="swipe"><button class="act" data-del="${U[i].date}" tabindex="-1">מחיקה</button>`;
     h+=`<${EL} class="row${PRIV()?' dotted':''}"${PRIV()?'':` data-edit="${U[i].date}"`}><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span><span class="nm n">${dlong(U[i].date)}</span><div class="sub">שער דולר <span class="n">${U[i].rate?U[i].rate.toFixed(3):'—'}</span></div></span>
-    <span class="val"><b>${ils(C[i].total)}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${C[i-1].total?' ('+pct(d/C[i-1].total,2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span>${PRIV()?'':'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>'}</${EL}>`;
-    if(!PRIV())h+=`</div>`}
+    <span class="val"><b>${ils(C[i].total)}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${C[i-1].total?' ('+pct(d/C[i-1].total,2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span>${PRIV()?'':'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>'}</${EL}>`}
   const span=Math.round((new Date(U[U.length-1].date)-new Date(U[0].date))/864e5);
   h+=`</div></section><section><h2>נתוני מפתח</h2><div class="panel facts">
   <div><small>מספר עדכונים</small><b>${U.length}</b></div><div><small>תקופת המעקב</small><b>${span} ימים</b></div>
   <div><small>שער דולר נוכחי</small><b id="liverate" class="flat">—</b></div></div></section>`;
   view.innerHTML=h;
-  wireSwipes();
   setTop('עדכונים');
   showLiveRate('#liverate');
 }
@@ -919,64 +912,6 @@ function viewSettings(){
   <div class="stackbtns">${locked?'<button class="btn ghost" data-act="locknow">נעילה עכשיו</button><button class="btn ghost" data-act="setpass">החלפת קוד</button><button class="btn ghost" data-act="rmpass">ביטול הנעילה</button>':'<button class="btn ghost" data-act="setpass">הגדרת קוד נעילה</button>'}</div></div></section>
   <section><h2>נתונים</h2><div class="panel pad"><button class="btn danger" data-act="wipe">מחיקת כל הנתונים מהמכשיר</button></div></section>
   <section><p style="font-size:13px;color:var(--muted);text-align:center;margin:0 12px">שום נתון לא נשלח לשרת. הפעולה היחידה שפונה לאינטרנט היא ״משיכה״ של שער הדולר, והיא שולחת רק תאריך.</p></section>`;
-}
-
-/* ---------- swipe an update aside ----------
-   the row rides a spring, so it follows the finger and can be flung either way. only one row
-   is ever open, and a tap anywhere else puts it back. */
-const OPENW=92;
-let openSwipe=null;
-function closeSwipe(){if(openSwipe){openSwipe.sp.to(0,{damping:1,response:.34});openSwipe=null}}
-function wireSwipes(){
-  if(offscreen)return;
-  view.querySelectorAll('.swipe').forEach(box=>{
-    const row=box.querySelector('.row');if(!row)return;
-    const sp=Spring(x=>{row.style.transform=x?`translate3d(${x.toFixed(2)}px,0,0)`:'';row.style.willChange=x?'transform':''},OPENW);
-    const rec={sp,row};
-    let armed=false,on=false,sx=0,sy=0,base=0,vt=null,pid=0,swallow=false;
-    row.addEventListener('pointerdown',e=>{
-      if(e.pointerType==='mouse'&&e.button!==0)return;
-      armed=true;on=false;sx=e.clientX;sy=e.clientY;pid=e.pointerId;base=sp.value;
-    });
-    row.addEventListener('pointermove',e=>{
-      if(!armed||e.pointerId!==pid)return;
-      const dx=e.clientX-sx,dy=e.clientY-sy;
-      if(!on){
-        if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){armed=false;return}
-        if(dx<0&&sp.value<=0){armed=false;return}   /* leftward belongs to the page, not the row */
-        if(Math.abs(dx)<8)return;
-        on=true;sp.stop();vt=Velocity();vt.add(e.clientX);
-        if(openSwipe&&openSwipe!==rec)closeSwipe();
-        try{row.setPointerCapture(pid)}catch(err){}
-      }
-      vt.add(e.clientX);
-      let x=base+dx;
-      if(x<0)x=rubber(x,OPENW*2);               /* the other way gives, but leads nowhere */
-      if(x>OPENW)x=OPENW+rubber(x-OPENW,OPENW);
-      sp.jump(x);
-    });
-    const up=e=>{
-      if(!armed||(e&&e.pointerId!==pid))return;
-      armed=false;if(!on){return}
-      on=false;
-      const v=vt?vt.get():0,land=sp.value+project(v)*.3;
-      const open=land>OPENW/2;
-      sp.to(open?OPENW:0,{damping:1,response:.36,velocity:v});
-      openSwipe=open?rec:(openSwipe===rec?null:openSwipe);
-      swallow=true;            /* the click that ends the drag is part of the drag, not a tap */
-    };
-    row.addEventListener('pointerup',up);row.addEventListener('pointercancel',up);
-    row.addEventListener('click',e=>{
-      if(swallow){swallow=false;e.preventDefault();e.stopPropagation();return}
-      if(openSwipe){e.preventDefault();e.stopPropagation();closeSwipe()}
-    },true);
-  });
-}
-async function delUpdate(date){
-  if(!confirm('למחוק את העדכון של '+dlong(date)+'?'))return;
-  S.updates=S.updates.filter(u=>u.date!==date);
-  openSwipe=null;
-  render();save();toast('העדכון נמחק');
 }
 
 /* ---------- backup ---------- */
@@ -1480,7 +1415,7 @@ async function importPortfolio(accId,file){
 const tabSwipe={busy:false};
 (function tabPager(){
   const app=$('#app');
-  let armed=false,on=false,sx=0,sy=0,pid=0,vt=null,dirn=0,ghost=null,lockY=0,W=1,onRow=false,eat=false;
+  let armed=false,on=false,sx=0,sy=0,pid=0,vt=null,dirn=0,ghost=null,lockY=0,W=1,eat=false;
   /* a sideways drag is never a tap, even when there is no page to move to */
   addEventListener('click',e=>{if(eat){eat=false;e.preventDefault();e.stopPropagation()}},true);
   let pending=null;
@@ -1494,7 +1429,7 @@ const tabSwipe={busy:false};
     if(next){tab=next;shownTab=next;render();window.scrollTo(0,0)}
     else window.scrollTo(0,lockY);
   };
-  const canStart=()=>!stack.length&&!document.querySelector('.lock')&&!openSwipe&&!tabSwipe.busy&&TABS.includes(tab);
+  const canStart=()=>!stack.length&&!document.querySelector('.lock')&&!tabSwipe.busy&&TABS.includes(tab);
   const place=u=>{
     const x=u*W;
     view.style.transform=`translate3d(${x.toFixed(2)}px,0,0)`;
@@ -1514,16 +1449,12 @@ const tabSwipe={busy:false};
     if(e.pointerType==='mouse'&&e.button!==0)return;
     if(e.target.closest('.sheet,input,select,textarea,.chiprow,.segbar'))return;
     armed=true;on=false;eat=false;sx=e.clientX;sy=e.clientY;pid=e.pointerId;
-    /* over a row the rightward drag reveals its delete action, so the page only takes that
-       direction when the finger starts at the leading edge, where there is room to pull it across — only from the far edge, where there is room to pull the page across */
-    onRow=!!e.target.closest('.swipe')&&e.clientX>56;
   },{passive:true});
   addEventListener('pointermove',e=>{
     if(!armed||e.pointerId!==pid)return;
     const dx=e.clientX-sx,dy=e.clientY-sy;
     if(!on){
       if(Math.abs(dy)>8&&Math.abs(dy)>Math.abs(dx)){armed=false;return}
-      if(onRow&&dx>0){armed=false;return}
       if(Math.abs(dx)<14)return;
       /* in a right-to-left bar the next page sits to the left, so dragging left advances */
       const step=dx>0?1:-1;
@@ -1606,9 +1537,7 @@ const tabSwipe={busy:false};
 
 /* ---------- events / boot ---------- */
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-tab],[data-act],[data-acc],[data-acced],[data-edit],[data-close],[data-port],[data-del]');if(!t)return;
-  if(t.dataset.del!==undefined){delUpdate(t.dataset.del);return}
-  if(openSwipe&&!t.closest('.swipe'))closeSwipe();
+  const t=e.target.closest('[data-tab],[data-act],[data-acc],[data-acced],[data-edit],[data-close],[data-port]');if(!t)return;
   if(t.dataset.tab){tab=t.dataset.tab;render()}
   else if(t.dataset.acced!==undefined)openAccEditor(t.dataset.acced);
   else if(t.dataset.acc)openAccount(t.dataset.acc,t);
