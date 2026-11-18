@@ -1093,7 +1093,7 @@ function openLayer(html,push,origin){
 }
 function closeLayer(vel){
   const L=stack.pop();if(!L)return;
-  L.s.to(0,{damping:1,response:L.kind==='push'?.36:.34,velocity:vel||0},()=>{
+  L.s.to(0,{damping:1,response:L.kind==='push'?.24:.28,velocity:vel||0},()=>{
     L.el.style.willChange='';L.el.remove();L.sc.remove();
     if(!stack.length)clearStage();
   });
@@ -1465,11 +1465,13 @@ async function importPortfolio(accId,file){
 const tabSwipe={busy:false};
 (function tabPager(){
   const app=$('#app');
-  let armed=false,on=false,sx=0,sy=0,pid=0,vt=null,dirn=0,ghost=null,lockY=0,W=1,onRow=false;
+  let armed=false,on=false,sx=0,sy=0,pid=0,vt=null,dirn=0,ghost=null,lockY=0,W=1,onRow=false,eat=false;
+  /* a sideways drag is never a tap, even when there is no page to move to */
+  addEventListener('click',e=>{if(eat){eat=false;e.preventDefault();e.stopPropagation()}},true);
   const canStart=()=>!stack.length&&!document.querySelector('.lock')&&!openSwipe&&!tabSwipe.busy&&TABS.includes(tab);
   const place=x=>{
     view.style.transform=`translate3d(${x.toFixed(2)}px,0,0)`;
-    if(ghost)ghost.style.transform=`translate3d(${(x+dirn*W).toFixed(2)}px,0,0)`;
+    if(ghost)ghost.style.transform=`translate3d(${(x-dirn*W).toFixed(2)}px,0,0)`;
   };
   const sp=Spring(place);
   const cleanup=()=>{
@@ -1483,10 +1485,10 @@ const tabSwipe={busy:false};
     if(!canStart())return;
     if(e.pointerType==='mouse'&&e.button!==0)return;
     if(e.target.closest('.sheet,input,select,textarea,.chiprow,.segbar'))return;
-    armed=true;on=false;sx=e.clientX;sy=e.clientY;pid=e.pointerId;
+    armed=true;on=false;eat=false;sx=e.clientX;sy=e.clientY;pid=e.pointerId;
     /* over a row the rightward drag reveals its delete action, so the page only takes that
-       direction when the finger starts at the screen edge — only from the far edge, where there is room to pull the page across */
-    onRow=!!e.target.closest('.swipe')&&e.clientX<innerWidth-28;
+       direction when the finger starts at the leading edge, where there is room to pull it across — only from the far edge, where there is room to pull the page across */
+    onRow=!!e.target.closest('.swipe')&&e.clientX>56;
   },{passive:true});
   addEventListener('pointermove',e=>{
     if(!armed||e.pointerId!==pid)return;
@@ -1496,10 +1498,11 @@ const tabSwipe={busy:false};
       if(onRow&&dx>0){armed=false;return}
       if(Math.abs(dx)<14)return;
       /* in a right-to-left bar the next page sits to the left, so dragging left advances */
-      const want=TABS.indexOf(tab)+(dx<0?1:-1);
-      if(want<0||want>=TABS.length){armed=false;return}
-      on=true;tabSwipe.busy=true;
-      W=innerWidth;dirn=dx<0?1:-1;
+      const step=dx>0?1:-1;
+      const want=TABS.indexOf(tab)+step;
+      if(want<0||want>=TABS.length){armed=false;eat=true;return}
+      on=true;tabSwipe.busy=true;eat=true;
+      W=innerWidth;dirn=step;
       lockY=scrollY;
       ghost=buildPage(TABS[want]);
       /* #app is held at -lockY while the drag runs, so the incoming page is offset to match */
@@ -1514,8 +1517,8 @@ const tabSwipe={busy:false};
     }
     vt.add(e.clientX);
     let x=dx;
-    if(dirn>0&&x>0)x=rubber(x,W);
-    if(dirn<0&&x<0)x=rubber(x,W);
+    if(dirn>0&&x<0)x=rubber(x,W);
+    if(dirn<0&&x>0)x=rubber(x,W);
     sp.jump(x);
   },{passive:true});
   const release=()=>{
@@ -1523,8 +1526,8 @@ const tabSwipe={busy:false};
     if(!on)return;
     on=false;
     const v=vt?vt.get():0,land=sp.value+project(v)*.35;
-    const go=dirn>0?land<-W*.3:land>W*.3;
-    const target=go?-dirn*W:0;
+    const go=dirn>0?land>W*.3:land<-W*.3;
+    const target=go?dirn*W:0;
     sp.to(target,{damping:1,response:.42,velocity:v},()=>{
       const next=go?TABS[TABS.indexOf(tab)+dirn]:null;
       cleanup();
