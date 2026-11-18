@@ -84,6 +84,9 @@ button.row:active{background:#E5E5EA}
 .sw-c{width:32px;height:32px;border-radius:50%;border:0;padding:0;position:relative;-webkit-tap-highlight-color:transparent}
 .sw-c[aria-pressed="true"]::after{content:"";position:absolute;inset:-4px;border-radius:50%;box-shadow:0 0 0 2px var(--ink)}
 .pick1{height:40px;border:0;background:transparent;color:var(--tint);font-size:17px;text-align:start}
+.row .lblin{width:100%;border:0;background:transparent;font:inherit;font-size:17px;color:var(--ink);padding:3px 0;border-radius:6px;transition:background .15s}
+.row .lblin:focus{background:var(--bg);outline:0;padding:3px 7px;margin:0 -7px}
+.row .lblin::placeholder{color:#C7C7CC}
 @media(prefers-reduced-motion:reduce){.sw,.sw i{transition:none}}
 .sheet .row{grid-template-columns:1fr auto;min-height:52px}
 .row.plain{grid-template-columns:1fr auto}
@@ -625,7 +628,7 @@ function accDraft(a){
   });
   for(const f of (a?a.fields:[]))if(!used.has(f[0]))rows.push({key:f[0],label:f[1],type:f[2],on:true,trend:!!f[3],std:false});
   return {id:a?a.id:fresh('a'),name:a?a.name:'',short:a?a.short:'',cur:a?a.cur:'ILS',
-    color:a?a.color:PALETTE[ACCOUNTS.length%PALETTE.length],rows,link:a?(S.plink[a.id]||''):''};
+    color:a?a.color:PALETTE[ACCOUNTS.length%PALETTE.length],rows,link:a?(S.plink[a.id]||''):'',focus:''};
 }
 function accBody(d,editing){
   const on=d.rows.filter(r=>r.on);
@@ -636,9 +639,11 @@ function accBody(d,editing){
   <p class="hint">חשבון דולרי מוזן בדולרים ומומר לפי שער היום של העדכון.</p></section>
   <section><h2>צבע</h2><div class="panel pad"><div class="swatches">${PALETTE.map(c=>`<button class="sw-c" data-color="${c}" style="background:${c}" aria-label="צבע" aria-pressed="${d.color.toLowerCase()===c.toLowerCase()}"></button>`).join('')}</div></div></section>
   <section><h2>מה יש בחשבון</h2><div class="panel">
-  ${d.rows.map((r,i)=>`<div class="row plain"><span><span class="nm">${esc(r.label)}</span>${r.std?'':'<div class="sub">רכיב קיים</div>'}</span>
-  <span class="val"><button class="sw" data-row="${i}" role="switch" aria-checked="${r.on}" aria-label="${esc(r.label)}"><i></i></button></span></div>`).join('')}
-  </div><p class="hint">כל רכיב מסומן הופך לשדה בעדכון ולשורה בפירוט היתרות.</p></section>
+  ${d.rows.map((r,i)=>`<div class="row plain"><span>${r.std?`<span class="nm">${esc(r.label)}</span>`
+    :`<input class="lblin" data-lbl="${i}" value="${esc(r.label)}" placeholder="שם הרכיב" maxlength="24" autocomplete="off" aria-label="שם הרכיב">`}</span>
+  <span class="val"><button class="sw" data-row="${i}" role="switch" aria-checked="${r.on}" aria-label="${esc(r.label)||'רכיב'}"><i></i></button></span></div>`).join('')}
+  <button class="row plain" id="ac-other"><span><span class="nm" style="color:var(--tint)">אחר</span></span><span class="val" style="color:var(--tint);font-size:22px;line-height:1">+</span></button>
+  </div><p class="hint">כל רכיב מסומן הופך לשדה בעדכון ולשורה בפירוט היתרות. ״אחר״ מוסיף רכיב בשם שתכתבו.</p></section>
   <section><h2>קובץ מהבנק</h2><div class="panel">
   <div class="row plain"><span><span class="nm">העלאת קובץ אחזקות</span><div class="sub">${d.link?'מופעל':'הזנה ידנית בלבד'}</div></span>
   <span class="val"><button class="sw" data-link role="switch" aria-checked="${!!d.link}" aria-label="העלאת קובץ אחזקות"><i></i></button></span></div>
@@ -654,9 +659,12 @@ function openAccEditor(id){
   const d=accDraft(a);
   openLayer(`<div class="sheet modal" role="dialog" aria-label="חשבון"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>${a?'עריכת חשבון':'חשבון חדש'}</h2><span></span></header><div class="body"></div></div>`);
   const L=stack[stack.length-1];
-  const paint=()=>{const b=L.el.querySelector('.body');const y=b.scrollTop;b.innerHTML=accBody(d,!!a);b.scrollTop=y;wire()};
+  const paint=()=>{const b=L.el.querySelector('.body');const y=b.scrollTop;b.innerHTML=accBody(d,!!a);b.scrollTop=y;wire();
+    if(d.focus){const i=d.rows.findIndex(r=>r.key===d.focus),el=i<0?null:L.el.querySelector(`[data-lbl="${i}"]`);
+      d.focus='';if(el){el.scrollIntoView({block:'center'});el.focus()}}};
   const grab=()=>{const n=L.el.querySelector('#ac-name'),h=L.el.querySelector('#ac-short'),l=L.el.querySelector('#ac-link');
-    if(n)d.name=n.value;if(h)d.short=h.value;if(l)d.link=l.value};
+    if(n)d.name=n.value;if(h)d.short=h.value;if(l)d.link=l.value;
+    L.el.querySelectorAll('[data-lbl]').forEach(i=>{d.rows[+i.dataset.lbl].label=i.value});};
   function wire(){
     L.el.querySelectorAll('[data-cur]').forEach(b=>b.onclick=()=>{grab();d.cur=b.dataset.cur;paint()});
     L.el.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{grab();d.color=b.dataset.color;paint()});
@@ -667,6 +675,9 @@ function openAccEditor(id){
       else{const on=d.rows.filter(r=>r.on);if(!on.length){toast('בחרו קודם מה יש בחשבון');return}
         d.link=(on.find(r=>r.type==='cap')||on[0]).key}
       paint()};
+    L.el.querySelector('#ac-other').onclick=()=>{grab();
+      const r={key:fresh('f'),label:'',type:'cap',on:true,trend:false,std:false};
+      d.rows.push(r);d.focus=r.key;paint()};
     const sel=L.el.querySelector('#ac-link');if(sel)sel.onchange=()=>{d.link=sel.value};
     const del=L.el.querySelector('#ac-del');
     if(del)del.onclick=async()=>{
@@ -678,7 +689,9 @@ function openAccEditor(id){
     L.el.querySelector('#ac-save').onclick=async()=>{
       grab();
       const name=d.name.trim();if(!name){toast('צריך שם לחשבון');return}
-      const on=d.rows.filter(r=>r.on);if(!on.length){toast('בחרו מה יש בחשבון');return}
+      d.rows.forEach(r=>{if(!r.std)r.label=r.label.trim()});
+      const on=d.rows.filter(r=>r.on&&r.label);if(!on.length){toast('בחרו מה יש בחשבון');return}
+      if(d.rows.some(r=>r.on&&!r.label)){toast('תנו שם לרכיב שהוספתם');return}
       const rec={id:d.id,name,short:(d.short.trim()||name).slice(0,18),color:d.color,cur:d.cur,
         fields:on.map(r=>[r.key,r.label,r.type,!!r.trend])};
       const list=ACCOUNTS.slice();const i=list.findIndex(x=>x.id===d.id);
