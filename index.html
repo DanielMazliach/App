@@ -80,6 +80,10 @@ button.row:active{background:#E5E5EA}
 .sw[aria-checked="true"] i{transform:translateX(-20px)}
 .sw:active i{width:29px}
 .pmk{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;opacity:.4;vertical-align:-1px}
+.swatches{display:flex;gap:8px;justify-content:space-between}
+.sw-c{width:32px;height:32px;border-radius:50%;border:0;padding:0;position:relative;-webkit-tap-highlight-color:transparent}
+.sw-c[aria-pressed="true"]::after{content:"";position:absolute;inset:-4px;border-radius:50%;box-shadow:0 0 0 2px var(--ink)}
+.pick1{height:40px;border:0;background:transparent;color:var(--tint);font-size:17px;text-align:start}
 @media(prefers-reduced-motion:reduce){.sw,.sw i{transition:none}}
 .sheet .row{grid-template-columns:1fr auto;min-height:52px}
 .row.plain{grid-template-columns:1fr auto}
@@ -166,6 +170,8 @@ button.row[aria-pressed="true"] .nm{font-weight:600}
 .fld input::placeholder{color:#C7C7CC}
 .fld input:focus{background:var(--bg);outline:0}
 .fld input[type=date]{-webkit-appearance:none;appearance:none}
+.fld.wide{grid-template-columns:96px 1fr}
+.fld.wide input{direction:rtl;text-align:start;font-family:inherit;font-variant-numeric:normal}
 .fld .inl{display:flex;gap:4px;align-items:center}
 .fld .inl button{white-space:nowrap;font-size:15px;color:var(--tint);padding:0 4px;min-height:44px}
 .fld .inl button:active{opacity:.4}
@@ -419,7 +425,7 @@ function render(){
   view.classList.remove('fade');void view.offsetWidth;view.classList.add('fade');
 }
 function emptyState(){return ACCOUNTS.length?`<div class="empty"><h2>אין עדיין עדכונים</h2><p>הוסיפו את העדכון הראשון, או טענו גיבוי קיים.</p><div class="stackbtns"><button class="btn" data-act="new">עדכון חדש</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div>`
-  :`<div class="empty"><h2>האפליקציה ריקה</h2><p>טענו את קובץ הגיבוי שלכם. הוא מכיל את רשימת החשבונות ואת העדכונים, ונשמר רק במכשיר הזה.</p><button class="btn" data-act="import">טעינת גיבוי</button></div>`}
+  :`<div class="empty"><h2>בואו נתחיל</h2><p>הגדירו את החשבונות שלכם — לכל אחד שם, מטבע ומה יש בו. הכול נשמר רק במכשיר הזה. אם יש לכם כבר קובץ גיבוי, אפשר לטעון אותו במקום.</p><div class="stackbtns"><button class="btn" data-act="accnew">הוספת חשבון</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div>`}
 
 function viewHome(){
   const U=sorted();
@@ -467,10 +473,12 @@ function openAccount(id){
     const tapable=k===linked;
     h+=`<${tapable?'button':'div'} class="row"${tapable?` data-port="${id}"`:''}><span class="spine" style="background:${a.color}"></span><span class="nm" style="font-weight:500">${esc(nm)}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,f)}</span>`:''}</span>${tapable?'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>':''}</${tapable?'button':'div'}>`}
   h+=`</div></section>`;
+  if(S.plink[id]){
   const pl=portsOf(id),pLast=pl[pl.length-1];
   h+=`<section><h2>תיק ניירות ערך</h2><div class="panel">
   <button class="row dotted" data-port="${id}"><span class="spine" style="background:${a.color}"></span><span><span class="nm">${pLast?'פירוט האחזקות':'העלאת קובץ אחזקות'}</span><div class="sub">${pLast?`<span class="n">${pLast.hold?pLast.hold.length:'—'}</span> אחזקות · <span class="n">${dlong(pLast.date)}</span>`:'מקובץ ‎.xlsx‎ או ‎.csv‎ של הבנק'}</div></span>
-  <span class="val">${pLast&&pLast.hold?`<b>${ils(summarize(pLast.hold).total)}</b>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button></div></section><section><h2>היסטוריה</h2><div class="panel">`;
+  <span class="val">${pLast&&pLast.hold?`<b>${ils(summarize(pLast.hold).total)}</b>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button></div></section>`;}
+  h+=`<section><h2>היסטוריה</h2><div class="panel">`;
   for(let i=n-1;i>=0;i--){const d=i?vs[i]-vs[i-1]:0;
     h+=`<div class="row dotted"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
   h+=`</div></section></div></div>`;
@@ -598,9 +606,96 @@ function viewCompare(){
   $('#ca').onchange=e=>{st.a=e.target.value;viewCompare()};$('#cb').onchange=e=>{st.b=e.target.value;viewCompare()};
 }
 
+/* ---------- the account book ----------
+   accounts are not in the code: they are built here, on the device, and travel only in the backup.
+   anyone can set the app up from scratch: add an account, tick what it holds, and say whether it
+   takes a bank file or is filled in by hand. */
+const PARTS=[['עו״ש','cur'],['מט״ח','fx'],['ניירות ערך','cap'],['פקדונות','sav'],['קרנות','cap']];
+const PALETTE=['#8A2D0C','#E0A008','#E2571C','#2F9E6E','#3B82F6','#6D4AC4','#C2255C','#44566A'];
+const fresh=p=>p+Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-3);
+
+/* a working copy of one account: the standard components, plus anything it already holds that
+   is not one of them, so editing an existing account never drops a field by surprise */
+function accDraft(a){
+  const used=new Set();
+  const rows=PARTS.map(([lbl,t])=>{
+    const f=(a?a.fields:[]).find(x=>x[1]===lbl&&!used.has(x[0]));
+    if(f)used.add(f[0]);
+    return {key:f?f[0]:fresh('f'),label:lbl,type:t,on:!!f,trend:f?!!f[3]:false,std:true};
+  });
+  for(const f of (a?a.fields:[]))if(!used.has(f[0]))rows.push({key:f[0],label:f[1],type:f[2],on:true,trend:!!f[3],std:false});
+  return {id:a?a.id:fresh('a'),name:a?a.name:'',short:a?a.short:'',cur:a?a.cur:'ILS',
+    color:a?a.color:PALETTE[ACCOUNTS.length%PALETTE.length],rows,link:a?(S.plink[a.id]||''):''};
+}
+function accBody(d,editing){
+  const on=d.rows.filter(r=>r.on);
+  return `<section><div class="grp">
+  <div class="fld wide"><label for="ac-name">שם החשבון</label><input id="ac-name" value="${esc(d.name)}" placeholder="למשל: הבנק שלי" maxlength="40" autocomplete="off"></div>
+  <div class="fld wide"><label for="ac-short">שם קצר<small>לטבלאות</small></label><input id="ac-short" value="${esc(d.short)}" placeholder="לא חובה" maxlength="18" autocomplete="off"></div></div></section>
+  <section><h2>מטבע</h2><div class="segbar" role="tablist">${[['ILS','שקל ₪'],['USD','דולר $']].map(([k,t])=>`<button role="tab" data-cur="${k}" aria-selected="${d.cur===k}">${t}</button>`).join('')}</div>
+  <p class="hint">חשבון דולרי מוזן בדולרים ומומר לפי שער היום של העדכון.</p></section>
+  <section><h2>צבע</h2><div class="panel pad"><div class="swatches">${PALETTE.map(c=>`<button class="sw-c" data-color="${c}" style="background:${c}" aria-label="צבע" aria-pressed="${d.color.toLowerCase()===c.toLowerCase()}"></button>`).join('')}</div></div></section>
+  <section><h2>מה יש בחשבון</h2><div class="panel">
+  ${d.rows.map((r,i)=>`<div class="row plain"><span><span class="nm">${esc(r.label)}</span>${r.std?'':'<div class="sub">רכיב קיים</div>'}</span>
+  <span class="val"><button class="sw" data-row="${i}" role="switch" aria-checked="${r.on}" aria-label="${esc(r.label)}"><i></i></button></span></div>`).join('')}
+  </div><p class="hint">כל רכיב מסומן הופך לשדה בעדכון ולשורה בפירוט היתרות.</p></section>
+  <section><h2>קובץ מהבנק</h2><div class="panel">
+  <div class="row plain"><span><span class="nm">העלאת קובץ אחזקות</span><div class="sub">${d.link?'מופעל':'הזנה ידנית בלבד'}</div></span>
+  <span class="val"><button class="sw" data-link role="switch" aria-checked="${!!d.link}" aria-label="העלאת קובץ אחזקות"><i></i></button></span></div>
+  ${d.link?`<div class="fld"><label for="ac-link">הקובץ ממלא את</label><select id="ac-link" class="pick1">${on.map(r=>`<option value="${r.key}" ${r.key===d.link?'selected':''}>${esc(r.label)}</option>`).join('')}</select></div>`:''}
+  </div><p class="hint">כשזה מופעל מופיע בדף החשבון ״תיק ניירות ערך״, ובעדכון חדש אפשר לצרף את קובץ האחזקות שהבנק מייצא. גם אז אפשר תמיד להזין ידנית.</p></section>
+  ${editing?`<section><button type="button" class="btn danger" id="ac-del">מחיקת החשבון</button></section>`:''}
+  <section><button class="btn" id="ac-save">${editing?'שמירה':'הוספת החשבון'}</button></section>`;
+}
+function openAccEditor(id){
+  if(PRIV()){toast('מצב פרטי מופעל');return}
+  const a=id?ACCOUNTS.find(x=>x.id===id):null;
+  if(id&&!a)return;
+  const d=accDraft(a);
+  openLayer(`<div class="sheet modal" role="dialog" aria-label="חשבון"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>${a?'עריכת חשבון':'חשבון חדש'}</h2><span></span></header><div class="body"></div></div>`);
+  const L=stack[stack.length-1];
+  const paint=()=>{const b=L.el.querySelector('.body');const y=b.scrollTop;b.innerHTML=accBody(d,!!a);b.scrollTop=y;wire()};
+  const grab=()=>{const n=L.el.querySelector('#ac-name'),h=L.el.querySelector('#ac-short'),l=L.el.querySelector('#ac-link');
+    if(n)d.name=n.value;if(h)d.short=h.value;if(l)d.link=l.value};
+  function wire(){
+    L.el.querySelectorAll('[data-cur]').forEach(b=>b.onclick=()=>{grab();d.cur=b.dataset.cur;paint()});
+    L.el.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{grab();d.color=b.dataset.color;paint()});
+    L.el.querySelectorAll('[data-row]').forEach(b=>b.onclick=()=>{grab();const r=d.rows[+b.dataset.row];r.on=!r.on;if(!r.on&&d.link===r.key)d.link='';paint()});
+    const lk=L.el.querySelector('[data-link]');
+    if(lk)lk.onclick=()=>{grab();
+      if(d.link){d.link=''}
+      else{const on=d.rows.filter(r=>r.on);if(!on.length){toast('בחרו קודם מה יש בחשבון');return}
+        d.link=(on.find(r=>r.type==='cap')||on[0]).key}
+      paint()};
+    const sel=L.el.querySelector('#ac-link');if(sel)sel.onchange=()=>{d.link=sel.value};
+    const del=L.el.querySelector('#ac-del');
+    if(del)del.onclick=async()=>{
+      if(!confirm('למחוק את החשבון? הסכומים שהוזנו עבורו יימחקו מכל העדכונים.'))return;
+      delete S.ports[a.id];delete S.plink[a.id];delete S.pmask[a.id];
+      setConfig(ACCOUNTS.filter(x=>x.id!==a.id));S.updates=clean(S.updates);
+      await save();closeLayer();setTimeout(render,340);toast('החשבון נמחק');
+    };
+    L.el.querySelector('#ac-save').onclick=async()=>{
+      grab();
+      const name=d.name.trim();if(!name){toast('צריך שם לחשבון');return}
+      const on=d.rows.filter(r=>r.on);if(!on.length){toast('בחרו מה יש בחשבון');return}
+      const rec={id:d.id,name,short:(d.short.trim()||name).slice(0,18),color:d.color,cur:d.cur,
+        fields:on.map(r=>[r.key,r.label,r.type,!!r.trend])};
+      const list=ACCOUNTS.slice();const i=list.findIndex(x=>x.id===d.id);
+      if(i<0)list.push(rec);else list[i]=rec;
+      setConfig(list);
+      if(d.link&&on.some(r=>r.key===d.link))S.plink[d.id]=d.link;
+      else{delete S.plink[d.id];delete S.ports[d.id]}
+      S.updates=clean(S.updates);
+      await save();closeLayer();setTimeout(render,340);toast(i<0?'החשבון נוסף':'נשמר');
+    };
+  }
+  paint();
+}
 const PMARK='<svg class="pmk" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 2.5l19 19M10.6 5.2a9 9 0 0110.1 6.8 9 9 0 01-2.4 4M6.3 6.4A9 9 0 003.3 12a9 9 0 0011.9 5.5M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
 function openPrivCfg(){
-  if(!ACCOUNTS.length){toast('צריך קודם לטעון גיבוי');return}
+  if(PRIV())return;
+  if(!ACCOUNTS.length){toast('צריך קודם להגדיר חשבונות');return}
   const opt=[['full','רגיל'],['half','חצי'],['hide','מוסתר']];
   openLayer(`<div class="sheet modal" role="dialog" aria-label="מה מוסתר"><header><span class="grab" aria-hidden="true"></span><button data-close>סגירה</button><h2>מה מוסתר</h2><span></span></header><div class="body">
   <section><p class="hint" style="padding:0 4px 12px">לכל חשבון אפשר לקבוע מה יוצג כשמצב פרטי מופעל. ההגדרה נשמרת, והיא לא משנה דבר כל עוד המצב כבוי.</p>
@@ -620,8 +715,12 @@ function viewSettings(){
   <section><h2>מצב פרטי</h2><div class="panel">
   <div class="row plain"><span><span class="nm">מצב פרטי</span><div class="sub">${p?'מופעל — הסכומים המוצגים אינם האמיתיים':'כבוי — הכול מוצג כרגיל'}</div></span>
   <span class="val"><button class="sw" data-act="privtog" role="switch" aria-checked="${p}" aria-label="מצב פרטי"><i></i></button></span></div>
-  <button class="row plain" data-act="privcfg"><span><span class="nm">מה מוסתר</span></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>
+  ${p?'':`<button class="row plain" data-act="privcfg"><span><span class="nm">מה מוסתר</span></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
   </div></section>
+  ${p?'':`<section><h2>חשבונות</h2><div class="panel">
+  ${ACCOUNTS.map(a=>`<button class="row" data-acced="${a.id}"><span class="spine" style="background:${a.color}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub">${a.fields.length===1?'רכיב אחד':a.fields.length+' רכיבים'}${a.cur==='USD'?' · דולר':''}${S.plink[a.id]?' · קובץ מהבנק':''}</div></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`).join('')}
+  ${ACCOUNTS.length?'':'<div class="row plain"><span class="nm flat">עוד לא הוגדרו חשבונות</span></div>'}
+  </div><div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="accnew">הוספת חשבון</button></div></section>`}
   <section><h2>גיבוי</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">הנתונים נשמרים רק במכשיר הזה. מחיקת האפליקציה ממסך הבית או ניקוי נתוני Safari מוחקים אותם, אז כדאי לשמור גיבוי אחרי כל עדכון.${m.lastBackup?` גיבוי אחרון: <span class="n">${new Date(m.lastBackup).toLocaleDateString('he-IL')}</span>.`:''}</p>
   <div class="stackbtns"><button class="btn" data-act="backup">שמירת גיבוי</button><button class="btn ghost" data-act="csv">ייצוא לאקסל (CSV)</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div></section>
   <section><h2>נעילה</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">${locked?'האפליקציה נעולה בקוד, והנתונים שמורים מוצפנים במכשיר. הקוד נדרש בפתיחה, ושוב אחרי שהאפליקציה הייתה ברקע יותר משתי דקות.':'אפשר לנעול את האפליקציה בקוד. הנתונים יישמרו מוצפנים, ובלי הקוד אי אפשר לשחזר אותם.'}</p>
@@ -1084,14 +1183,16 @@ async function importPortfolio(accId,file){
 
 /* ---------- events / boot ---------- */
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-tab],[data-act],[data-acc],[data-edit],[data-close],[data-port]');if(!t)return;
+  const t=e.target.closest('[data-tab],[data-act],[data-acc],[data-acced],[data-edit],[data-close],[data-port]');if(!t)return;
   if(t.dataset.tab){tab=t.dataset.tab;render()}
+  else if(t.dataset.acced!==undefined)openAccEditor(t.dataset.acced);
   else if(t.dataset.acc)openAccount(t.dataset.acc);
   else if(t.dataset.port)openPortfolio(t.dataset.port);
   else if(t.dataset.edit)openForm(t.dataset.edit);
   else if('close' in t.dataset)closeLayer();
   else ({new:()=>ACCOUNTS.length?openForm():openImport(),backup:doBackup,csv:doCsv,import:openImport,setpass:setPass,rmpass:rmPass,locknow:lockNow,
     privcfg:openPrivCfg,
+    accnew:()=>openAccEditor(null),
     privtog:async()=>{
       if(!S.priv&&!anyMask()){openPrivCfg();toast('בחרו קודם מה יוסתר');return}
       S.priv=!S.priv;await save();closeAllLayers();render();toast(S.priv?'מצב פרטי מופעל':'מצב פרטי כבוי');
