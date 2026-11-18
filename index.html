@@ -111,6 +111,10 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 .sheet .row.dotted{grid-template-columns:10px 1fr auto}
 .sheet button.row.dotted{grid-template-columns:10px 1fr auto 8px}
 .sheet .row.dotted .spine{display:block}
+/* a row inside a sheet that leads somewhere needs a track for its chevron, or the chevron
+   wraps onto a line of its own */
+.sheet button.row{grid-template-columns:1fr auto 8px}
+.sheet button.row.dotted{grid-template-columns:10px 1fr auto 8px}
 .sheet .row::before{inset-inline-start:16px}
 
 .facts div{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;padding:10px 16px;background:var(--surface)}
@@ -118,6 +122,8 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 .facts small{font-size:17px;color:var(--ink)}
 .facts b{font-family:var(--num);font-size:17px;font-weight:400;color:var(--muted);direction:ltr}
 .facts b.up{color:var(--up)}.facts b.down{color:var(--down)}
+.row.link .nm{color:var(--tint);font-weight:500}
+.row.link .chev{stroke:var(--tint);stroke-width:2.4}
 
 .note{font-size:15px;color:var(--ink2);background:var(--surface);border-radius:14px;padding:12px 16px;margin:18px 16px 0;display:flex;gap:12px;align-items:center;justify-content:space-between}
 .note button{color:var(--tint);font-weight:600;white-space:nowrap;min-height:32px}
@@ -631,22 +637,20 @@ function openAccount(id,from){
   <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dF)}">${arrow(dF)} ${signedIls(dF)}</b> <span class="n ${cls(dF)}">${vs[0]?pct(dF/vs[0],2):''}</span>`:'<b class="flat">—</b>'}</div></div>
   <section><h2>שינוי בין העדכונים</h2><div class="panel pad" id="ch-acc">${lineChart(pts,acol(a.color),{label:a.name})}<p class="readout"></p></div></section>
   <section><div class="panel facts"><div><small>הגבוה ביותר</small><b>${ils(hi)}</b></div><div><small>הנמוך ביותר</small><b>${ils(lo)}</b></div>
-  <div><small>שינוי ממוצע לעדכון</small><b class="${cls(n>1?dF/(n-1):0)}">${n>1?signedIls(dF/(n-1)):'—'}</b></div><div><small>מספר עדכונים</small><b>${n}</b></div></div></section>`;
+</div></section>`;
   if(isUsd){h+=`<section><h2>שווי בדולרים</h2><div class="panel pad" id="ch-usd">${lineChart(U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),acol(a.color),{label:'שווי בדולרים'})}<p class="readout"></p></div></section>`}
   const tr=a.fields.filter(f=>f[3]);
   tr.forEach((f,i)=>{h+=`<section><h2>${esc(f[1])}</h2><div class="panel pad" id="ch-t${i}">${lineChart(U.map(u=>({d:u.date,v:u.vals[f[0]]*q})),acol(a.color),{label:f[1]})}<p class="readout"></p></div></section>`});
   h+=`<section><h2>פירוט היתרות <small>עדכון אחרון</small></h2><div class="panel">`;
   const last=U[n-1],prev=U[n-2];const f=isUsd?usd:ils;
   const linked=S.plink[id];
+  const pLast=linked?portsOf(id).slice(-1)[0]:null;
   for(const [k,nm] of a.fields){const fv=last.vals[k]*q,d=prev?fv-prev.vals[k]*q:0;
     const tapable=k===linked;
-    h+=`<${tapable?'button':'div'} class="row"${tapable?` data-port="${id}"`:''}><span class="spine" style="background:${acol(a.color)}"></span><span class="nm" style="font-weight:500">${esc(nm)}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,f)}</span>`:''}</span>${tapable?'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>':''}</${tapable?'button':'div'}>`}
+    const sub=!tapable?'':pLast?`<div class="sub"><span class="n">${pLast.hold?pLast.hold.length:'—'}</span> אחזקות · <span class="n">${dlong(pLast.date)}</span></div>`
+      :'<div class="sub">העלאת קובץ אחזקות מהבנק</div>';
+    h+=`<${tapable?'button':'div'} class="row${tapable?' link':''}"${tapable?` data-port="${id}"`:''}><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm"${tapable?'':' style="font-weight:500"'}>${esc(nm)}</span>${sub}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,f)}</span>`:''}</span>${tapable?'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>':''}</${tapable?'button':'div'}>`}
   h+=`</div></section>`;
-  if(S.plink[id]){
-  const pl=portsOf(id),pLast=pl[pl.length-1];
-  h+=`<section><h2>תיק ניירות ערך</h2><div class="panel">
-  <button class="row dotted" data-port="${id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${pLast?'פירוט האחזקות':'העלאת קובץ אחזקות'}</span><div class="sub">${pLast?`<span class="n">${pLast.hold?pLast.hold.length:'—'}</span> אחזקות · <span class="n">${dlong(pLast.date)}</span>`:'מקובץ ‎.xlsx‎ או ‎.csv‎ של הבנק'}</div></span>
-  <span class="val">${pLast&&pLast.hold?`<b>${ils(summarize(pLast.hold).total)}</b>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button></div></section>`;}
   h+=`<section><h2>היסטוריה</h2><div class="panel">`;
   for(let i=n-1;i>=0;i--){const d=i?vs[i]-vs[i-1]:0;
     h+=`<div class="row dotted"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
