@@ -438,8 +438,7 @@ function viewHome(){
     h+=`<button class="row" data-acc="${a.id}"><span class="spine" style="background:${a.color}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${share(v,last.total)}%</span> מההון</div></span>
     <span class="val"><b>${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
   h+=`</div></section>`;
-  h+=PRIV()?`<section><div class="panel pad"><p class="hint" style="padding:0">מצב פרטי מופעל. הסכומים המוצגים אינם האמיתיים, ואין אפשרות לערוך עדכונים. לכיבוי: הגדרות.</p></div></section>`
-           :`<section><button class="btn" data-act="new">עדכון חדש</button></section>`;
+  h+=PRIV()?'':`<section><button class="btn" data-act="new">עדכון חדש</button></section>`;
   view.innerHTML=h;
   wireChart($('#ch-total'),win.map((u,i)=>({d:u.date,v:winC[i].total})),ils);
 }
@@ -600,12 +599,6 @@ function viewCompare(){
 }
 
 const PMARK='<svg class="pmk" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 2.5l19 19M10.6 5.2a9 9 0 0110.1 6.8 9 9 0 01-2.4 4M6.3 6.4A9 9 0 003.3 12a9 9 0 0011.9 5.5M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
-function maskSummary(){
-  const hid=ACCOUNTS.filter(a=>maskOf(a.id)==='hide').length,hf=ACCOUNTS.filter(a=>maskOf(a.id)==='half').length;
-  if(!hid&&!hf)return 'עוד לא נבחר מה להסתיר';
-  const p=[];if(hid)p.push(hid+(hid===1?' חשבון מוסתר':' חשבונות מוסתרים'));if(hf)p.push(hf+(hf===1?' חשבון בחצי':' חשבונות בחצי'));
-  return p.join(' · ');
-}
 function openPrivCfg(){
   if(!ACCOUNTS.length){toast('צריך קודם לטעון גיבוי');return}
   const opt=[['full','רגיל'],['half','חצי'],['hide','מוסתר']];
@@ -627,8 +620,7 @@ function viewSettings(){
   <section><h2>מצב פרטי</h2><div class="panel">
   <div class="row plain"><span><span class="nm">מצב פרטי</span><div class="sub">${p?'מופעל — הסכומים המוצגים אינם האמיתיים':'כבוי — הכול מוצג כרגיל'}</div></span>
   <span class="val"><button class="sw" data-act="privtog" role="switch" aria-checked="${p}" aria-label="מצב פרטי"><i></i></button></span></div>
-  <button class="row plain" data-act="privcfg"><span><span class="nm">מה מוסתר</span><div class="sub">${maskSummary()}</div></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>
-  <div class="pad" style="padding-top:2px"><p class="hint" style="padding:0">חשבון שסומן ״מוסתר״ לא מופיע בכלל, וחשבון שסומן ״חצי״ מוצג בחצי מהסכום — בדף הראשי, בהשוואה, בדף החשבון ובתיק ניירות הערך. זו תצוגה בלבד: הנתונים במכשיר, הגיבוי וקובץ ה-CSV תמיד מכילים את הסכומים האמיתיים. כל עוד המצב מופעל אין אפשרות להוסיף או לערוך עדכון, כדי שסכום מוסווה לא יישמר בטעות.</p></div>
+  <button class="row plain" data-act="privcfg"><span><span class="nm">מה מוסתר</span></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>
   </div></section>
   <section><h2>גיבוי</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">הנתונים נשמרים רק במכשיר הזה. מחיקת האפליקציה ממסך הבית או ניקוי נתוני Safari מוחקים אותם, אז כדאי לשמור גיבוי אחרי כל עדכון.${m.lastBackup?` גיבוי אחרון: <span class="n">${new Date(m.lastBackup).toLocaleDateString('he-IL')}</span>.`:''}</p>
   <div class="stackbtns"><button class="btn" data-act="backup">שמירת גיבוי</button><button class="btn ghost" data-act="csv">ייצוא לאקסל (CSV)</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div></section>
