@@ -481,6 +481,7 @@ function spark(vs,color){if(vs.length<2)return '';const lo=Math.min(...vs),hi=Ma
   return `<svg class="spark" viewBox="0 0 60 22" aria-hidden="true"><polyline fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${p}"/><circle cx="${last[0]}" cy="${last[1]}" r="2.6" fill="${color}"/></svg>`}
 function readoutText(p,prev,fmt){let t=`<span class="n">${dlong(p.d)}</span> · <b class="n">${fmt(p.v)}</b>`;if(prev){const d=p.v-prev.v;t+=` · <span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,fmt)}</span>`}return t}
 function wireChart(box,pts,fmt){
+  if(!box||offscreen)return;
   const svg=box.querySelector('svg.chart'),out=box.querySelector('.readout');if(!svg||!out)return;
   const hit=svg.querySelector('.hit'),cross=svg.querySelector('.cross');const xs=hit.dataset.xs.split(',').map(Number);
   const show=i=>{out.innerHTML=readoutText(pts[i],pts[i-1],fmt)};
@@ -528,11 +529,13 @@ function roll(el,id,val,fmt,o={}){
 }
 const ILSROLL=v=>ils(v);
 function paintRolls(){
+  if(offscreen)return;
   document.querySelectorAll('[data-roll]').forEach(el=>roll(el,el.dataset.roll,+el.dataset.rv,ILSROLL));
 }
 
 /* ---------- views ---------- */
-const $=s=>document.querySelector(s);const view=$('#view'),layer=$('#layer');
+const $=s=>document.querySelector(s);let view=$('#view');const layer=$('#layer');
+let offscreen=false;   /* true while a page is being built for the strip, not for the screen */
 function toast(msg){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
 let firstPaint=true,shownTab=null,topText='',topNum=false;
 /* the large title scrolls away; a compact one takes over so the figure stays reachable */
@@ -544,6 +547,7 @@ function syncTop(){
   bar.classList.toggle('on',anchor.getBoundingClientRect().bottom<limit);
 }
 function setTop(text,isNum){
+  if(offscreen)return;
   topText=text;topNum=!!isNum;
   const sp=$('#topbar').firstElementChild;
   sp.textContent=text;sp.className=isNum?'n':'';
@@ -551,17 +555,29 @@ function setTop(text,isNum){
 }
 addEventListener('scroll',syncTop,{passive:true});
 const TABS=['home','updates','compare','settings'];
+const VIEWS={home:viewHome,updates:viewUpdates,compare:viewCompare,settings:viewSettings};
+/* build a page into a node of our own, with every wiring step standing down */
+function buildPage(t){
+  const node=document.createElement('div');node.className='view';
+  const keepView=view,keepTab=tab,keepOff=offscreen,keepFirst=firstPaint;
+  view=node;tab=t;offscreen=true;firstPaint=false;
+  try{VIEWS[t]()}catch(e){node.innerHTML=''}
+  view=keepView;tab=keepTab;offscreen=keepOff;firstPaint=keepFirst;
+  return node;
+}
 function render(){
   document.querySelectorAll('.tabbar button').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===tab?'page':'false'));
   const dir=shownTab&&shownTab!==tab?Math.sign(TABS.indexOf(tab)-TABS.indexOf(shownTab)):0;
-  ({home:viewHome,updates:viewUpdates,compare:viewCompare,settings:viewSettings})[tab]();
+  VIEWS[tab]();
   window.scrollTo(0,0);firstPaint=false;shownTab=tab;
   /* the tabs sit in a fixed order, so the page arrives from the side it lives on */
-  if(dir&&!calm()){
+  if(dir&&!calm()&&!tabSwipe.busy){
     view.classList.remove('fade');
-    view.animate([{transform:`translateX(${-dir*34}px)`,opacity:0},{transform:'none',opacity:1}],
-      {duration:380,easing:'cubic-bezier(.32,.72,0,1)'});
-  }else{view.classList.remove('fade');void view.offsetWidth;view.classList.add('fade')}
+    const a=view.animate([{transform:`translateX(${-dir*30}px)`,opacity:0},{transform:'none',opacity:1}],
+      {duration:340,easing:'cubic-bezier(.32,.72,0,1)'});
+    view.style.willChange='transform,opacity';
+    a.finished.then(()=>{view.style.willChange=''},()=>{view.style.willChange=''});
+  }else if(!tabSwipe.busy){view.classList.remove('fade');void view.offsetWidth;view.classList.add('fade')}
   syncTop();
 }
 function emptyState(){return ACCOUNTS.length?`<div class="empty"><h2>אין עדיין עדכונים</h2><p>הוסיפו את העדכון הראשון, או טענו גיבוי קיים.</p><div class="stackbtns"><button class="btn" data-act="new">עדכון חדש</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div>`
@@ -585,7 +601,7 @@ function viewHome(){
     <span class="val"><b data-roll="acc:${a.id}" data-rv="${v}">${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
   h+=`</div></section>`;
   h+=PRIV()?'':`<section><button class="btn" data-act="new">עדכון חדש</button></section>`;
-  const moved=rollMem.total!==undefined&&rollMem.total!==last.total;
+  const moved=!offscreen&&rollMem.total!==undefined&&rollMem.total!==last.total;
   view.innerHTML=h;
   paintRolls();
   if(moved&&!calm()&&!PRIV())view.querySelectorAll('.hero .deltas>div').forEach((el,i)=>
@@ -728,6 +744,7 @@ function openForm(date,pre){
 }
 let liveRate=null,liveAt=0;
 async function showLiveRate(sel){
+  if(offscreen)return;
   const el=$(sel);if(!el)return;
   if(liveRate&&Date.now()-liveAt<3600000){el.textContent='₪'+liveRate.toFixed(3);el.classList.remove('flat');return}
   el.textContent='…';
@@ -758,6 +775,7 @@ function viewCompare(){
   h+=`<section><div class="panel facts"><div><small>ימים בין התאריכים</small><b>${Math.round((new Date(B.date)-new Date(A.date))/864e5)}</b></div><div><small>שער דולר</small><b>${A.rate?A.rate.toFixed(3):'—'} → ${B.rate?B.rate.toFixed(3):'—'}</b></div></div></section>`;
   view.innerHTML=h;
   setTop('השוואה');
+  if(offscreen)return;
   $('#ca').onchange=e=>{st.a=e.target.value;viewCompare()};$('#cb').onchange=e=>{st.b=e.target.value;viewCompare()};
 }
 
@@ -902,9 +920,10 @@ const OPENW=92;
 let openSwipe=null;
 function closeSwipe(){if(openSwipe){openSwipe.sp.to(0,{damping:1,response:.34});openSwipe=null}}
 function wireSwipes(){
+  if(offscreen)return;
   view.querySelectorAll('.swipe').forEach(box=>{
     const row=box.querySelector('.row');if(!row)return;
-    const sp=Spring(x=>{row.style.transform=`translateX(${x.toFixed(2)}px)`});
+    const sp=Spring(x=>{row.style.transform=x?`translate3d(${x.toFixed(2)}px,0,0)`:'';row.style.willChange=x?'transform':''});
     const rec={sp,row};
     let armed=false,on=false,sx=0,sy=0,base=0,vt=null,pid=0,swallow=false;
     row.addEventListener('pointerdown',e=>{
@@ -916,6 +935,7 @@ function wireSwipes(){
       const dx=e.clientX-sx,dy=e.clientY-sy;
       if(!on){
         if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){armed=false;return}
+        if(dx<0&&sp.value<=0){armed=false;return}   /* leftward belongs to the page, not the row */
         if(Math.abs(dx)<8)return;
         on=true;sp.stop();vt=Velocity();vt.add(e.clientX);
         if(openSwipe&&openSwipe!==rec)closeSwipe();
@@ -979,24 +999,32 @@ function openImport(){
 const calm=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
 /* A spring, not a timed animation: it starts from wherever the surface is right now and
    carries the finger's velocity, so a page can be grabbed and reversed mid-flight. */
+const TICK={live:new Set(),raf:0,last:0};
+function tickAll(now){
+  TICK.raf=0;
+  let dt=(now-TICK.last)/1000;TICK.last=now;
+  if(dt>1/20)dt=1/20;if(dt<=0)dt=1/60;
+  for(const sp of [...TICK.live])sp._step(dt);
+  if(TICK.live.size)TICK.raf=requestAnimationFrame(tickAll);
+}
+function tickOn(sp){TICK.live.add(sp);if(!TICK.raf){TICK.last=performance.now();TICK.raf=requestAnimationFrame(tickAll)}}
 function Spring(set){
-  let x=0,v=0,t=0,z=1,r=.4,raf=0,last=0,cb=null;
-  const step=now=>{
-    let dt=(now-last)/1000;last=now;if(dt>1/20)dt=1/20;if(dt<=0)dt=1/60;
-    const w=2*Math.PI/r,k=w*w,c=2*z*w,n=Math.max(1,Math.ceil(dt*360)),h=dt/n;
-    for(let i=0;i<n;i++){v+=(-k*(x-t)-c*v)*h;x+=v*h}
-    if(Math.abs(x-t)<4e-4&&Math.abs(v)<4e-3){x=t;v=0;set(x);raf=0;const f=cb;cb=null;if(f)f();return}
-    set(x);raf=requestAnimationFrame(step);
-  };
+  let x=0,v=0,t=0,z=1,r=.4,cb=null;
   const api={
     get value(){return x},get velocity(){return v},
-    jump(val){if(raf)cancelAnimationFrame(raf);raf=0;x=val;v=0;set(x)},
+    _step(dt){
+      const w=2*Math.PI/r,k=w*w,c=2*z*w,n=Math.max(1,Math.ceil(dt*360)),h=dt/n;
+      for(let i=0;i<n;i++){v+=(-k*(x-t)-c*v)*h;x+=v*h}
+      if(Math.abs(x-t)<4e-4&&Math.abs(v)<4e-3){x=t;v=0;set(x);TICK.live.delete(api);const f=cb;cb=null;if(f)f();return}
+      set(x);
+    },
+    jump(val){TICK.live.delete(api);x=val;v=0;set(x)},
     to(target,o,done){o=o||{};t=target;
       if(o.damping!=null)z=o.damping;if(o.response!=null)r=o.response;if(o.velocity!=null)v=o.velocity;
       cb=done||null;
       if(calm()){api.stop();x=t;v=0;set(x);if(done)done();return}
-      if(!raf){last=performance.now();raf=requestAnimationFrame(step)}},
-    stop(){if(raf)cancelAnimationFrame(raf);raf=0;cb=null}
+      tickOn(api);},
+    stop(){TICK.live.delete(api);cb=null}
   };
   return api;
 }
@@ -1028,12 +1056,13 @@ function openLayer(html,push,origin){
      whole way, so what you see is that rectangle growing; the contents fade in once it is
      nearly there, which is what hides the squash of the early frames. */
   const parts=origin?[el.querySelector('header'),el.querySelector('.body')].filter(Boolean):[];
+  for(const n of parts)n.style.willChange='opacity';
   const set=p=>{
     if(origin){
       const vw=innerWidth||1,vh=innerHeight||1;
       const e=p<0?0:p>1?1:p;
       if(e>=.9995){
-        el.style.transform='';el.style.borderRadius='';el.style.transformOrigin='';el.style.overflow='';
+        el.style.transform='';el.style.borderRadius='';el.style.transformOrigin='';el.style.overflow='';el.style.willChange='';
         for(const n of parts)n.style.opacity='';
         sc.style.opacity='.1';underZoom(under,1);return;
       }
@@ -1053,7 +1082,8 @@ function openLayer(html,push,origin){
     if(kind==='push')underTx(under,p);
   };
   const s=Spring(set);s.jump(0);
-  if(origin)el.style.overflow='hidden';
+  if(origin){el.style.overflow='hidden';el.style.willChange='transform'}
+  else el.style.willChange='transform';
   const L={el,sc,s,set,kind,under,origin};stack.push(L);
   s.to(1,{damping:1,response:origin?.46:kind==='push'?.42:.4});
   grab(L);
@@ -1064,7 +1094,7 @@ function openLayer(html,push,origin){
 function closeLayer(vel){
   const L=stack.pop();if(!L)return;
   L.s.to(0,{damping:1,response:L.kind==='push'?.36:.34,velocity:vel||0},()=>{
-    L.el.remove();L.sc.remove();
+    L.el.style.willChange='';L.el.remove();L.sc.remove();
     if(!stack.length)clearStage();
   });
 }
@@ -1398,12 +1428,7 @@ function openHolding(accId,id){
   <div><small>מס תיאורטי</small><b class="${cls(x.tx)}">${signedIls(x.tx)}</b></div>
   ${old?`<div><small>שינוי מהצילום הקודם</small><b class="${cls(x.v-old.v)}">${signedIls(x.v-old.v)}</b></div>`:''}
   </div></section>
-  <section><h2>סיווג</h2><div class="segbar">${Object.entries(TYPES).map(([k,v])=>`<button data-type="${k}" aria-selected="${k===t}">${v}</button>`).join('')}</div>
-  <p class="hint">הסיווג נקבע אוטומטית לפי שם הנייר, והשיוך לישראל או לחו״ל לפי שפת השם והמטבע. שינוי כאן נשמר לנייר הזה בכל הצילומים.</p></section></div></div>`);
-  layer.querySelectorAll('[data-type]').forEach(b=>b.onclick=async()=>{
-    S.ptype[id]=b.dataset.type;await save();closeLayer();
-    setTimeout(()=>paintPortfolio(accId,true),340);
-  });
+  <p class="hint">${esc(CATLBL[c])}. הסיווג נקבע לפי שם הנייר, והשיוך לישראל או לחו״ל לפי שפת השם והמטבע.</p></div></div>`);
 }
 async function importPortfolio(accId,file){
   const a=ACCOUNTS.find(x=>x.id===accId);
@@ -1433,6 +1458,83 @@ async function importPortfolio(accId,file){
   }catch(err){toast(err.message||'לא הצלחתי לקרוא את הקובץ')}
 }
 
+/* ---------- drag sideways between the four pages ----------
+   the neighbour is built once, at the moment the drag is recognised, and then both pages ride
+   the finger on one spring. letting go hands the spring the finger's speed, so a flick lands
+   where it was thrown and a slow drag settles back. */
+const tabSwipe={busy:false};
+(function tabPager(){
+  const app=$('#app');
+  let armed=false,on=false,sx=0,sy=0,pid=0,vt=null,dirn=0,ghost=null,lockY=0,W=1,onRow=false;
+  const canStart=()=>!stack.length&&!document.querySelector('.lock')&&!openSwipe&&!tabSwipe.busy&&TABS.includes(tab);
+  const place=x=>{
+    view.style.transform=`translate3d(${x.toFixed(2)}px,0,0)`;
+    if(ghost)ghost.style.transform=`translate3d(${(x+dirn*W).toFixed(2)}px,0,0)`;
+  };
+  const sp=Spring(place);
+  const cleanup=()=>{
+    if(ghost){ghost.remove();ghost=null}
+    view.style.transform='';view.style.willChange='';
+    app.style.position='';app.style.top='';app.style.insetInline='';app.style.overflow='';
+    document.body.style.overflow='';
+    tabSwipe.busy=false;
+  };
+  addEventListener('pointerdown',e=>{
+    if(!canStart())return;
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    if(e.target.closest('.sheet,input,select,textarea,.chiprow,.segbar'))return;
+    armed=true;on=false;sx=e.clientX;sy=e.clientY;pid=e.pointerId;
+    /* over a row the rightward drag reveals its delete action, so the page only takes that
+       direction when the finger starts at the screen edge — only from the far edge, where there is room to pull the page across */
+    onRow=!!e.target.closest('.swipe')&&e.clientX<innerWidth-28;
+  },{passive:true});
+  addEventListener('pointermove',e=>{
+    if(!armed||e.pointerId!==pid)return;
+    const dx=e.clientX-sx,dy=e.clientY-sy;
+    if(!on){
+      if(Math.abs(dy)>8&&Math.abs(dy)>Math.abs(dx)){armed=false;return}
+      if(onRow&&dx>0){armed=false;return}
+      if(Math.abs(dx)<14)return;
+      /* in a right-to-left bar the next page sits to the left, so dragging left advances */
+      const want=TABS.indexOf(tab)+(dx<0?1:-1);
+      if(want<0||want>=TABS.length){armed=false;return}
+      on=true;tabSwipe.busy=true;
+      W=innerWidth;dirn=dx<0?1:-1;
+      lockY=scrollY;
+      ghost=buildPage(TABS[want]);
+      /* #app is held at -lockY while the drag runs, so the incoming page is offset to match */
+      ghost.style.cssText=`position:absolute;top:${lockY}px;inset-inline:0;will-change:transform`;
+      view.style.willChange='transform';
+      app.style.position='fixed';app.style.top=(-lockY)+'px';app.style.insetInline='0';app.style.overflow='hidden';
+      document.body.style.overflow='hidden';
+      app.appendChild(ghost);
+      sp.jump(0);place(0);
+      vt=Velocity();vt.add(e.clientX);
+      try{app.setPointerCapture(pid)}catch(err){}
+    }
+    vt.add(e.clientX);
+    let x=dx;
+    if(dirn>0&&x>0)x=rubber(x,W);
+    if(dirn<0&&x<0)x=rubber(x,W);
+    sp.jump(x);
+  },{passive:true});
+  const release=()=>{
+    if(!armed)return;armed=false;
+    if(!on)return;
+    on=false;
+    const v=vt?vt.get():0,land=sp.value+project(v)*.35;
+    const go=dirn>0?land<-W*.3:land>W*.3;
+    const target=go?-dirn*W:0;
+    sp.to(target,{damping:1,response:.42,velocity:v},()=>{
+      const next=go?TABS[TABS.indexOf(tab)+dirn]:null;
+      cleanup();
+      if(next){tab=next;shownTab=next;render();window.scrollTo(0,0)}
+      else window.scrollTo(0,lockY);
+    });
+  };
+  addEventListener('pointerup',release);addEventListener('pointercancel',release);
+})();
+
 /* ---------- pull down for the rate ----------
    the page itself gives under the finger and resists further the further it goes, which is the
    same rubber the sheets use. letting go past the mark fetches today's rate. */
@@ -1446,12 +1548,12 @@ async function importPortfolio(accId,file){
   });
   const atTop=()=>(document.scrollingElement||document.documentElement).scrollTop<=0;
   addEventListener('pointerdown',e=>{
-    if(busy||stack.length||document.querySelector('.lock')||e.pointerType==='mouse'&&e.button!==0)return;
+    if(busy||stack.length||tabSwipe.busy||document.querySelector('.lock')||e.pointerType==='mouse'&&e.button!==0)return;
     if(!atTop())return;
     y0=e.clientY;on=false;pid=e.pointerId;
   },{passive:true});
   addEventListener('pointermove',e=>{
-    if(y0===null||e.pointerId!==pid||busy)return;
+    if(y0===null||e.pointerId!==pid||busy||tabSwipe.busy)return;
     const dy=e.clientY-y0;
     if(!on){if(dy<10||!atTop()){if(dy<-6)y0=null;return}on=true;sp.stop()}
     sp.jump(rubber(Math.max(0,dy),innerHeight*.9));
