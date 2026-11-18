@@ -159,6 +159,8 @@ button.row[aria-pressed="true"] .nm{font-weight:600}
 .fld .inl{display:flex;gap:4px;align-items:center}
 .fld .inl button{white-space:nowrap;font-size:15px;color:var(--tint);padding:0 4px;min-height:44px}
 .fld .inl button:active{opacity:.4}
+.fld .inl .atbtn{color:var(--tint);font-size:15px;min-height:44px;display:flex;align-items:center;cursor:pointer;white-space:nowrap}
+.fld .inl .atbtn.on{color:var(--up);font-weight:600;font-size:13.5px}
 .hint{font-size:13px;color:var(--muted);padding:6px 16px 12px;margin:0}
 .err{margin:16px 16px 0;background:#FFE5E7;color:#A1000F;border-radius:12px;padding:11px 14px;font-size:15px}
 
@@ -292,10 +294,29 @@ document.addEventListener('visibilitychange',()=>{
   else {hiddenAt=0;cover(false)}
 });
 window.addEventListener('pagehide',()=>{hiddenAt=Date.now();cover(true)});
+function applyPlain(pt){
+  const d=JSON.parse(new TextDecoder().decode(pt));
+  setConfig(d.accounts);S.updates=clean(d.updates);loadPorts(d);
+}
 async function unlock(pass){
-  const raw=readRaw();const salt=unb64(raw.salt);const k=await deriveKey(pass,salt);
-  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},k,unb64(raw.ct));
-  const d=JSON.parse(new TextDecoder().decode(pt));setConfig(d.accounts);S.updates=clean(d.updates);loadPorts(d);cryptoKey=k;encMeta={salt:raw.salt};
+  const raw=readRaw();
+  if(raw.wrap){
+    /* written by the build that offered Face ID: the file is sealed with a random data key,
+       and that key is wrapped under the passcode. Read it, then rewrite in this build's format. */
+    const w=raw.wrap.pass;
+    if(!w)throw new Error('no-pass-wrap');
+    const kek=await deriveKey(pass,unb64(w.salt));
+    const dkRaw=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(w.iv)},kek,unb64(w.ct));
+    const dk=await crypto.subtle.importKey('raw',dkRaw,{name:'AES-GCM'},false,['decrypt']);
+    applyPlain(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},dk,unb64(raw.ct)));
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    cryptoKey=await deriveKey(pass,salt);encMeta={salt:b64(salt)};
+    await save();
+    return;
+  }
+  const k=await deriveKey(pass,unb64(raw.salt));
+  applyPlain(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},k,unb64(raw.ct)));
+  cryptoKey=k;encMeta={salt:raw.salt};
 }
 function loadPorts(d){
   S.ports={};S.ptype={};S.plink={};
@@ -391,9 +412,7 @@ function viewHome(){
   for(const a of ACCOUNTS){const v=last.acc[a.id],d=prev?v-prev.acc[a.id]:0;
     h+=`<button class="row" data-acc="${a.id}"><span class="spine" style="background:${a.color}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${(v/last.total*100).toFixed(1)}%</span> מההון</div></span>
     <span class="val"><b>${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
-  const span=Math.round((new Date(U[n-1].date)-new Date(U[0].date))/864e5);
-  h+=`</div></section><section><h2>נתוני מפתח</h2><div class="panel facts">
-  <div><small>מספר עדכונים</small><b>${n}</b></div><div><small>תקופת המעקב</small><b>${span} ימים</b></div></div></section>
+  h+=`</div></section>
   <section><button class="btn" data-act="new">עדכון חדש</button></section>`;
   view.innerHTML=h;
   wireChart($('#ch-total'),win.map((u,i)=>({d:u.date,v:winC[i].total})),ils);
@@ -443,7 +462,12 @@ function viewUpdates(){
   for(let i=U.length-1;i>=0;i--){const d=i?C[i].total-C[i-1].total:0;
     h+=`<button class="row" data-edit="${U[i].date}"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span><span class="nm n">${dlong(U[i].date)}</span><div class="sub">שער דולר <span class="n">${U[i].rate?U[i].rate.toFixed(3):'—'}</span></div></span>
     <span class="val"><b>${ils(C[i].total)}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)} (${pct(d/C[i-1].total,2)})</span>`:'<span class="flat">עדכון ראשון</span>'}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
-  view.innerHTML=h+`</div></section>`;
+  const span=Math.round((new Date(U[U.length-1].date)-new Date(U[0].date))/864e5);
+  h+=`</div></section><section><h2>נתוני מפתח</h2><div class="panel facts">
+  <div><small>מספר עדכונים</small><b>${U.length}</b></div><div><small>תקופת המעקב</small><b>${span} ימים</b></div>
+  <div><small>שער דולר נוכחי</small><b id="liverate" class="flat">—</b></div></div></section>`;
+  view.innerHTML=h;
+  showLiveRate('#liverate');
 }
 
 function openForm(date,pre){
@@ -459,7 +483,8 @@ function openForm(date,pre){
   for(const a of ACCOUNTS){
     h+=`<div class="grp" style="--c:${a.color}"><h3>${esc(a.name)}${a.cur==='USD'?'<small>בדולרים</small>':'<small>בש״ח</small>'}</h3>`;
     for(const [k,nm] of a.fields)h+=`<div class="fld"><label for="f-${k}">${esc(nm)}</label><input id="f-${k}" data-k="${k}" inputmode="decimal" autocomplete="off" value="${f.vals[k]===''?'':f.vals[k]}" placeholder="0"></div>`;
-    if(a.id===rateAcc)h+=`<div class="fld"><label for="f-rate">שער דולר<small>USD/ILS ביום העדכון</small></label><div class="inl"><input id="f-rate" inputmode="decimal" autocomplete="off" value="${f.rate||''}" placeholder="3.160"><button type="button" id="getrate">משיכה</button></div></div><p class="hint" id="ratehint">״משיכה״ מביאה את השער לתאריך שנבחר מהאינטרנט. אפשר תמיד להקליד ידנית.</p>`;
+    if(a.id===rateAcc)h+=`<div class="fld"><label for="f-rate">שער דולר<small>USD/ILS ביום העדכון</small></label><div class="inl"><input id="f-rate" inputmode="decimal" autocomplete="off" value="${f.rate||''}" placeholder="3.160"><button type="button" id="getrate">רענון</button></div></div><p class="hint" id="ratehint">השער נמשך לבד לפי התאריך. שער נוכחי: <b id="liverate2" class="n">—</b></p>`;
+    if(S.plink[a.id])h+=`<input type="file" id="af-${a.id}" accept=".xlsx,.csv,.txt" hidden><div class="fld"><label for="af-${a.id}">קובץ אחזקות<small>לא חובה</small></label><div class="inl"><label class="atbtn" for="af-${a.id}" id="al-${a.id}">צירוף קובץ</label></div></div>`;
     h+=`</div>`}
   if(editing)h+=`<section><button type="button" class="btn danger" id="del">מחיקת העדכון</button></section>`;
   h+=`</form></div><footer><div class="sum"><small>סה״כ הון בעדכון הזה</small><b id="fsum">—</b></div><button class="btn" id="fsave">שמירה</button></footer></div>`;
@@ -467,9 +492,38 @@ function openForm(date,pre){
   const read=()=>{const u={date:$('#f-date').value,rate:$('#f-rate')?num($('#f-rate').value):0,vals:{}};layer.querySelectorAll('input[data-k]').forEach(i=>u.vals[i.dataset.k]=num(i.value));return u};
   const upd=()=>{$('#fsum').textContent=ils(calc(read()).total)};upd();
   layer.querySelector('#frm').addEventListener('input',upd);
-  if($('#getrate'))$('#getrate').onclick=async()=>{const d=$('#f-date').value,hint=$('#ratehint');if(!d)return;hint.textContent='מושך שער…';
-    try{const r=await fetchRate(d);$('#f-rate').value=r.rate.toFixed(4).replace(/0$/,'');hint.textContent=`שער ${r.src} ל-${dlong(r.date||d)}. כדאי לוודא שהוא סביר.`;upd()}
-    catch(e){hint.textContent='לא הצלחתי למשוך שער (אין חיבור או שהשירות לא זמין). הקלידו את השער ידנית.'}};
+  showLiveRate('#liverate2');
+  let rateTouched=!!f.rate;
+  const rateInput=$('#f-rate');
+  if(rateInput)rateInput.addEventListener('input',()=>{rateTouched=true});
+  const pullRate=async force=>{
+    const d=$('#f-date').value,hint=$('#ratehint');if(!rateInput||!d)return;
+    if(rateTouched&&!force)return;
+    hint.innerHTML='מושך שער…';
+    try{const r=await fetchRate(d);rateInput.value=String(Math.round(r.rate*1e4)/1e4);rateTouched=false;
+      hint.innerHTML=`שער ${esc(r.src)} ל-<span class="n">${dlong(r.date||d)}</span> · שער נוכחי: <b id="liverate2" class="n">—</b>`;upd()}
+    catch(e){hint.innerHTML='לא הצלחתי למשוך שער. הקלידו אותו ידנית · שער נוכחי: <b id="liverate2" class="n">—</b>'}
+    showLiveRate('#liverate2');
+  };
+  if($('#getrate'))$('#getrate').onclick=()=>pullRate(true);
+  const dateEl=$('#f-date');
+  if(dateEl)dateEl.addEventListener('change',()=>pullRate(false));
+  if(rateInput&&!f.rate)pullRate(false);
+  const attach={};                                  // optional holdings file, per account that has a portfolio
+  for(const a of ACCOUNTS){
+    const inp=$('#af-'+a.id);if(!inp)continue;
+    inp.onchange=async e=>{
+      const file=e.target.files[0];inp.value='';if(!file)return;
+      const lab=$('#al-'+a.id);lab.textContent='קורא…';
+      try{
+        const hold=parsePortfolio(await readSheet(file));
+        attach[a.id]=hold;
+        const tot=summarize(hold).total,fld=S.plink[a.id];
+        if(fld&&$('#f-'+fld)){$('#f-'+fld).value=Math.round(tot);upd()}
+        lab.textContent=hold.length+' אחזקות · '+ils(tot);lab.classList.add('on');
+      }catch(err){lab.textContent='צירוף קובץ';toast(err.message||'לא הצלחתי לקרוא את הקובץ')}
+    };
+  }
   $('#fsave').onclick=async()=>{const u=read(),err=$('#ferr');let msg='';
     const usdSum=ACCOUNTS.filter(a=>a.cur==='USD').flatMap(a=>a.fields).reduce((s,[k])=>s+u.vals[k],0);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(u.date))msg='בחרו תאריך לעדכון.';
@@ -478,8 +532,17 @@ function openForm(date,pre){
     else if(layer.querySelector('input[data-k]')&&[...layer.querySelectorAll('input[data-k]')].some(i=>i.value.trim()!==''&&!/^-?[\d,]*\.?\d*$/.test(i.value.trim())))msg='באחד השדות יש ערך שאינו מספר.';
     if(msg){err.textContent=msg;err.hidden=false;layer.querySelector('.body').scrollTo({top:0,behavior:'smooth'});return}
     if(editing)S.updates=S.updates.filter(x=>x.date!==editing.date);
-    S.updates.push(u);await save();closeLayer();tab='home';render();toast('העדכון נשמר')};
+    S.updates.push(u);for(const id in attach)addSnapshot(id,u.date,attach[id]);await save();closeLayer();tab='home';render();toast(Object.keys(attach).length?'העדכון והאחזקות נשמרו':'העדכון נשמר')};
   if(editing)$('#del').onclick=async()=>{if(!confirm('למחוק את העדכון מ-'+dlong(editing.date)+'?'))return;S.updates=S.updates.filter(x=>x.date!==editing.date);await save();closeLayer();render();toast('העדכון נמחק')};
+}
+let liveRate=null,liveAt=0;
+async function showLiveRate(sel){
+  const el=$(sel);if(!el)return;
+  if(liveRate&&Date.now()-liveAt<3600000){el.textContent='₪'+liveRate.toFixed(3);el.classList.remove('flat');return}
+  el.textContent='…';
+  try{const r=await fetchRate(today());liveRate=r.rate;liveAt=Date.now();
+    const e2=$(sel);if(e2){e2.textContent='₪'+r.rate.toFixed(3);e2.classList.remove('flat')}}
+  catch(e){const e2=$(sel);if(e2)e2.textContent='לא זמין'}
 }
 function findRate(j){let found=null;(function walk(o,key){if(found!==null||o==null)return;if(typeof o==='number'){if(o>=2&&o<=6&&(/rate|ils|value/i.test(key||'')))found=o;return}if(typeof o==='object')for(const k in o)walk(o[k],k)})(j,'');return found}
 async function fetchRate(d){
