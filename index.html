@@ -983,7 +983,17 @@ function viewSettings(){
 const hmonth=d=>{try{return new Date(d+'T00:00:00').toLocaleDateString('he-IL',{month:'long',year:'numeric'})}catch(e){return d}};
 const RECDAY=20*60*60*1000;                       /* a consensus does not move hourly */
 const isForeignStock=x=>catOf(x)==='stock-intl';
-const tickOf=x=>S.tick[x.id]||'';
+/* the bank file already carries a ״סימבול״ column, and for a US-listed share it IS the ticker,
+   so nothing needs typing. Anything else in that column is not one: bonds arrive as
+   "BA 2.7 2/2" and non-US listings as "VITB SS" (Stockholm) or "CSU CN" (Toronto), and the free
+   sources cover US listings only — so those are left for the user to fill in or leave empty. */
+const autoTick=x=>{
+  const s=String((x&&x.sym)||'').toUpperCase().replace(/[^A-Z0-9./\- ]/g,'').trim();
+  if(!/^[A-Z][A-Z0-9]{0,4}([./][A-Z])?$/.test(s))return '';
+  return s.replace('/','.');                 /* BRK/B is BRK.B at Finnhub */
+};
+const tickOf=x=>S.tick[x.id]||autoTick(x);
+const tickMan=x=>!!S.tick[x.id];
 const recOf=x=>{const t=tickOf(x);return t?S.rec[t]:null};
 function recScore(r){
   const n=r.sb+r.b+r.h+r.s+r.ss;
@@ -1044,10 +1054,11 @@ function recBadge(x){
 function recBlock(x){
   if(!isForeignStock(x))return '';
   const t=tickOf(x),r=t?S.rec[t]:null,v=r&&recVerdict(r);
+  const src=t?(tickMan(x)?'ידני':'מהקובץ'):'לא מקושר';
   let h=`<section><h2>המלצות אנליסטים</h2><div class="panel">
-  <button class="row plain" data-tick="${esc(x.id)}"><span><span class="nm">טיקר</span>${t?'':'<div class="sub">לא מקושר</div>'}</span><span class="val n">${t?esc(t):'—'}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button></div>`;
+  <button class="row plain" data-tick="${esc(x.id)}"><span><span class="nm">טיקר</span><div class="sub">${src}</div></span><span class="val n">${t?esc(t):'—'}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button></div>`;
   if(!S.fh)return h+`<p class="hint">כדי למשוך המלצות צריך מפתח API חינמי. הגדרות ← המלצות אנליסטים.</p></section>`;
-  if(!t)return h+`<p class="hint">קשרו את הנייר לטיקר שלו בבורסה האמריקאית, למשל NVDA.</p></section>`;
+  if(!t)return h+`<p class="hint">ניירות שמופיע להם סימבול אמריקאי בקובץ מקושרים מעצמם. לנייר הזה אין, אפשר לקשר אותו ידנית.</p></section>`;
   if(!v)return h+`<div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-recload="${esc(t)}">משיכת המלצות</button></div></section>`;
   const tot=r.sb+r.b+r.h+r.s+r.ss;
   const seg=(n,c)=>n?`<i style="flex:${n};background:${c}"></i>`:'';
@@ -1072,11 +1083,13 @@ function recBlock(x){
 }
 function openTicker(holdId,accId){
   const cur=S.tick[holdId]||'';
+  const hx=((portsRaw(accId).slice(-1)[0]||{}).hold||[]).find(h=>String(h.id)===String(holdId));
+  const auto=hx?autoTick(hx):'';
   openLayer(`<div class="sheet modal" role="dialog" aria-label="טיקר"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>קישור לטיקר</h2><span></span></header><div class="body">
-  <section><div class="grp"><div class="fld"><label for="tk">טיקר</label><input id="tk" value="${esc(cur)}" placeholder="NVDA" maxlength="12" autocomplete="off" autocapitalize="characters"></div></div>
-  <p class="hint">הסמל של הנייר בבורסה האמריקאית. הקישור נשמר לפי מספר הנייר, כך שהוא שורד העלאה של קובץ חדש.</p></section>
+  <section><div class="grp"><div class="fld"><label for="tk">טיקר</label><input id="tk" value="${esc(cur)}" placeholder="${esc(auto||'NVDA')}" maxlength="12" autocomplete="off" autocapitalize="characters"></div></div>
+  <p class="hint">${auto?`בקובץ מופיע הסימבול <span class="n">${esc(auto)}</span>, והוא בשימוש כברירת מחדל. מה שייכתב כאן ידרוס אותו.`:'הסמל של הנייר בבורסה האמריקאית. הקישור נשמר לפי מספר הנייר, כך שהוא שורד העלאה של קובץ חדש.'}</p></section>
   <section><button class="btn" id="tksave">שמירה</button></section>
-  ${cur?`<section><button class="btn danger" id="tkdel">ניתוק</button></section>`:''}</div></div>`);
+  ${cur?`<section><button class="btn danger" id="tkdel">${auto?'חזרה לסימבול מהקובץ':'ניתוק'}</button></section>`:''}</div></div>`);
   const done=async()=>{closeLayer();save();setTimeout(()=>{if(accId)paintPortfolio(accId,true)},300)};
   $('#tksave').onclick=async()=>{
     const v=$('#tk').value.toUpperCase().replace(/[^A-Z0-9.\-]/g,'').slice(0,12);
@@ -1382,6 +1395,9 @@ function mapHeader(rows){
 const ETFWORDS=/ISHARES|SHARES|SPDR|VANGUARD|INVESCO|FIRST TRUST|\bFT\b|ROUNDHILL|SELECT|\bSEL\b|\bTRUST\b|\bETF\b|INDEX|NASDAQ/i;
 function guessType(h){
   const n=norm(h.name);
+  /* a foreign bond's symbol carries its coupon ("BA 2.7 2/2"), which the mangled name does not
+     always show; a share's symbol never looks like that */
+  if(/^[A-Z.]+ \d+(\.\d+)?/.test(norm(h.sym)))return 'bond';
   if(/אג"ח|אגח|ממשל|ממשלתית|מלווה/.test(n))return 'bond';
   if(/\d+\.\d+\s*\d*\/?\d*$|\d+\.\d+\s/.test(n)&&!/[א-ת]/.test(n))return 'bond';
   if(/(?:^|[^א-ת])סל(?:[^א-ת]|$)|תעודת|מחקה|קרן סל|תכלית|קסם|פסגות סל|MTF|הראל סל/.test(n))return 'fund';
