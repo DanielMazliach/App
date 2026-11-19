@@ -1289,9 +1289,8 @@ function addSnapshot(accId,date,hold){
 /* colour carries the asset type only; Israel vs abroad is carried by the label and a hollow dot,
    so the six buckets stay apart for anyone, including colour-blind readers */
 const marketOf=h=>/[א-ת]/.test(h.name)?'il':(h.cur==='שקל'?'il':'intl');
-const catOf=h=>ptypeOf(h)+'-'+marketOf(h);
-const CATS=[['bond-il','אג״ח ישראלי'],['bond-intl','אג״ח חו״ל'],['stock-il','מניות ישראל'],
-            ['stock-intl','מניות חו״ל'],['fund-il','קרנות סל'],['fund-intl','ETF חו״ל']];
+const catOf=h=>{const t=ptypeOf(h);return t==='stock'?'stock-'+marketOf(h):t};
+const CATS=[['bond','אג״ח'],['stock-il','מניות ישראל'],['stock-intl','מניות חו״ל'],['fund','קרנות סל ו-ETF']];
 const CATLBL=Object.fromEntries(CATS);
 const catCol=c=>acol(TYPECOL[c.split('-')[0]]||'#6C6C70');
 const catHollow=c=>c.endsWith('-intl');
