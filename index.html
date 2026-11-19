@@ -20,7 +20,7 @@
   --bg:#F2F2F7; --surface:#FFFFFF; --ink:#1C1C1E; --ink2:#48484A; --muted:#6C6C70; --sep:#3C3C4329; --line:#E5E5EA; --fill:#7676801F;
   --up:#248A3D; --down:#D70015; --tint:#007AFF; --focus:#007AFF; --ease:cubic-bezier(.32,.72,0,1);
   --blur:saturate(1.6) blur(16px);
-  --chev:#C7C7CC; --knob:#FFFFFF; --onTint:#FFFFFF; --bar:#F9F9F9D9; --barsheet:#F2F2F7CC; --grab:#C7C7CC;
+  --up2:#5BB974; --chev:#C7C7CC; --knob:#FFFFFF; --onTint:#FFFFFF; --bar:#F9F9F9D9; --barsheet:#F2F2F7CC; --grab:#C7C7CC;
   --press:#E8F0FE; --errbg:#FFE5E7; --errink:#A1000F; --toast:#3A3A3CF2; --ontoast:#FFFFFF;
   --cline:#1C1C1E; --cgrid:#E5E5EA; --cring:#FFFFFF; --ccross:#9AA8B4; --knobshadow:rgba(0,0,0,.16);
   --num: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "SF Hebrew", "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
@@ -32,7 +32,7 @@
     --bg:#000000; --surface:#1C1C1E; --ink:#FFFFFF; --ink2:#D1D1D6; --muted:#98989F;
     --sep:#54545899; --line:#38383A; --fill:#7676803D;
     --up:#30D158; --down:#FF453A; --tint:#0A84FF; --focus:#0A84FF;
-    --chev:#48484A; --knob:#FFFFFF; --onTint:#FFFFFF; --bar:#1C1C1ED9; --barsheet:#1C1C1ECC; --grab:#48484A;
+    --up2:#2B9E4E; --chev:#48484A; --knob:#FFFFFF; --onTint:#FFFFFF; --bar:#1C1C1ED9; --barsheet:#1C1C1ECC; --grab:#48484A;
     --press:#0A84FF2E; --errbg:#3A1216; --errink:#FF6A6A; --toast:#48484AF2; --ontoast:#FFFFFF;
     --cline:#F2F2F7; --cgrid:#2C2C2E; --cring:#1C1C1E; --ccross:#636366; --knobshadow:rgba(0,0,0,.5);
   }
@@ -103,6 +103,18 @@ button.row:active{background:#E5E5EA}
 .sw[aria-checked="true"] i{transform:translateX(-20px)}
 .sw:active i{width:29px}
 .pmk{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;opacity:.4;vertical-align:-1px}
+.rec{display:inline-flex;align-items:center;font-size:12.5px;font-weight:600;padding:1px 7px;border-radius:7px;line-height:1.5}
+.rec.buy{background:color-mix(in srgb,var(--up) 15%,transparent);color:var(--up)}
+.rec.hold{background:color-mix(in srgb,var(--muted) 20%,transparent);color:var(--ink2)}
+.rec.sell{background:color-mix(in srgb,var(--down) 14%,transparent);color:var(--down)}
+.rec.none{background:color-mix(in srgb,var(--muted) 14%,transparent);color:var(--muted);font-weight:500}
+.bigrec{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:1px 0 2px}
+.bigrec.buy{color:var(--up)}.bigrec.sell{color:var(--down)}
+.cons{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;margin:6px 0 12px}
+.cons i{display:block}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend b{width:9px;height:9px;border-radius:50%;display:inline-block}
 .swatches{display:flex;gap:8px;justify-content:space-between}
 .sw-c{width:36px;height:36px;border-radius:50%;border:0;padding:0;position:relative;-webkit-tap-highlight-color:transparent}
 .sw-c::before{content:"";position:absolute;inset:-4px;border-radius:50%}  /* 44×44 to the finger */
@@ -301,7 +313,7 @@ svg.chart circle{stroke:var(--cring)}
 let ACCOUNTS=[],FIELDS=[];
 function setConfig(list){const ok=[];for(const a of Array.isArray(list)?list:[]){if(!a||!a.id||!Array.isArray(a.fields))continue;ok.push({id:String(a.id),name:String(a.name||a.id),short:String(a.short||a.name||a.id),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#44566A',cur:a.cur==='USD'?'USD':'ILS',fields:a.fields.filter(f=>Array.isArray(f)&&f[0]).map(f=>[String(f[0]),String(f[1]||f[0]),['cur','fx','cap','sav'].includes(f[2])?f[2]:'cap',!!f[3]])})}ACCOUNTS=ok;FIELDS=ok.flatMap(a=>a.fields.map(f=>f[0]))}
 const KEY='ft.data.v1', META='ft.meta.v1';
-let S={updates:[],ports:{},ptype:{},plink:{},priv:false,pmask:{}}, cryptoKey=null, encMeta=null, tab='home';
+let S={updates:[],ports:{},ptype:{},plink:{},priv:false,pmask:{},fh:'',tick:{},rec:{}}, cryptoKey=null, encMeta=null, tab='home';
 
 const num=v=>{
   if(typeof v==='number')return Number.isFinite(v)?v:0;
@@ -390,7 +402,7 @@ function setMeta(p){try{localStorage.setItem(META,JSON.stringify({...meta(),...p
 let saveChain=Promise.resolve();
 function save(){
   saveChain=saveChain.then(async()=>{
-    const plain=JSON.stringify({v:3,accounts:ACCOUNTS,updates:S.updates,ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask});
+    const plain=JSON.stringify({v:3,accounts:ACCOUNTS,updates:S.updates,ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,tick:S.tick,rec:S.rec});
     let out;
     if(cryptoKey){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},cryptoKey,new TextEncoder().encode(plain));out={enc:1,salt:encMeta.salt,iv:b64(iv),ct:b64(ct)}}
     else out={enc:0,data:JSON.parse(plain)};
@@ -410,7 +422,7 @@ function lockNow(){
   if(!cryptoKey||document.querySelector('.lock'))return;
   cryptoKey=null;                       // the key leaves memory until the code is re-entered
   closeAllLayers();
-  S.updates=[];S.ports={};S.ptype={};S.plink={};S.priv=false;S.pmask={};$('#tabbar').hidden=true;view.innerHTML='';
+  S.updates=[];S.ports={};S.ptype={};S.plink={};S.priv=false;S.pmask={};S.fh='';S.tick={};S.rec={};$('#tabbar').hidden=true;view.innerHTML='';
   lockScreen();
 }
 document.addEventListener('visibilitychange',()=>{
@@ -445,6 +457,9 @@ async function unlock(pass){
 }
 function loadPorts(d){
   S.ports={};S.ptype={};S.plink={};S.priv=!!d.priv;S.pmask={};
+  S.fh=typeof d.fh==='string'?d.fh.trim().slice(0,80):'';
+  S.tick={};for(const k in (d.tick||{})){const v=String(d.tick[k]||'').toUpperCase().replace(/[^A-Z0-9.\-]/g,'').slice(0,12);if(v)S.tick[String(k)]=v}
+  S.rec={};for(const k in (d.rec||{})){const r=d.rec[k];if(r&&typeof r==='object')S.rec[String(k)]={ts:num(r.ts),sb:num(r.sb),b:num(r.b),h:num(r.h),s:num(r.s),ss:num(r.ss),period:String(r.period||''),tm:num(r.tm),tl:num(r.tl),th:num(r.th),px:num(r.px)}}
   const ok=new Set(ACCOUNTS.map(a=>a.id));
   for(const id in (d.pmask||{}))if(ok.has(id)&&['half','hide'].includes(d.pmask[id]))S.pmask[id]=d.pmask[id];
   for(const id in (d.ports||{})){
@@ -937,6 +952,7 @@ function openPrivCfg(){
 }
 function viewSettings(){
   setTop('הגדרות');
+  setTimeout(()=>{const k=$('#fhkey');if(k)k.onchange=()=>{S.fh=k.value.trim().slice(0,80);save()}},0);
   const m=meta();const locked=!!cryptoKey;const p=PRIV();
   view.innerHTML=`<div class="pagehead"><h1>הגדרות</h1><p>גיבוי, נעילה ונתונים</p></div>
   <section><h2>מצב פרטי</h2><div class="panel">
@@ -948,12 +964,129 @@ function viewSettings(){
   ${ACCOUNTS.map(a=>`<button class="row" data-acced="${a.id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub">${a.fields.length===1?'רכיב אחד':a.fields.length+' רכיבים'}${a.cur==='USD'?' · דולר':''}${S.plink[a.id]?' · קובץ מהבנק':''}</div></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`).join('')}
   ${ACCOUNTS.length?'':'<div class="row plain"><span class="nm flat">עוד לא הוגדרו חשבונות</span></div>'}
   </div><div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="accnew">הוספת חשבון</button></div></section>`}
+  ${p?'':`<section><h2>המלצות אנליסטים</h2><div class="panel">
+  <div class="fld wide"><label for="fhkey">מפתח API</label><input id="fhkey" type="password" value="${esc(S.fh)}" placeholder="finnhub.io" autocomplete="off" spellcheck="false"></div>
+  </div><div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="recall">רענון כל ההמלצות</button></div>
+  <p class="hint">מפתח חינמי מ-finnhub.io. הוא נשמר מוצפן במכשיר הזה בלבד — לא בקוד של האתר. ההמלצות זמינות למניות הנסחרות בארה״ב; למניות בתל אביב, לאג״ח ולקרנות אין כיסוי.</p></section>`}
   <section><h2>גיבוי</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">הנתונים נשמרים רק במכשיר הזה. מחיקת האפליקציה ממסך הבית או ניקוי נתוני Safari מוחקים אותם, אז כדאי לשמור גיבוי אחרי כל עדכון.${m.lastBackup?` גיבוי אחרון: <span class="n">${new Date(m.lastBackup).toLocaleDateString('he-IL')}</span>.`:''}</p>
   <div class="stackbtns"><button class="btn" data-act="backup">שמירת גיבוי</button><button class="btn ghost" data-act="csv">ייצוא לאקסל (CSV)</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div></section>
   <section><h2>נעילה</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">${locked?'האפליקציה נעולה בקוד, והנתונים שמורים מוצפנים במכשיר. הקוד נדרש בפתיחה, ושוב אחרי שהאפליקציה הייתה ברקע יותר משתי דקות.':'אפשר לנעול את האפליקציה בקוד. הנתונים יישמרו מוצפנים, ובלי הקוד אי אפשר לשחזר אותם.'}</p>
   <div class="stackbtns">${locked?'<button class="btn ghost" data-act="locknow">נעילה עכשיו</button><button class="btn ghost" data-act="setpass">החלפת קוד</button><button class="btn ghost" data-act="rmpass">ביטול הנעילה</button>':'<button class="btn ghost" data-act="setpass">הגדרת קוד נעילה</button>'}</div></div></section>
   <section><h2>נתונים</h2><div class="panel pad"><button class="btn danger" data-act="wipe">מחיקת כל הנתונים מהמכשיר</button></div></section>
   <section><p style="font-size:13px;color:var(--muted);text-align:center;margin:0 12px">שום נתון לא נשלח לשרת. הפעולה היחידה שפונה לאינטרנט היא ״משיכה״ של שער הדולר, והיא שולחת רק תאריך.</p></section>`;
+}
+
+/* ---------- analyst consensus ----------
+   Only for shares listed abroad: the free sources cover US-listed companies, and bonds and
+   funds have no analyst coverage at all. The key lives in the encrypted store on this device,
+   never in the code, because the page itself is public. */
+const hmonth=d=>{try{return new Date(d+'T00:00:00').toLocaleDateString('he-IL',{month:'long',year:'numeric'})}catch(e){return d}};
+const RECDAY=20*60*60*1000;                       /* a consensus does not move hourly */
+const isForeignStock=x=>catOf(x)==='stock-intl';
+const tickOf=x=>S.tick[x.id]||'';
+const recOf=x=>{const t=tickOf(x);return t?S.rec[t]:null};
+function recScore(r){
+  const n=r.sb+r.b+r.h+r.s+r.ss;
+  if(!n)return null;
+  return {n,score:(r.sb*1+r.b*2+r.h*3+r.s*4+r.ss*5)/n};
+}
+function recVerdict(r){
+  const v=recScore(r);if(!v)return null;
+  const q=v.score;
+  const label=q<1.5?'קנייה חזקה':q<2.5?'קנייה':q<3.5?'החזקה':q<4.5?'מכירה':'מכירה חזקה';
+  const cls=q<2.5?'buy':q<3.5?'hold':'sell';
+  return {label,cls,n:v.n};
+}
+async function fetchRec(sym){
+  if(!S.fh)throw new Error('no-key');
+  const base='https://finnhub.io/api/v1/';
+  const get=async path=>{
+    const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),9000);
+    try{const r=await fetch(base+path+'&token='+encodeURIComponent(S.fh),{signal:ctl.signal});
+      clearTimeout(t);
+      if(r.status===401||r.status===403)throw new Error('key');
+      if(!r.ok)throw new Error('http');
+      return await r.json();
+    }finally{clearTimeout(t)}
+  };
+  const list=await get('stock/recommendation?symbol='+encodeURIComponent(sym));
+  if(!Array.isArray(list)||!list.length)throw new Error('empty');
+  const a=list[0];
+  const out={ts:Date.now(),sb:num(a.strongBuy),b:num(a.buy),h:num(a.hold),s:num(a.sell),ss:num(a.strongSell),
+    period:String(a.period||''),tm:0,tl:0,th:0,px:0};
+  /* the price target and the quote may sit behind a paid plan; they are a bonus, not a requirement */
+  try{const pt=await get('stock/price-target?symbol='+encodeURIComponent(sym));
+    out.tm=num(pt.targetMean);out.tl=num(pt.targetLow);out.th=num(pt.targetHigh)}catch(e){}
+  try{const q=await get('quote?symbol='+encodeURIComponent(sym));out.px=num(q.c)}catch(e){}
+  return out;
+}
+async function refreshRecs(force){
+  if(!S.fh)return 0;
+  const want=new Set();
+  for(const id in S.ports)for(const x of (portsRaw(id).slice(-1)[0]||{}).hold||[])
+    if(isForeignStock(x)&&tickOf(x))want.add(tickOf(x));
+  let got=0;
+  for(const sym of want){
+    const cur=S.rec[sym];
+    if(!force&&cur&&Date.now()-cur.ts<RECDAY)continue;
+    try{S.rec[sym]=await fetchRec(sym);got++}catch(e){if(e.message==='key'){toast('מפתח ה-API נדחה');break}}
+  }
+  if(got)save();
+  return got;
+}
+function recBadge(x){
+  if(!isForeignStock(x))return '';
+  const t=tickOf(x);
+  if(!t)return S.fh?'<span class="rec none">ללא טיקר</span>':'';
+  const r=S.rec[t],v=r&&recVerdict(r);
+  return v?`<span class="rec ${v.cls}">${v.label}</span>`:`<span class="rec none">${esc(t)}</span>`;
+}
+function recBlock(x){
+  if(!isForeignStock(x))return '';
+  const t=tickOf(x),r=t?S.rec[t]:null,v=r&&recVerdict(r);
+  let h=`<section><h2>המלצות אנליסטים</h2><div class="panel">
+  <button class="row plain" data-tick="${esc(x.id)}"><span><span class="nm">טיקר</span>${t?'':'<div class="sub">לא מקושר</div>'}</span><span class="val n">${t?esc(t):'—'}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button></div>`;
+  if(!S.fh)return h+`<p class="hint">כדי למשוך המלצות צריך מפתח API חינמי. הגדרות ← המלצות אנליסטים.</p></section>`;
+  if(!t)return h+`<p class="hint">קשרו את הנייר לטיקר שלו בבורסה האמריקאית, למשל NVDA.</p></section>`;
+  if(!v)return h+`<div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-recload="${esc(t)}">משיכת המלצות</button></div></section>`;
+  const tot=r.sb+r.b+r.h+r.s+r.ss;
+  const seg=(n,c)=>n?`<i style="flex:${n};background:${c}"></i>`:'';
+  h+=`<div class="panel pad" style="margin-top:10px">
+  <div class="sub">קונצנזוס של <span class="n">${v.n}</span> אנליסטים</div>
+  <div class="bigrec ${v.cls}">${v.label}</div>
+  <div class="cons">${seg(r.sb,'var(--up)')}${seg(r.b,'var(--up2)')}${seg(r.h,'var(--muted)')}${seg(r.s,'var(--down)')}${seg(r.ss,'var(--down)')}</div>
+  <div class="legend">
+    ${r.sb?`<span><b style="background:var(--up)"></b>קנייה חזקה <span class="n">${r.sb}</span></span>`:''}
+    ${r.b?`<span><b style="background:var(--up2)"></b>קנייה <span class="n">${r.b}</span></span>`:''}
+    ${r.h?`<span><b style="background:var(--muted)"></b>החזקה <span class="n">${r.h}</span></span>`:''}
+    ${r.s||r.ss?`<span><b style="background:var(--down)"></b>מכירה <span class="n">${r.s+r.ss}</span></span>`:''}
+  </div></div>`;
+  if(r.tm)h+=`<div class="panel facts" style="margin-top:10px">
+    ${r.px?`<div><small>מחיר נוכחי</small><b class="n">${r.px.toFixed(2)}</b></div>`:''}
+    <div><small>יעד ממוצע</small><b class="n ${r.px&&r.tm>r.px?'up':r.px?'down':''}">${r.tm.toFixed(2)}</b></div>
+    ${r.tl&&r.th?`<div><small>היעד הנמוך</small><b class="n">${r.tl.toFixed(2)}</b></div><div><small>היעד הגבוה</small><b class="n">${r.th.toFixed(2)}</b></div>`:''}
+    </div>`;
+  h+=`<p class="hint">${r.period?'נכון לחודש '+esc(hmonth(r.period))+'. ':''}נמשך ${dlong(new Date(r.ts).toISOString().slice(0,10))}. המלצות אנליסטים הן דעה ולא תחזית, והן נוטות להיות אופטימיות ולהגיב באיחור.</p>
+  <div class="stackbtns"><button class="btn ghost" data-recload="${esc(t)}">רענון</button></div></section>`;
+  return h;
+}
+function openTicker(holdId,accId){
+  const cur=S.tick[holdId]||'';
+  openLayer(`<div class="sheet modal" role="dialog" aria-label="טיקר"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>קישור לטיקר</h2><span></span></header><div class="body">
+  <section><div class="grp"><div class="fld"><label for="tk">טיקר</label><input id="tk" value="${esc(cur)}" placeholder="NVDA" maxlength="12" autocomplete="off" autocapitalize="characters"></div></div>
+  <p class="hint">הסמל של הנייר בבורסה האמריקאית. הקישור נשמר לפי מספר הנייר, כך שהוא שורד העלאה של קובץ חדש.</p></section>
+  <section><button class="btn" id="tksave">שמירה</button></section>
+  ${cur?`<section><button class="btn danger" id="tkdel">ניתוק</button></section>`:''}</div></div>`);
+  const done=async()=>{closeLayer();save();setTimeout(()=>{if(accId)paintPortfolio(accId,true)},300)};
+  $('#tksave').onclick=async()=>{
+    const v=$('#tk').value.toUpperCase().replace(/[^A-Z0-9.\-]/g,'').slice(0,12);
+    if(!v){toast('צריך טיקר');return}
+    S.tick[holdId]=v;
+    done();
+    if(S.fh&&!S.rec[v]){toast('מושך המלצות…');try{S.rec[v]=await fetchRec(v);save();toast('עודכן')}
+      catch(e){toast(e.message==='key'?'מפתח ה-API נדחה':e.message==='empty'?'אין כיסוי לנייר הזה':'לא הצלחתי למשוך')}}
+  };
+  const d=$('#tkdel');if(d)d.onclick=()=>{delete S.tick[holdId];done()};
 }
 
 /* ---------- backup ---------- */
@@ -963,7 +1096,7 @@ async function shareFile(name,text,type){
   const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return true;
 }
 async function doBackup(){if(!S.updates.length){toast('אין עדיין נתונים לגיבוי');return}
-  const ok=await shareFile(`finance-backup-${today()}.json`,JSON.stringify({app:'finance-tracker',v:3,exported:new Date().toISOString(),accounts:ACCOUNTS,updates:sorted(),ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask},null,1),'application/json');
+  const ok=await shareFile(`finance-backup-${today()}.json`,JSON.stringify({app:'finance-tracker',v:3,exported:new Date().toISOString(),accounts:ACCOUNTS,updates:sorted(),ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,tick:S.tick,rec:S.rec},null,1),'application/json');
   if(ok){setMeta({lastBackup:Date.now()});toast('הגיבוי נוצר');render()}}
 async function doCsv(){if(!S.updates.length){toast('אין עדיין נתונים לייצוא');return}
   const head=['תאריך',...ACCOUNTS.flatMap(a=>a.fields.map(f=>a.short+' – '+f[1])),'שער דולר','סה״כ הון (₪)'];
@@ -1376,7 +1509,7 @@ function portfolioBody(accId){
   if(!shown.length)h+=`<div class="row"><span class="nm flat">אין אחזקות בקטגוריה הזו</span></div>`;
   for(const x of shown.slice().sort(sorters[srt])){
     const c=catOf(x);
-    h+=`<button class="row dotted" data-hold="${esc(x.id)}">${dot(c)}<span><span class="nm">${esc(x.name)}</span><div class="sub">${esc(CATLBL[c])} · <span class="n">${(x.v/s.total*100).toFixed(1)}%</span>${x.cur!=='שקל'?' · '+esc(x.cur):''}</div></span>
+    h+=`<button class="row dotted" data-hold="${esc(x.id)}">${dot(c)}<span><span class="nm">${esc(x.name)}</span><div class="sub">${esc(CATLBL[c])} · <span class="n">${(x.v/s.total*100).toFixed(1)}%</span>${x.cur!=='שקל'?' · '+esc(x.cur):''}</div>${recBadge(x)?`<div class="sub" style="margin-top:4px">${recBadge(x)}</div>`:''}</span>
     <span class="val"><b>${ils(x.v)}</b><span class="n ${cls(x.tg)}">${x.tg?arrow(x.tg)+' '+signedIls(x.tg):''}</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
   }
   h+=`</div></section>`;
@@ -1421,7 +1554,14 @@ function openHolding(accId,id){
   <div><small>מס תיאורטי</small><b class="${cls(x.tx)}">${signedIls(x.tx)}</b></div>
   ${old?`<div><small>שינוי מהצילום הקודם</small><b class="${cls(x.v-old.v)}">${signedIls(x.v-old.v)}</b></div>`:''}
   </div></section>
-  <p class="hint">${esc(CATLBL[c])}. הסיווג נקבע לפי שם הנייר, והשיוך לישראל או לחו״ל לפי שפת השם והמטבע.</p></div></div>`);
+  <p class="hint">${esc(CATLBL[c])}. הסיווג נקבע לפי שם הנייר, והשיוך לישראל או לחו״ל לפי שפת השם והמטבע.</p>
+  ${recBlock(x)}</div></div>`);
+  const tk=layer.querySelector('[data-tick]');if(tk)tk.onclick=()=>openTicker(x.id,accId);
+  const rl=layer.querySelector('[data-recload]');
+  if(rl)rl.onclick=async()=>{const sym=rl.dataset.recload;rl.disabled=true;rl.textContent='מושך…';
+    try{S.rec[sym]=await fetchRec(sym);save();closeLayer();setTimeout(()=>{openHolding(accId,id)},320)}
+    catch(e){rl.disabled=false;rl.textContent='משיכת המלצות';
+      toast(e.message==='key'?'מפתח ה-API נדחה':e.message==='empty'?'אין כיסוי לנייר הזה':'לא הצלחתי למשוך')}};
 }
 async function importPortfolio(accId,file){
   const a=ACCOUNTS.find(x=>x.id===accId);
@@ -1585,6 +1725,10 @@ document.addEventListener('click',e=>{
   else if('close' in t.dataset)closeLayer();
   else ({new:()=>ACCOUNTS.length?openForm():openImport(),backup:doBackup,csv:doCsv,import:openImport,setpass:setPass,rmpass:rmPass,locknow:lockNow,
     privcfg:openPrivCfg,
+    recall:async()=>{const k=$('#fhkey');if(k)S.fh=k.value.trim().slice(0,80);
+      if(!S.fh){toast('צריך מפתח');return}
+      await save();toast('מושך…');const n=await refreshRecs(true);
+      toast(n?'עודכנו '+n+' ניירות':'אין ניירות מקושרים');},
     accnew:()=>openAccEditor(null),
     privtog:async()=>{
       if(!S.priv&&!anyMask()){openPrivCfg();toast('בחרו קודם מה יוסתר');return}
