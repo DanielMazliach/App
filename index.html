@@ -578,6 +578,11 @@ addEventListener('scroll',syncTop,{passive:true});
 const TABS=['home','updates','compare','settings'];
 const VIEWS={home:viewHome,updates:viewUpdates,compare:viewCompare,settings:viewSettings};
 /* build a page into a node of our own, with every wiring step standing down */
+let pageCache={};
+function warmPages(){
+  const i=TABS.indexOf(tab);if(i<0)return;
+  for(const t of [TABS[i-1],TABS[i+1]])if(t&&!pageCache[t]){try{pageCache[t]=buildPage(t)}catch(e){}}
+}
 function buildPage(t){
   const node=document.createElement('div');node.className='view';
   const keepView=view,keepTab=tab,keepOff=offscreen,keepFirst=firstPaint;
@@ -591,6 +596,8 @@ function render(){
   const dir=shownTab&&shownTab!==tab?Math.sign(TABS.indexOf(tab)-TABS.indexOf(shownTab)):0;
   VIEWS[tab]();
   window.scrollTo(0,0);firstPaint=false;shownTab=tab;
+  pageCache={};                       /* the data may have changed, so the spares are stale */
+  (window.requestIdleCallback||(f=>setTimeout(f,120)))(warmPages);
   /* the tabs sit in a fixed order, so the page arrives from the side it lives on */
   if(dir&&!calm()&&!tabSwipe.busy){
     const a=view.animate([{transform:`translateX(${-dir*30}px)`,opacity:0},{transform:'none',opacity:1}],
@@ -1045,7 +1052,7 @@ function openLayer(html,push,origin){
     if(origin){
       const e=p<0?0:p>1?1:p;
       if(e>=.995){
-        el.style.transform='';el.style.opacity='';el.style.transformOrigin='';el.style.willChange='';
+        el.style.transform='';el.style.opacity='';el.style.transformOrigin='';
         sc.style.opacity='.1';underZoom(under,1);return;
       }
       const k=.94+.06*e, o=(1-e)*.5;
@@ -1063,7 +1070,11 @@ function openLayer(html,push,origin){
   const s=Spring(set);s.jump(0);
   el.style.willChange=origin?'transform,opacity':'transform';
   const L={el,sc,s,set,kind,under,origin};stack.push(L);
-  s.to(1,{damping:1,response:origin?.38:kind==='push'?.36:.36});
+  /* inserting a full screen and animating it in the same frame makes the first frames of the
+     motion compete with laying it out. Give the browser that frame, then move. */
+  const go=()=>s.to(1,{damping:1,response:origin?.38:kind==='push'?.36:.36},
+    ()=>{el.style.willChange=''});        /* a page that has arrived needs no layer of its own */
+  if(calm())go(); else requestAnimationFrame(()=>requestAnimationFrame(go));
   grab(L);
   const body=el.querySelector('.body'),head=el.querySelector('header');
   if(body&&head)body.addEventListener('scroll',()=>head.classList.toggle('edge',body.scrollTop>2),{passive:true});
@@ -1071,6 +1082,9 @@ function openLayer(html,push,origin){
 }
 function closeLayer(vel){
   const L=stack.pop();if(!L)return;
+  /* give the page a layer of its own for the way out too, or every frame of the close
+     repaints the whole thing instead of moving a picture that is already drawn */
+  L.el.style.willChange=L.origin?'transform,opacity':'transform';
   L.s.to(0,{damping:1,response:L.kind==='push'?.22:.26,velocity:vel||0},()=>{
     L.el.style.willChange='';L.el.remove();L.sc.remove();
     if(!stack.length)clearStage();
@@ -1487,7 +1501,8 @@ const tabSwipe={busy:false};
       if(want<0||want>=TABS.length){armed=false;eat=true;return}
       on=true;tabSwipe.busy=true;eat=true;
       W=innerWidth;dirn=step;
-      ghost=buildPage(TABS[want]);
+      ghost=pageCache[TABS[want]]||buildPage(TABS[want]);
+      delete pageCache[TABS[want]];
       /* a fixed overlay, so bringing it in moves nothing that was already laid out */
       ghost.style.cssText='position:fixed;inset:0;overflow:hidden;z-index:3;background:var(--bg);will-change:transform';
       view.style.willChange='transform';
