@@ -23,6 +23,7 @@
   --up2:#5BB974; --chev:#C7C7CC; --knob:#FFFFFF; --onTint:#FFFFFF; --bar:#F9F9F9D9; --barsheet:#F2F2F7CC; --grab:#C7C7CC;
   --press:#E8F0FE; --errbg:#FFE5E7; --errink:#A1000F; --toast:#3A3A3CF2; --ontoast:#FFFFFF;
   --cline:#1C1C1E; --cgrid:#E5E5EA; --cring:#FFFFFF; --ccross:#9AA8B4; --knobshadow:rgba(0,0,0,.16);
+  --segbg:#7676801F; --segon:#FFFFFF; --segsh:0 1px 3px #0000001f;
   --num: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "SF Hebrew", "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
   --txt: -apple-system, system-ui, "SF Hebrew", "Segoe UI", "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
   --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
@@ -35,6 +36,7 @@
     --up2:#2B9E4E; --chev:#48484A; --knob:#FFFFFF; --onTint:#FFFFFF; --bar:#1C1C1ED9; --barsheet:#1C1C1ECC; --grab:#48484A;
     --press:#0A84FF2E; --errbg:#3A1216; --errink:#FF6A6A; --toast:#48484AF2; --ontoast:#FFFFFF;
     --cline:#F2F2F7; --cgrid:#2C2C2E; --cring:#1C1C1E; --ccross:#636366; --knobshadow:rgba(0,0,0,.5);
+    --segbg:#1C1C1E; --segon:#636366; --segsh:none;
   }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -182,9 +184,9 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 .sheet.modal header{touch-action:none;padding-top:14px;min-height:58px}
 .grab{position:absolute;top:6px;left:0;right:0;height:5px;margin:0 auto;width:36px;border-radius:3px;background:var(--grab)}
 .scrim{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none}
-.segbar{display:flex;gap:2px;background:var(--fill);border-radius:9px;padding:2px;margin:0 4px 10px}
+.segbar{display:flex;gap:2px;background:var(--segbg);border-radius:9px;padding:2px;margin:0 4px 10px}
 .segbar button{flex:1;min-height:32px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink)}
-.segbar button[aria-selected="true"]{background:var(--surface);font-weight:600;box-shadow:0 1px 3px #0000001f}
+.segbar button[aria-selected="true"]{background:var(--segon);font-weight:600;box-shadow:var(--segsh)}
 .chiprow{display:flex;gap:8px;overflow-x:auto;padding:0 16px 4px;margin:0 -16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .chiprow::-webkit-scrollbar{display:none}
 .chiprow button{flex:none;min-height:34px;padding:0 13px;border-radius:17px;background:var(--fill);font-size:14px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap}
@@ -1575,7 +1577,7 @@ function addSnapshot(accId,date,hold){
    so the six buckets stay apart for anyone, including colour-blind readers */
 const marketOf=h=>/[א-ת]/.test(h.name)?'il':(h.cur==='שקל'?'il':'intl');
 const catOf=h=>{const t=ptypeOf(h);return t==='stock'?'stock-'+marketOf(h):t};
-const CATS=[['bond','אג״ח'],['stock-il','מניות ישראל'],['stock-intl','מניות חו״ל'],['fund','קרנות סל ו-ETF']];
+const CATS=[['stock-il','מניות ישראל'],['stock-intl','מניות חו״ל'],['fund','קרנות סל ו-ETF'],['bond','אג״ח']];
 const CATLBL=Object.fromEntries(CATS);
 const catCol=c=>acol(TYPECOL[c.split('-')[0]]||'#6C6C70');
 const catHollow=c=>c.endsWith('-intl');
