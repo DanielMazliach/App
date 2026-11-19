@@ -655,7 +655,7 @@ function openAccount(id,from){
   const a=ACCOUNTS.find(x=>x.id===id);if(!a||isHidden(id))return;
   let origin=null;
   if(from&&!calm()){const r=from.getBoundingClientRect();
-    if(r.width>40&&r.height>10)origin={x:r.left,y:r.top,w:r.width,h:r.height}}
+    if(r.width>40&&r.height>10)origin={cx:r.left+r.width/2,cy:r.top+r.height/2,dy:r.top+r.height/2-innerHeight/2};}
   const q=facOf(id),U=sorted(),C=U.map(calc),n=U.length;
   const pts=U.map((u,i)=>({d:u.date,v:C[i].acc[id]}));const vs=pts.map(p=>p.v);
   const v=vs[n-1],dP=n>1?v-vs[n-2]:0,dF=v-vs[0];const isUsd=a.cur==='USD';
@@ -1026,8 +1026,8 @@ function underTx(el,p){
 }
 function clearStage(){for(const n of [$('#app'),$('#tabbar')]){n.style.transform='';n.style.opacity=''}}
 function underZoom(el,p){
-  const t=`scale(${(1-.05*p).toFixed(4)})`,o=(1-.6*p).toFixed(3);
-  const put=n=>{if(n){n.style.transform=t;n.style.opacity=o}};
+  const t=`scale(${(1-.035*p).toFixed(4)})`;
+  const put=n=>{if(n)n.style.transform=t};
   if(el)put(el); else {put($('#app'));put($('#tabbar'))}
 }
 function openLayer(html,push,origin){
@@ -1040,24 +1040,18 @@ function openLayer(html,push,origin){
   /* a zoom matches the row's rectangle at p=0 and the screen at p=1. the box is opaque the
      whole way, so what you see is that rectangle growing; the contents fade in once it is
      nearly there, which is what hides the squash of the early frames. */
-  const parts=origin?[el.querySelector('header'),el.querySelector('.body')].filter(Boolean):[];
-  for(const n of parts)n.style.willChange='opacity';
+
   const set=p=>{
     if(origin){
-      const vw=innerWidth||1,vh=innerHeight||1;
       const e=p<0?0:p>1?1:p;
-      if(e>=.9995){
-        el.style.transform='';el.style.borderRadius='';el.style.transformOrigin='';el.style.overflow='';el.style.willChange='';
-        for(const n of parts)n.style.opacity='';
+      if(e>=.995){
+        el.style.transform='';el.style.opacity='';el.style.transformOrigin='';el.style.willChange='';
         sc.style.opacity='.1';underZoom(under,1);return;
       }
-      const sx=origin.w/vw+(1-origin.w/vw)*e, sy=origin.h/vh+(1-origin.h/vh)*e;
-      el.style.transformOrigin='0 0';
-      el.style.transform=`translate(${(origin.x*(1-e)).toFixed(2)}px,${(origin.y*(1-e)).toFixed(2)}px) scale(${sx.toFixed(4)},${sy.toFixed(4)})`;
-      el.style.borderRadius=(14*(1-e)).toFixed(1)+'px';
-      /* the squash is worst early, so the contents stay out until the box is nearly there */
-      const fade=Math.max(0,Math.min(1,(e-.46)/.32)).toFixed(3);
-      for(const n of parts)n.style.opacity=fade;
+      const k=.94+.06*e, o=(1-e)*.5;
+      el.style.transformOrigin=`${origin.cx.toFixed(0)}px ${origin.cy.toFixed(0)}px`;
+      el.style.transform=`translate3d(0,${(origin.dy*o).toFixed(1)}px,0) scale(${k.toFixed(4)})`;
+      el.style.opacity=Math.min(1,e*2.6).toFixed(3);
       sc.style.opacity=(p*.1).toFixed(3);
       underZoom(under,e);
       return;
@@ -1067,8 +1061,7 @@ function openLayer(html,push,origin){
     if(kind==='push')underTx(under,p);
   };
   const s=Spring(set);s.jump(0);
-  if(origin){el.style.overflow='hidden';el.style.willChange='transform'}
-  else el.style.willChange='transform';
+  el.style.willChange=origin?'transform,opacity':'transform';
   const L={el,sc,s,set,kind,under,origin};stack.push(L);
   s.to(1,{damping:1,response:origin?.38:kind==='push'?.36:.36});
   grab(L);
@@ -1449,7 +1442,7 @@ async function importPortfolio(accId,file){
 const tabSwipe={busy:false};
 (function tabPager(){
   const app=$('#app');
-  let armed=false,on=false,sx=0,sy=0,pid=0,vt=null,dirn=0,ghost=null,lockY=0,W=1,eat=false;
+  let armed=false,on=false,sx=0,sy=0,pid=0,vt=null,dirn=0,ghost=null,W=1,eat=false;
   /* a sideways drag is never a tap, even when there is no page to move to */
   addEventListener('click',e=>{if(eat){eat=false;e.preventDefault();e.stopPropagation()}},true);
   let pending=null;
@@ -1460,8 +1453,8 @@ const tabSwipe={busy:false};
     const go=pending.go;pending=null;sp.stop();
     const next=go?TABS[TABS.indexOf(tab)+dirn]:null;
     cleanup();
+    /* an abandoned drag moved nothing but a transform, so there is no scroll to put back */
     if(next){tab=next;shownTab=next;render();window.scrollTo(0,0)}
-    else window.scrollTo(0,lockY);
   };
   const canStart=()=>!stack.length&&!document.querySelector('.lock')&&!tabSwipe.busy&&TABS.includes(tab);
   const place=u=>{
@@ -1473,8 +1466,6 @@ const tabSwipe={busy:false};
   const cleanup=()=>{
     if(ghost){ghost.remove();ghost=null}
     view.style.transform='';view.style.willChange='';
-    app.style.position='';app.style.top='';app.style.insetInline='';app.style.overflow='';
-    document.body.style.overflow='';
     tabSwipe.busy=false;
   };
   addEventListener('pointerdown',e=>{
@@ -1496,14 +1487,11 @@ const tabSwipe={busy:false};
       if(want<0||want>=TABS.length){armed=false;eat=true;return}
       on=true;tabSwipe.busy=true;eat=true;
       W=innerWidth;dirn=step;
-      lockY=scrollY;
       ghost=buildPage(TABS[want]);
-      /* #app is held at -lockY while the drag runs, so the incoming page is offset to match */
-      ghost.style.cssText=`position:absolute;top:${lockY}px;inset-inline:0;will-change:transform`;
+      /* a fixed overlay, so bringing it in moves nothing that was already laid out */
+      ghost.style.cssText='position:fixed;inset:0;overflow:hidden;z-index:3;background:var(--bg);will-change:transform';
       view.style.willChange='transform';
-      app.style.position='fixed';app.style.top=(-lockY)+'px';app.style.insetInline='0';app.style.overflow='hidden';
-      document.body.style.overflow='hidden';
-      app.appendChild(ghost);
+      document.body.appendChild(ghost);
       sp.jump(0);place(0);
       vt=Velocity();vt.add(e.clientX);
       try{app.setPointerCapture(pid)}catch(err){}
