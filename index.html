@@ -1027,16 +1027,18 @@ function Velocity(){const h=[];return{add(p){const t=performance.now();h.push([p
   get(){if(h.length<2)return 0;const a=h[0],b=h[h.length-1],dt=(b[1]-a[1])/1000;return dt>.004?(b[0]-a[0])/dt:0}}}
 
 let stack=[];
+function stageNode(el){return el||$('#app')}
 function underTx(el,p){
-  const t=`translateX(${(p*22).toFixed(2)}%)`;
-  if(el)el.style.transform=t; else {$('#app').style.transform=t;$('#tabbar').style.transform=t}
+  const n=stageNode(el);if(!n)return;
+  if(!n.style.willChange)n.style.willChange='transform';
+  n.style.transform=`translateX(${(p*22).toFixed(2)}%)`;
 }
-function clearStage(){for(const n of [$('#app'),$('#tabbar')]){n.style.transform='';n.style.opacity=''}}
 function underZoom(el,p){
-  const t=`scale(${(1-.035*p).toFixed(4)})`;
-  const put=n=>{if(n)n.style.transform=t};
-  if(el)put(el); else {put($('#app'));put($('#tabbar'))}
+  const n=stageNode(el);if(!n)return;
+  if(!n.style.willChange)n.style.willChange='transform';
+  n.style.transform=`scale(${(1-.035*p).toFixed(4)})`;
 }
+function clearStage(){for(const n of [$('#app'),$('#tabbar')]){if(!n)continue;n.style.transform='';n.style.opacity='';n.style.willChange=''}}
 function openLayer(html,push,origin){
   const kind=push?'push':'modal';
   const sc=document.createElement('div');sc.className='scrim';
