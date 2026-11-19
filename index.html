@@ -104,7 +104,8 @@ button.row:active{background:#E5E5EA}
 .sw:active i{width:29px}
 .pmk{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;opacity:.4;vertical-align:-1px}
 .swatches{display:flex;gap:8px;justify-content:space-between}
-.sw-c{width:32px;height:32px;border-radius:50%;border:0;padding:0;position:relative;-webkit-tap-highlight-color:transparent}
+.sw-c{width:36px;height:36px;border-radius:50%;border:0;padding:0;position:relative;-webkit-tap-highlight-color:transparent}
+.sw-c::before{content:"";position:absolute;inset:-4px;border-radius:50%}  /* 44×44 to the finger */
 .sw-c[aria-pressed="true"]::after{content:"";position:absolute;inset:-4px;border-radius:50%;box-shadow:0 0 0 2px var(--ink)}
 .pick1{height:40px;border:0;background:transparent;color:var(--tint);font-size:17px;text-align:start}
 .row .lblin{width:100%;border:0;background:transparent;font:inherit;font-size:17px;color:var(--ink);padding:3px 0;border-radius:6px;transition:background .15s}
@@ -272,8 +273,6 @@ svg.chart circle{stroke:var(--cring)}
   .panel,.chips div,.hero .deltas div,.grp{outline:1px solid #8E8E93;outline-offset:-1px}
 }
 @media (prefers-reduced-motion:no-preference){
-  .view.fade{animation:tabin .22s ease-out}
-  @keyframes tabin{from{opacity:0}}
   svg.chart .draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .9s .1s var(--ease) forwards}
   svg.chart .pop{opacity:0;animation:pop .3s ease-out forwards}
   @keyframes draw{to{stroke-dashoffset:0}}
@@ -301,11 +300,17 @@ svg.chart circle{stroke:var(--cring)}
 /* accounts are not part of the code: they arrive with the backup file and live only on the device */
 let ACCOUNTS=[],FIELDS=[];
 function setConfig(list){const ok=[];for(const a of Array.isArray(list)?list:[]){if(!a||!a.id||!Array.isArray(a.fields))continue;ok.push({id:String(a.id),name:String(a.name||a.id),short:String(a.short||a.name||a.id),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#44566A',cur:a.cur==='USD'?'USD':'ILS',fields:a.fields.filter(f=>Array.isArray(f)&&f[0]).map(f=>[String(f[0]),String(f[1]||f[0]),['cur','fx','cap','sav'].includes(f[2])?f[2]:'cap',!!f[3]])})}ACCOUNTS=ok;FIELDS=ok.flatMap(a=>a.fields.map(f=>f[0]))}
-const ASSETS=[['cur','עו״ש'],['fx','עו״ש מט״ח'],['cap','שוק ההון / קרנות'],['sav','חיסכון, פיקדונות ו-IRA']];
 const KEY='ft.data.v1', META='ft.meta.v1';
 let S={updates:[],ports:{},ptype:{},plink:{},priv:false,pmask:{}}, cryptoKey=null, encMeta=null, tab='home';
 
-const num=v=>{const x=typeof v==='number'?v:parseFloat(String(v??'').replace(/[,\s₪$]/g,''));return Number.isFinite(x)?x:0};
+const num=v=>{
+  if(typeof v==='number')return Number.isFinite(v)?v:0;
+  const raw=String(v??'');
+  const paren=/\(\s*[\d.,]+\s*\)/.test(raw);               /* (1,000) means minus, in a bank file */
+  const x=parseFloat(raw.replace(/[^0-9.\-]/g,''));          /* commas, ₪, $, spaces, RTL marks */
+  if(!Number.isFinite(x))return 0;
+  return paren?-Math.abs(x):x;
+};
 /* ---------- private mode ----------
    for when the screen is not only mine: an account can be left out altogether, or shown at
    half its value. display only — while it is on nothing can be written, so a masked number
@@ -319,8 +324,8 @@ const anyMask=()=>ACCOUNTS.some(a=>maskOf(a.id)!=='full');
 const share=(v,t)=>t?(v/t*100).toFixed(1):'0.0';
 
 function calcAt(u,raw){
-  const r={acc:{},usdAcc:{},asset:{cur:0,fx:0,cap:0,sav:0},total:0,usd:0};
-  for(const a of ACCOUNTS){const q=raw?1:facOf(a.id);let s=0;for(const [k,,t] of a.fields){const m=a.cur==='USD'?num(u.rate):1;const v=num(u.vals[k])*m*q;s+=v;r.asset[t]+=v;if(a.cur==='USD'){r.usd+=num(u.vals[k])*q;r.usdAcc[a.id]=(r.usdAcc[a.id]||0)+num(u.vals[k])*q}}r.acc[a.id]=s;r.total+=s}
+  const r={acc:{},usdAcc:{},total:0,usd:0};
+  for(const a of ACCOUNTS){const q=raw?1:facOf(a.id);let s=0;for(const [k] of a.fields){const m=a.cur==='USD'?num(u.rate):1;const v=num(u.vals[k])*m*q;s+=v;if(a.cur==='USD'){r.usd+=num(u.vals[k])*q;r.usdAcc[a.id]=(r.usdAcc[a.id]||0)+num(u.vals[k])*q}}r.acc[a.id]=s;r.total+=s}
   return r;
 }
 const calc=u=>calcAt(u,false);     /* what the screen shows */
@@ -369,7 +374,7 @@ const arrow=v=>v>0.5?'▲':v<-0.5?'▼':'●';
 const dshort=d=>{const [y,m,dd]=d.split('-');return +dd+'/'+ +m+'/'+y.slice(2)};
 const dlong=d=>{const [y,m,dd]=d.split('-');return +dd+'/'+ +m+'/'+y};
 const today=()=>{const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')};
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const compact=v=>{const a=Math.abs(v);return a>=1e6?(v/1e6).toFixed(a>=1e7?1:2)+'M':a>=1e4?(v/1e3).toFixed(a>=1e5?0:1)+'K':nf0.format(v)};
 
 /* ---------- storage (optionally encrypted on device) ---------- */
@@ -477,7 +482,6 @@ function lineChart(pts,color,o={}){
   const W=340,H=o.h||170,AX=46,PR=10,T=14,B=24,dark=!!o.dark;   // AX: width reserved for the value axis, on the left
   const vs=pts.map(p=>p.v);const {min,max,ticks}=niceTicks(Math.min(...vs),Math.max(...vs));const tf=tickFmt(ticks);
   const x=i=>pts.length===1?(AX+(W-PR-AX)/2):AX+10+i*(W-PR-AX-20)/(pts.length-1);const y=v=>T+(max-v)*(H-T-B)/(max-min);
-  const grid='var(--cgrid)',ring='var(--cring)';
   let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label||'גרף')}">`;
   for(const t of ticks){s+=`<line class="g" x1="${AX}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke-width="1"/><text x="${AX-7}" y="${y(t)+3.5}" text-anchor="end">${tf(t)}</text>`}
   const step=Math.max(1,Math.ceil(pts.length/5));
@@ -588,7 +592,6 @@ function render(){
   VIEWS[tab]();
   window.scrollTo(0,0);firstPaint=false;shownTab=tab;
   /* the tabs sit in a fixed order, so the page arrives from the side it lives on */
-  view.classList.remove('fade');
   if(dir&&!calm()&&!tabSwipe.busy){
     const a=view.animate([{transform:`translateX(${-dir*30}px)`,opacity:0},{transform:'none',opacity:1}],
       {duration:300,easing:'cubic-bezier(.32,.72,0,1)'});
@@ -629,6 +632,25 @@ function viewHome(){
   setTop(ils(last.total),true);
 }
 
+/* a heading that folds the block under it away. the panel carries the id the heading names,
+   so wiring is the same wherever it is used. */
+const foldHead=(id,title,extra='',open=false)=>
+  `<button class="foldh" aria-expanded="${open}" aria-controls="${id}"><h2>${title}${extra}</h2><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
+function wireFolds(root,onToggle){
+  (root||document).querySelectorAll('.foldh').forEach(hd=>{
+    const panel=document.getElementById(hd.getAttribute('aria-controls'));
+    if(!panel)return;
+    hd.onclick=()=>{
+      const open=hd.getAttribute('aria-expanded')==='true';
+      hd.setAttribute('aria-expanded',String(!open));
+      panel.hidden=open;
+      if(onToggle)onToggle(panel.id,!open);
+      if(!open&&!calm())panel.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],
+        {duration:200,easing:'cubic-bezier(.32,.72,0,1)'});
+    };
+  });
+}
+
 function openAccount(id,from){
   const a=ACCOUNTS.find(x=>x.id===id);if(!a||isHidden(id))return;
   let origin=null;
@@ -659,19 +681,12 @@ function openAccount(id,from){
     h+=`<${tapable?'button':'div'} class="row${tapable?' link':''}"${tapable?` data-port="${id}"`:''}><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm"${tapable?'':' style="font-weight:500"'}>${esc(nm)}</span>${sub}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,f)}</span>`:''}</span>${tapable?'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>':''}</${tapable?'button':'div'}>`}
   h+=`</div></section>`;
   h+=`<section><div class="panel facts"><div><small>הגבוה ביותר</small><b>${ils(hi)}</b></div><div><small>הנמוך ביותר</small><b>${ils(lo)}</b></div></div></section>`;
-  h+=`<section><button class="foldh" id="histh" aria-expanded="false" aria-controls="hist"><h2>היסטוריה</h2><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button><div class="panel" id="hist" hidden>`;
+  h+=`<section>${foldHead('hist','היסטוריה')}<div class="panel" id="hist" hidden>`;
   for(let i=n-1;i>=0;i--){const d=i?vs[i]-vs[i-1]:0;
     h+=`<div class="row dotted"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
   h+=`</div></section></div></div>`;
   openLayer(h,true,origin);
-  const hh=$('#histh'),hp=$('#hist');
-  if(hh)hh.onclick=()=>{
-    const open=hh.getAttribute('aria-expanded')==='true';
-    hh.setAttribute('aria-expanded',!open);
-    hp.hidden=open;
-    if(!open&&!calm())hp.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],
-      {duration:200,easing:'cubic-bezier(.32,.72,0,1)'});
-  };
+  wireFolds(stack[stack.length-1].el);
   wireChart($('#ch-acc'),pts,ils);
   if($('#ch-usd'))wireChart($('#ch-usd'),U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),usd);
   tr.forEach((f,i)=>wireChart($('#ch-t'+i),U.map(u=>({d:u.date,v:u.vals[f[0]]*q})),isUsd?usd:ils));
@@ -1231,13 +1246,11 @@ function guessType(h){
   if(ETFWORDS.test(n))return 'fund';
   return 'stock';
 }
-const TYPES={stock:'מניות',bond:'אג״ח',fund:'קרנות ו-ETF'};
 const TYPECOL={stock:'#3B82F6',bond:'#2F9E6E',fund:'#E2571C'};
 function parsePortfolio(rows){
   const hit=mapHeader(rows);
   if(!hit)throw new Error('לא זיהיתי את הכותרות בקובץ. ודאו שזו שורת האחזקות המקורית מהבנק.');
   const m=hit.map,out=[];
-  const num=v=>{const x=typeof v==='number'?v:parseFloat(String(v??'').replace(/[,\s₪$]/g,''));return Number.isFinite(x)?x:0};
   for(let r=hit.row+1;r<rows.length;r++){
     const row=rows[r]||[];const id=row[m.num];
     if(id==null||id==='')continue;
@@ -1252,11 +1265,10 @@ function parsePortfolio(rows){
 }
 const ptypeOf=h=>S.ptype[h.id]||guessType(h);
 function summarize(hold){
-  const s={total:0,cur:{},type:{},cat:{},count:{},gain:0,loss:0,tax:0,shield:0};
+  const s={total:0,cur:{},cat:{},count:{},gain:0,loss:0,tax:0,shield:0};
   for(const h of hold){
     s.total+=h.v;
     s.cur[h.cur]=(s.cur[h.cur]||0)+h.v;
-    const t=ptypeOf(h);s.type[t]=(s.type[t]||0)+h.v;
     const c=catOf(h);s.cat[c]=(s.cat[c]||0)+h.v;s.count[c]=(s.count[c]||0)+1;
     if(h.tg>0)s.gain+=h.tg;else s.loss+=h.tg;
     if(h.tx>0)s.tax+=h.tx;else s.shield+=h.tx;
@@ -1274,7 +1286,7 @@ function portsOf(id){
   return list.map(p=>({...p,
     hold:p.hold?p.hold.map(h=>({...h,qty:sc(h.qty),v:sc(h.v),vc:sc(h.vc),gain:sc(h.gain),tg:sc(h.tg),tx:sc(h.tx)})):p.hold,
     sum:p.sum?{...p.sum,total:sc(p.sum.total),gain:sc(p.sum.gain),loss:sc(p.sum.loss),tax:sc(p.sum.tax),shield:sc(p.sum.shield),
-      cur:scm(p.sum.cur),type:scm(p.sum.type),cat:scm(p.sum.cat)}:p.sum}));
+      cur:scm(p.sum.cur),cat:scm(p.sum.cat)}:p.sum}));
 }
 const KEEP_ROWS=24;
 function addSnapshot(accId,date,hold){
@@ -1298,7 +1310,7 @@ const dot=(c,extra='')=>`<span class="spine${catHollow(c)?' hollow':''}" style="
 
 function openPortfolio(accId){
   const a=ACCOUNTS.find(x=>x.id===accId);if(!a||isHidden(accId))return;
-  openPortfolio.filt=null;
+  openPortfolio.filt=null;openPortfolio.taxOpen=false;
   openLayer(`<div class="sheet push" role="dialog" aria-label="תיק ניירות ערך"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>${esc(a.short)}</span></button><h2>תיק ניירות ערך</h2><span></span></header><div class="body"></div></div>`,true);
   paintPortfolio(accId);
 }
@@ -1335,12 +1347,14 @@ function portfolioBody(accId){
   h+=`<section><h2>לפי מטבע</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי מטבע">${curs.map(k=>`<i style="flex:${s.cur[k]} 0 0;background:${CURCOL[k]||acol('#8A2D0C')}"></i>`).join('')}</div></div>`;
   for(const k of curs)h+=`<div class="row dotted"><span class="spine" style="background:${CURCOL[k]||acol('#8A2D0C')}"></span><span class="nm">${esc(k)}</span><span class="val"><b>${ils(s.cur[k])}</b><span class="n flat">${(s.cur[k]/s.total*100).toFixed(1)}%</span></span></div>`;
   h+=`</div></section>`;
-  h+=`<section><h2>מס על הנייר <small>לפי חישוב הבנק</small></h2><div class="panel facts">
+  const taxOpen=!!openPortfolio.taxOpen;
+  h+=`<section>${foldHead('taxp','מס על הנייר',' <small>לפי חישוב הבנק</small>',taxOpen)}
+  <div id="taxp"${taxOpen?'':' hidden'}><div class="panel facts">
   <div><small>רווח שטרם מומש</small><b class="up">${signedIls(s.gain)}</b></div>
   <div><small>הפסד שטרם מומש</small><b class="${s.loss?'down':''}">${signedIls(s.loss)}</b></div>
   <div><small>מס תיאורטי על הרווח</small><b>${ils(s.tax)}</b></div>
   <div><small>מגן מס מההפסד</small><b>${ils(Math.abs(s.shield))}</b></div></div>
-  <p class="hint">הסכומים הם על הנייר. הפסד מקוזז לצורכי מס רק אחרי מכירה בפועל.</p></section>`;
+  <p class="hint">הסכומים הם על הנייר. הפסד מקוזז לצורכי מס רק אחרי מכירה בפועל.</p></div></section>`;
   // holdings, filtered
   const shown=filt?hold.filter(x=>catOf(x)===filt):hold;
   const sub=filt?shown.reduce((t,x)=>t+x.v,0):s.total;
@@ -1369,6 +1383,7 @@ function portfolioBody(accId){
   return h+(PRIV()?'':`<section class="stackbtns"><label class="btn" style="cursor:pointer" for="pfile">העלאת קובץ חדש</label></section>`);
 }
 function wirePortfolio(accId){
+  wireFolds(layer,(id,open)=>{if(id==='taxp')openPortfolio.taxOpen=open});
   const f=$('#pfile');
   if(f)f.onchange=async e=>{const file=e.target.files[0];f.value='';if(file)await importPortfolio(accId,file)};
   layer.querySelectorAll('[data-sort]').forEach(b=>b.onclick=()=>{openPortfolio.sort=b.dataset.sort;paintPortfolio(accId,true)});
