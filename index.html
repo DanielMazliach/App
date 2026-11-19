@@ -408,7 +408,7 @@ function setMeta(p){try{localStorage.setItem(META,JSON.stringify({...meta(),...p
 let saveChain=Promise.resolve();
 function save(){
   saveChain=saveChain.then(async()=>{
-    const plain=JSON.stringify({v:3,accounts:ACCOUNTS,updates:S.updates,ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,tick:S.tick,rec:S.rec});
+    const plain=JSON.stringify({v:3,accounts:ACCOUNTS,updates:S.updates,ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,td:S.td,tick:S.tick,rec:S.rec});
     let out;
     if(cryptoKey){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},cryptoKey,new TextEncoder().encode(plain));out={enc:1,salt:encMeta.salt,iv:b64(iv),ct:b64(ct)}}
     else out={enc:0,data:JSON.parse(plain)};
@@ -428,7 +428,7 @@ function lockNow(){
   if(!cryptoKey||document.querySelector('.lock'))return;
   cryptoKey=null;                       // the key leaves memory until the code is re-entered
   closeAllLayers();
-  S.updates=[];S.ports={};S.ptype={};S.plink={};S.priv=false;S.pmask={};S.fh='';S.tick={};S.rec={};$('#tabbar').hidden=true;view.innerHTML='';
+  S.updates=[];S.ports={};S.ptype={};S.plink={};S.priv=false;S.pmask={};S.fh='';S.td='';S.tick={};S.rec={};PX={};$('#tabbar').hidden=true;view.innerHTML='';
   lockScreen();
 }
 document.addEventListener('visibilitychange',()=>{
@@ -464,6 +464,7 @@ async function unlock(pass){
 function loadPorts(d){
   S.ports={};S.ptype={};S.plink={};S.priv=!!d.priv;S.pmask={};
   S.fh=typeof d.fh==='string'?d.fh.trim().slice(0,80):'';
+  S.td=typeof d.td==='string'?d.td.trim().slice(0,80):'';
   S.tick={};for(const k in (d.tick||{})){const v=String(d.tick[k]||'').toUpperCase().replace(/[^A-Z0-9.\-]/g,'').slice(0,12);if(v)S.tick[String(k)]=v}
   S.rec={};for(const k in (d.rec||{})){const r=d.rec[k];if(r&&typeof r==='object')S.rec[String(k)]={ts:num(r.ts),sb:num(r.sb),b:num(r.b),h:num(r.h),s:num(r.s),ss:num(r.ss),period:String(r.period||''),tm:num(r.tm),tl:num(r.tl),th:num(r.th),px:num(r.px)}}
   const ok=new Set(ACCOUNTS.map(a=>a.id));
@@ -958,7 +959,8 @@ function openPrivCfg(){
 }
 function viewSettings(){
   setTop('הגדרות');
-  setTimeout(()=>{const k=$('#fhkey');if(k)k.onchange=()=>{S.fh=k.value.trim().slice(0,80);save()}},0);
+  setTimeout(()=>{const k=$('#fhkey');if(k)k.onchange=()=>{S.fh=k.value.trim().slice(0,80);save()};
+    const t=$('#tdkey');if(t)t.onchange=()=>{S.td=t.value.trim().slice(0,80);PX={};save()}},0);
   const m=meta();const locked=!!cryptoKey;const p=PRIV();
   view.innerHTML=`<div class="pagehead"><h1>הגדרות</h1><p>גיבוי, נעילה ונתונים</p></div>
   <section><h2>מצב פרטי</h2><div class="panel">
@@ -973,7 +975,11 @@ function viewSettings(){
   ${p?'':`<section><h2>המלצות אנליסטים</h2><div class="panel">
   <div class="fld wide"><label for="fhkey">מפתח API</label><input id="fhkey" type="password" value="${esc(S.fh)}" placeholder="finnhub.io" autocomplete="off" spellcheck="false"></div>
   </div><div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="recall">רענון כל ההמלצות</button></div>
-  <p class="hint">מפתח חינמי מ-finnhub.io. הוא נשמר מוצפן במכשיר הזה בלבד — לא בקוד של האתר. ההמלצות זמינות למניות הנסחרות בארה״ב; למניות בתל אביב, לאג״ח ולקרנות אין כיסוי.</p></section>`}
+  <p class="hint">מפתח חינמי מ-finnhub.io. הוא נשמר מוצפן במכשיר הזה בלבד — לא בקוד של האתר. ההמלצות זמינות למניות הנסחרות בארה״ב; למניות בתל אביב, לאג״ח ולקרנות אין כיסוי.</p></section>
+  <section><h2>גרף מחיר</h2><div class="panel">
+  <div class="fld wide"><label for="tdkey">מפתח API</label><input id="tdkey" type="password" value="${esc(S.td)}" placeholder="twelvedata.com" autocomplete="off" spellcheck="false"></div>
+  </div>
+  <p class="hint">מפתח חינמי מ-twelvedata.com, גם הוא מוצפן במכשיר בלבד. הוא מביא שנה של מחירי סגירה יומיים לניירות הנסחרים בארה״ב, ונמשך כשנכנסים לנייר. לכל יתר הניירות הגרף נבנה מהקבצים שהעלית.</p></section>`}
   <section><h2>גיבוי</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">הנתונים נשמרים רק במכשיר הזה. מחיקת האפליקציה ממסך הבית או ניקוי נתוני Safari מוחקים אותם, אז כדאי לשמור גיבוי אחרי כל עדכון.${m.lastBackup?` גיבוי אחרון: <span class="n">${new Date(m.lastBackup).toLocaleDateString('he-IL')}</span>.`:''}</p>
   <div class="stackbtns"><button class="btn" data-act="backup">שמירת גיבוי</button><button class="btn ghost" data-act="csv">ייצוא לאקסל (CSV)</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div></section>
   <section><h2>נעילה</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">${locked?'האפליקציה נעולה בקוד, והנתונים שמורים מוצפנים במכשיר. הקוד נדרש בפתיחה, ושוב אחרי שהאפליקציה הייתה ברקע יותר משתי דקות.':'אפשר לנעול את האפליקציה בקוד. הנתונים יישמרו מוצפנים, ובלי הקוד אי אפשר לשחזר אותם.'}</p>
@@ -997,21 +1003,64 @@ function priceSeries(accId,holdId,days){
   }
   return out;
 }
+/* ---------- a year of daily closes, for the securities a free source covers ----------
+   Twelve Data's free plan is US listings only, so this reaches the shares and the ETFs quoted in
+   dollars and nothing else; everything else keeps the chart built from the uploaded files above.
+   The series is held in memory for the session and never written to the stored blob: it is market
+   data, it is one request to get back, and 250 points per security would bloat every save. */
+let PX={};                                   /* ticker -> {ts, pts:[{d,v}]} */
+const pxBusy=new Set(),pxErr={};
+const PXDAY=12*60*60*1000;
+const pxTick=x=>x.cur==='דולר'?tickOf(x):'';
+async function fetchPx(sym){
+  if(!S.td)throw new Error('no-key');
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),12000);
+  try{
+    const r=await fetch('https://api.twelvedata.com/time_series?interval=1day&outputsize=260&symbol='+
+      encodeURIComponent(sym)+'&apikey='+encodeURIComponent(S.td),{signal:ctl.signal});
+    const j=await r.json();
+    if(j.code===401||j.code===403)throw new Error('key');
+    if(j.code===429)throw new Error('rate');
+    if(!Array.isArray(j.values)||!j.values.length)throw new Error('empty');
+    const pts=j.values.map(v=>({d:String(v.datetime).slice(0,10),v:parseFloat(v.close)}))
+      .filter(v=>Number.isFinite(v.v)).reverse();                 /* the API returns newest first */
+    if(pts.length<2)throw new Error('empty');
+    return {ts:Date.now(),pts};
+  }finally{clearTimeout(t)}
+}
+/* which series the chart draws, and where it came from */
+function priceData(x,accId){
+  const t=pxTick(x),m=t&&PX[t];
+  if(m)return {src:'market',t,pts:m.pts};
+  return {src:'own',t,pts:priceSeries(accId,x.id,365)};
+}
+const pxFmt=()=>v=>nf0.format(Math.round(v*100)/100);
 function priceBlock(x,accId){
-  const pts=priceSeries(accId,x.id,365);
-  if(pts.length<2)return pts.length===1
-    ?`<section><h2>מחיר הנייר</h2><p class="hint">יש צילום אחד בלבד. כל העלאת קובץ מוסיפה נקודה לגרף.</p></section>`:'';
-  const first=pts[0].v,last=pts[pts.length-1].v,d=last-first;
+  const {src,t,pts}=priceData(x,accId);
   const unit=x.cur==='שקל'?'אגורות':esc(x.cur);
-  const fmt=v=>nf0.format(Math.round(v*100)/100);
+  const head=`<section id="pxsec"><h2>מחיר הנייר · ${unit}</h2>`;
+  if(src==='own'&&t&&pxBusy.has(t))
+    return head+`<div class="panel pad"><div class="recwait"><span class="ring"></span><span>מושך נתוני שוק…</span></div></div></section>`;
+  if(pts.length<2){
+    const why=t&&pxErr[t]==='key'?'מפתח Twelve Data נדחה. הגדרות ← גרף מחיר.'
+      :t&&pxErr[t]==='rate'?'חריגה ממגבלת הבקשות לדקה. נסה שוב בעוד רגע.'
+      :t&&pxErr[t]?'לא הצלחתי למשוך נתוני שוק לנייר הזה.'
+      :pts.length===1?'יש צילום אחד בלבד. כל העלאת קובץ מוסיפה נקודה לגרף.':'';
+    return why?head+`<p class="hint">${why}</p></section>`:'';
+  }
+  const first=pts[0].v,last=pts[pts.length-1].v,d=last-first;
+  const fmt=pxFmt();
   const col=d>0?'var(--up)':d<0?'var(--down)':'var(--muted)';
-  return `<section><h2>מחיר הנייר · ${unit}</h2>
+  const note=src==='market'
+    ?`מחירי סגירה יומיים, <span class="n">${pts.length}</span> ימי מסחר מ-${dlong(pts[0].d)}. מקור: Twelve Data.`
+    :`<span class="n">${pts.length}</span> צילומים, מ-${dlong(pts[0].d)} עד ${dlong(pts[pts.length-1].d)}. הגרף נבנה מהקבצים שהעלית, ולא ממקור חיצוני.`;
+  return head+`
   <div class="panel pad chartbox" id="pxbox">
     <div class="chart-top"><b class="n">${fmt(last)}</b><span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,fmt)}${first?' · '+pct(d/first,1):''}</span></div>
     <div class="readout"></div>
-    ${lineChart(pts,col,{h:150,label:'מחיר '+x.name,anim:true})}
+    ${lineChart(pts,col,{h:150,label:'מחיר '+x.name,anim:src!=='market'})}
   </div>
-  <p class="hint"><span class="n">${pts.length}</span> צילומים, מ-${dlong(pts[0].d)} עד ${dlong(pts[pts.length-1].d)}. הגרף נבנה מהקבצים שהעלית, ולא ממקור חיצוני.</p></section>`;
+  <p class="hint">${note}</p></section>`;
 }
 
 /* ---------- analyst consensus ----------
@@ -1172,7 +1221,7 @@ async function shareFile(name,text,type){
   const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return true;
 }
 async function doBackup(){if(!S.updates.length){toast('אין עדיין נתונים לגיבוי');return}
-  const ok=await shareFile(`finance-backup-${today()}.json`,JSON.stringify({app:'finance-tracker',v:3,exported:new Date().toISOString(),accounts:ACCOUNTS,updates:sorted(),ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,tick:S.tick,rec:S.rec},null,1),'application/json');
+  const ok=await shareFile(`finance-backup-${today()}.json`,JSON.stringify({app:'finance-tracker',v:3,exported:new Date().toISOString(),accounts:ACCOUNTS,updates:sorted(),ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,td:S.td,tick:S.tick,rec:S.rec},null,1),'application/json');
   if(ok){setMeta({lastBackup:Date.now()});toast('הגיבוי נוצר');render()}}
 async function doCsv(){if(!S.updates.length){toast('אין עדיין נתונים לייצוא');return}
   const head=['תאריך',...ACCOUNTS.flatMap(a=>a.fields.map(f=>a.short+' – '+f[1])),'שער דולר','סה״כ הון (₪)'];
@@ -1663,13 +1712,33 @@ function openHolding(accId,id){
     finally{recBusy.delete(t);paint()}
   };
   wire();
-  const px=L.el.querySelector('#pxbox');
-  if(px){
-    wireChart(px,priceSeries(accId,x.id,365),v=>nf0.format(Math.round(v*100)/100));
+  const wirePx=()=>{
+    const px=L.el.querySelector('#pxbox');if(!px)return;
+    wireChart(px,priceData(x,accId).pts,pxFmt());
     /* wireChart opens on the last point, which the headline already states; leave the line for
        the reader's own finger instead of saying the same number twice */
     const ro=px.querySelector('.readout');if(ro)ro.innerHTML='<span class="flat">גע בגרף כדי לראות נקודה</span>';
-  }
+  };
+  const paintPx=()=>{
+    if(!mine())return;
+    const sec=L.el.querySelector('#pxsec');if(!sec)return;
+    const tmp=document.createElement('div');tmp.innerHTML=priceBlock(x,accId);
+    const neu=tmp.firstElementChild;
+    if(!neu){sec.remove();return}
+    sec.replaceWith(neu);wirePx();
+  };
+  const pullPx=async()=>{
+    const t=pxTick(x);
+    if(!t||!S.td||pxBusy.has(t))return;
+    const cur=PX[t];
+    if(cur&&Date.now()-cur.ts<PXDAY)return;
+    pxBusy.add(t);paintPx();
+    try{PX[t]=await fetchPx(t);delete pxErr[t]}
+    catch(e){pxErr[t]=e.message}
+    finally{pxBusy.delete(t);paintPx()}
+  };
+  wirePx();
+  pullPx();
   recPaintOpen.hold=paint;
   pull(false);                                                     /* opening the share is the request */
 }
