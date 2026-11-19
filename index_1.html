@@ -1,0 +1,1947 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="מעקב כספים">
+<meta name="robots" content="noindex,nofollow">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>מעקב כספים</title>
+<style>
+:root{
+  --bg:#F2F2F7; --surface:#FFFFFF; --ink:#1C1C1E; --ink2:#48484A; --muted:#6C6C70; --sep:#3C3C4329; --line:#E5E5EA; --fill:#7676801F;
+  --up:#248A3D; --down:#D70015; --tint:#007AFF; --focus:#007AFF; --ease:cubic-bezier(.32,.72,0,1);
+  --blur:saturate(1.6) blur(16px);
+  --up2:#5BB974; --chev:#C7C7CC; --knob:#FFFFFF; --onTint:#FFFFFF; --bar:#F9F9F9D9; --barsheet:#F2F2F7CC; --grab:#C7C7CC;
+  --press:#E8F0FE; --errbg:#FFE5E7; --errink:#A1000F; --toast:#3A3A3CF2; --ontoast:#FFFFFF;
+  --cline:#1C1C1E; --cgrid:#E5E5EA; --cring:#FFFFFF; --ccross:#9AA8B4; --knobshadow:rgba(0,0,0,.16);
+  --segbg:#7676801F; --segon:#FFFFFF; --segsh:0 1px 3px #0000001f;
+  --num: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "SF Hebrew", "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
+  --txt: -apple-system, system-ui, "SF Hebrew", "Segoe UI", "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
+  --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#000000; --surface:#1C1C1E; --ink:#FFFFFF; --ink2:#D1D1D6; --muted:#98989F;
+    --sep:#54545899; --line:#38383A; --fill:#7676803D;
+    --up:#30D158; --down:#FF453A; --tint:#0A84FF; --focus:#0A84FF;
+    --up2:#2B9E4E; --chev:#48484A; --knob:#FFFFFF; --onTint:#FFFFFF; --bar:#1C1C1ED9; --barsheet:#1C1C1ECC; --grab:#48484A;
+    --press:#0A84FF2E; --errbg:#3A1216; --errink:#FF6A6A; --toast:#48484AF2; --ontoast:#FFFFFF;
+    --cline:#F2F2F7; --cgrid:#2C2C2E; --cring:#1C1C1E; --ccross:#636366; --knobshadow:rgba(0,0,0,.5);
+    --segbg:#1C1C1E; --segon:#636366; --segsh:none;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg)}
+body{font-family:var(--txt);color:var(--ink);font-size:17px;line-height:1.3;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.n{font-family:var(--num);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;white-space:nowrap}
+.up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--muted)}
+[hidden]{display:none!important}
+
+#app{min-height:100%;background:var(--bg);padding-bottom:calc(76px + var(--sab))}
+.view{max-width:560px;margin:0 auto}
+
+/* overview header: the total is the title */
+.hero{padding:calc(var(--sat) + 20px) 16px 0}
+.hero h1{margin:0 4px;font-size:15px;font-weight:600;color:var(--muted)}
+.hero .total{font-family:var(--num);font-size:46px;font-weight:700;letter-spacing:-.024em;line-height:1.08;margin:2px 4px 0;direction:ltr;text-align:right}
+.hero .asof{font-size:15px;color:var(--muted);margin:2px 4px 0}
+.hero .deltas{display:flex;gap:10px;margin:18px 0 10px}
+.hero .deltas div,.chips div{flex:1;background:var(--surface);border-radius:14px;padding:11px 14px}
+.hero .deltas small,.chips small{display:block;font-size:13px;color:var(--muted)}
+.hero .deltas b,.chips b{font-family:var(--num);font-size:19px;font-weight:600;direction:ltr;display:inline-block}
+.hero .deltas span,.chips span{font-size:13px}
+.readout{font-size:13px;min-height:18px;color:var(--muted);margin:4px 0 0}
+
+.pagehead{padding:calc(var(--sat) + 20px) 20px 2px}
+.pagehead h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.022em;line-height:1.15}
+.pagehead p{margin:2px 0 0;font-size:15px;color:var(--muted)}
+
+section{margin:28px 16px 0}
+section>h2{font-size:22px;font-weight:700;letter-spacing:-.016em;line-height:1.2;margin:0 4px 10px}
+section>h2 small{font-weight:400;font-size:15px;letter-spacing:0;color:var(--muted);margin-inline-start:6px}
+.panel{background:var(--surface);border-radius:14px;overflow:hidden}
+.foldh{display:flex;align-items:center;gap:8px;width:100%;background:0;border:0;padding:0;margin:0 4px 10px;
+  font:inherit;color:inherit;text-align:start;-webkit-tap-highlight-color:transparent}
+.foldh h2{font-size:22px;font-weight:700;letter-spacing:-.016em;line-height:1.2;margin:0}
+.foldh .chev{width:9px;height:15px;flex:0 0 auto;fill:none;stroke:var(--tint);stroke-width:2.6;
+  stroke-linecap:round;stroke-linejoin:round;transform:rotate(-90deg);transition:transform .22s var(--ease)}
+.foldh[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.foldh:active h2{opacity:.5}
+@media(prefers-reduced-motion:reduce){.foldh .chev{transition:none}}
+.pad{padding:14px 16px}
+
+.stack{display:flex;gap:2px;height:10px;direction:ltr;margin:2px 0}
+.stack i{display:block;height:100%;min-width:3px;border-radius:2px}
+.stack i:first-child{border-radius:5px 2px 2px 5px}.stack i:last-child{border-radius:2px 5px 5px 2px}
+
+/* list rows: separators only, inset from the leading edge */
+.row{position:relative;display:grid;grid-template-columns:10px 1fr auto;gap:0 12px;align-items:center;width:100%;min-height:60px;text-align:start;padding:10px 16px;background:var(--surface);transition:background .07s ease-out}
+.row::before,.facts div::before{content:"";position:absolute;top:0;inset-inline:38px 0;height:1px;background:var(--sep);transform:scaleY(.5);transform-origin:top}
+.row:first-child::before,.facts div:first-child::before{display:none}
+.row .spine{width:10px;height:10px;border-radius:50%}
+.row .nm{font-weight:400;font-size:17px}
+.row .sub{font-size:13px;color:var(--muted);margin-top:1px}
+.row .val{text-align:left}
+.row .val b{font-family:var(--num);font-size:17px;font-weight:600;display:block;direction:ltr}
+.row .val span{font-size:13px}
+button.row{grid-template-columns:10px 1fr auto 8px}
+button.row:active{background:#E5E5EA}
+.row .chev{width:8px;height:14px;fill:none;stroke:var(--chev);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.sw{width:51px;height:31px;border-radius:16px;background:var(--line);border:0;padding:0;position:relative;flex:0 0 auto;transition:background .28s cubic-bezier(.32,.72,0,1);-webkit-tap-highlight-color:transparent}
+.sw[aria-checked="true"]{background:var(--up)}
+.sw i{position:absolute;top:2px;right:2px;width:27px;height:27px;border-radius:50%;background:var(--knob);box-shadow:0 2px 6px var(--knobshadow),0 0 0 .5px rgba(0,0,0,.04);transition:transform .28s cubic-bezier(.32,.72,0,1)}
+.sw[aria-checked="true"] i{transform:translateX(-20px)}
+.sw:active i{width:29px}
+.pmk{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;opacity:.4;vertical-align:-1px}
+.rec{display:inline-flex;align-items:center;font-size:12.5px;font-weight:600;padding:1px 7px;border-radius:7px;line-height:1.5}
+.rec.buy{background:color-mix(in srgb,var(--up) 15%,transparent);color:var(--up)}
+.rec.hold{background:color-mix(in srgb,var(--muted) 20%,transparent);color:var(--ink2)}
+.rec.sell{background:color-mix(in srgb,var(--down) 14%,transparent);color:var(--down)}
+.rec.none{background:color-mix(in srgb,var(--muted) 14%,transparent);color:var(--muted);font-weight:500}
+.recwait{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px}
+.recwait .ring{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--muted);animation:ringspin .75s linear infinite;flex:0 0 auto}
+.bigrec{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:1px 0 2px}
+.bigrec.buy{color:var(--up)}.bigrec.sell{color:var(--down)}
+.cons{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;margin:6px 0 12px}
+.cons i{display:block}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend b{width:9px;height:9px;border-radius:50%;display:inline-block}
+.swatches{display:flex;gap:8px;justify-content:space-between}
+.sw-c{width:36px;height:36px;border-radius:50%;border:0;padding:0;position:relative;-webkit-tap-highlight-color:transparent}
+.sw-c::before{content:"";position:absolute;inset:-4px;border-radius:50%}  /* 44×44 to the finger */
+.sw-c[aria-pressed="true"]::after{content:"";position:absolute;inset:-4px;border-radius:50%;box-shadow:0 0 0 2px var(--ink)}
+.pick1{height:40px;border:0;background:transparent;color:var(--tint);font-size:17px;text-align:start}
+.row .lblin{width:100%;border:0;background:transparent;font:inherit;font-size:17px;color:var(--ink);padding:3px 0;border-radius:6px;transition:background .15s}
+.row .lblin:focus{background:var(--bg);outline:0;padding:3px 7px;margin:0 -7px}
+.row .lblin::placeholder{color:var(--chev)}
+@media(prefers-reduced-motion:reduce){.sw,.sw i{transition:none}}
+.sheet .row{grid-template-columns:1fr auto;min-height:52px}
+.row.plain{grid-template-columns:1fr auto}
+button.row.plain{grid-template-columns:1fr auto 8px}
+.row.plain::before{inset-inline:16px 0}
+.sheet .row .spine{display:none}
+.sheet .row.dotted{grid-template-columns:10px 1fr auto}
+.sheet button.row.dotted{grid-template-columns:10px 1fr auto 8px}
+.sheet .row.dotted .spine{display:block}
+/* a row inside a sheet that leads somewhere needs a track for its chevron, or the chevron
+   wraps onto a line of its own */
+.sheet button.row{grid-template-columns:1fr auto 8px}
+.sheet button.row.dotted{grid-template-columns:10px 1fr auto 8px}
+.sheet .row::before{inset-inline-start:16px}
+
+.facts div{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;padding:10px 16px;background:var(--surface)}
+.facts div::before{inset-inline-start:16px}
+.facts small{font-size:17px;color:var(--ink)}
+.facts b{font-family:var(--num);font-size:17px;font-weight:400;color:var(--muted);direction:ltr}
+.facts b.up{color:var(--up)}.facts b.down{color:var(--down)}
+.row.link .nm{color:var(--tint);font-weight:500}
+.row.link .chev{stroke:var(--tint);stroke-width:2.4}
+
+.note{font-size:15px;color:var(--ink2);background:var(--surface);border-radius:14px;padding:12px 16px;margin:18px 16px 0;display:flex;gap:12px;align-items:center;justify-content:space-between}
+.note button{color:var(--tint);font-weight:600;white-space:nowrap;min-height:32px}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;border-radius:14px;background:var(--tint);color:var(--onTint);font-weight:600;font-size:17px;padding:0 18px;transition:opacity .09s ease-out,transform .09s ease-out}
+.btn.ghost{background:var(--fill);color:var(--tint)}
+.btn.danger{background:var(--fill);color:var(--down)}
+.btn:active{opacity:.7;transform:scale(.985)}
+.btn[disabled]{opacity:.4}
+.stackbtns{display:grid;gap:10px}
+
+.tabbar{position:fixed;inset:auto 0 0 0;background:var(--bar);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:0 -.5px 0 var(--sep);display:flex;justify-content:center;padding-bottom:var(--sab);z-index:5}
+.tabbar div{display:flex;width:100%;max-width:560px}
+.tabbar button{flex:1;height:52px;font-size:10.5px;font-weight:500;color:#8E8E93;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.tabbar svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button[aria-current="page"]{color:var(--tint)}
+
+/* pages: a detail page pushes in from the side, a form rises as a sheet */
+.sheet{position:fixed;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column;touch-action:pan-y;will-change:transform}
+.sheet header{position:relative;background:var(--barsheet);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:0 .5px 0 transparent;transition:box-shadow .2s;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:calc(var(--sat) + 4px) 10px 4px;min-height:calc(var(--sat) + 48px)}
+.sheet header.edge{box-shadow:0 .5px 0 var(--sep)}
+.sheet header h2{margin:0;font-size:17px;font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw}
+.sheet header button{color:var(--tint);font-size:17px;min-height:44px;padding:0 6px;justify-self:start;display:flex;align-items:center;gap:3px}
+.sheet header button:active{opacity:.4}
+.sheet header button svg{width:12px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.sheet .body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(28px + var(--sab))}
+.sheet footer{background:var(--bar);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:0 -.5px 0 var(--sep);padding:10px 16px calc(10px + var(--sab));display:flex;align-items:center;gap:14px}
+.sheet footer .sum{flex:1;min-width:0}
+.sheet footer .sum small{display:block;color:var(--muted);font-size:13px}
+.sheet footer .sum b{font-family:var(--num);font-size:22px;font-weight:600;letter-spacing:-.01em;direction:ltr;display:inline-block}
+.sheet footer .btn{width:auto;min-width:120px}
+.sheet.modal{top:calc(var(--sat) + 10px);border-radius:12px 12px 0 0;overflow:hidden}
+.sheet.modal header{touch-action:none;padding-top:14px;min-height:58px}
+.grab{position:absolute;top:6px;left:0;right:0;height:5px;margin:0 auto;width:36px;border-radius:3px;background:var(--grab)}
+.scrim{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none}
+.segbar{display:flex;gap:2px;background:var(--segbg);border-radius:9px;padding:2px;margin:0 4px 10px}
+.segbar button{flex:1;min-height:32px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink)}
+.segbar button[aria-selected="true"]{background:var(--segon);font-weight:600;box-shadow:var(--segsh)}
+.chiprow{display:flex;gap:8px;overflow-x:auto;padding:0 16px 4px;margin:0 -16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chiprow::-webkit-scrollbar{display:none}
+.chiprow button{flex:none;min-height:34px;padding:0 13px;border-radius:17px;background:var(--fill);font-size:14px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.chiprow button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.chiprow .spine{width:8px;height:8px;border-radius:50%;flex:none}
+.chiprow .spine.hollow{box-shadow:inset 0 0 0 2.5px var(--c)}
+.row .spine.hollow,.chiprow .spine.hollow{background:var(--surface)!important;box-shadow:inset 0 0 0 3px var(--c)}
+.chiprow button[aria-pressed="true"] .spine.hollow{background:var(--ink)!important}
+button.row[aria-pressed="true"]{background:var(--press)}
+button.row[aria-pressed="true"] .nm{font-weight:600}
+#app,#tabbar{will-change:transform}
+
+.acc-head{padding:6px 20px 0}
+.acc-head h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.022em;line-height:1.15}
+.acc-head h1 span{font-size:.5em;vertical-align:middle}
+.acc-head .big{font-family:var(--num);font-size:34px;font-weight:600;letter-spacing:-.02em;direction:ltr;text-align:right;margin-top:14px;line-height:1.1}
+.acc-head .meta{color:var(--muted);font-size:15px;margin-top:2px}
+.chips{display:flex;gap:10px;margin:18px 16px 0}
+
+/* forms: grouped rows, borderless fields */
+.grp{margin:22px 16px 0;background:var(--surface);border-radius:14px;overflow:hidden}
+.grp h3{margin:0;padding:12px 16px 2px;font-size:13px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px}
+.grp h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c,var(--muted));flex:none}
+.grp h3 small{font-weight:400;font-size:13px}
+.fld{position:relative;display:grid;grid-template-columns:1fr 150px;align-items:center;gap:10px;min-height:48px;padding:3px 16px}
+.fld + .fld::before{content:"";position:absolute;top:0;inset-inline:16px 0;height:1px;background:var(--sep);transform:scaleY(.5);transform-origin:top}
+.fld label{font-size:17px}
+.fld label small{display:block;color:var(--muted);font-size:13px;direction:rtl}
+.fld input{width:100%;height:40px;border:0;border-radius:8px;padding:0 8px;font-family:var(--num);font-size:17px;direction:ltr;text-align:left;background:transparent;color:var(--ink);font-variant-numeric:tabular-nums;transition:background .15s}
+.fld input::placeholder{color:var(--chev)}
+.fld input:focus{background:var(--bg);outline:0}
+.fld input[type=date]{-webkit-appearance:none;appearance:none}
+.fld.wide{grid-template-columns:96px 1fr}
+.fld.wide input{direction:rtl;text-align:start;font-family:inherit;font-variant-numeric:normal}
+.fld .inl{display:flex;gap:4px;align-items:center}
+.fld .inl button{white-space:nowrap;font-size:15px;color:var(--tint);padding:0 4px;min-height:44px}
+.fld .inl button:active{opacity:.4}
+.fld .inl .atbtn{color:var(--tint);font-size:15px;min-height:44px;display:flex;align-items:center;cursor:pointer;white-space:nowrap}
+.fld .inl .atbtn.on{color:var(--up);font-weight:600;font-size:13.5px}
+.hint{font-size:13px;color:var(--muted);padding:6px 16px 12px;margin:0}
+.err{margin:16px 16px 0;background:var(--errbg);color:var(--errink);border-radius:12px;padding:11px 14px;font-size:15px}
+
+table.cmp{width:100%;border-collapse:collapse;font-size:15px}
+table.cmp th{font-weight:400;color:var(--muted);font-size:13px;text-align:left;padding:12px 8px 6px}
+table.cmp th:first-child,table.cmp td:first-child{text-align:right;padding-inline-start:16px}
+table.cmp td{padding:12px 8px;box-shadow:inset 0 .5px 0 var(--sep);text-align:left}
+table.cmp td:last-child,table.cmp th:last-child{padding-left:16px}
+table.cmp tr.tot td{font-weight:600}
+table.cmp .d small{display:block;font-size:12px}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pick label{font-size:13px;color:var(--muted);display:block;margin:0 4px}
+.pick select{width:100%;height:48px;border:0;border-radius:12px;background:var(--surface);color:var(--tint);padding:0 12px;font-size:17px;margin-top:6px}
+.empty{text-align:center;padding:56px 28px;color:var(--muted)}
+.empty h2{font-size:22px;font-weight:700;letter-spacing:-.016em;margin:0 0 6px;color:var(--ink)}
+.empty p{margin:0 0 22px;font-size:15px}
+.cover{position:fixed;inset:0;background:var(--bg);z-index:38}
+.lock{position:fixed;inset:0;background:var(--bg);color:var(--ink);z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:12px}
+.lock form{display:contents}
+.lock h1{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:0}
+.lock p{margin:0 0 6px;color:var(--muted);font-size:15px;text-align:center}
+.lock input{width:240px;height:52px;border-radius:12px;border:0;background:var(--surface);font-size:22px;text-align:center;direction:ltr}
+.lock .btn{width:240px}
+.lock .msg{color:var(--down);min-height:20px;font-size:15px}
+textarea{width:100%;min-height:120px;border:0;border-radius:10px;background:var(--bg);padding:10px;font-size:13px;direction:ltr;font-family:ui-monospace,Menlo,monospace}
+svg.chart{display:block;width:100%;height:auto;touch-action:pan-y;direction:ltr}
+svg.chart text{font-family:var(--num);font-size:10.5px;fill:#8E8E93}
+svg.chart .g{stroke:var(--cgrid)}
+svg.chart .cross{stroke:var(--ccross)}
+svg.chart circle{stroke:var(--cring)}
+.chart-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
+.chart-top b{font-size:22px;font-family:var(--num);letter-spacing:-.2px}
+.chart-top .n{font-size:14px;font-weight:600}
+.chartbox .readout{min-height:17px;font-size:12.5px;color:var(--muted);margin:0 0 4px;direction:rtl}
+.roll .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.roll{display:inline-flex;direction:ltr;font-variant-numeric:tabular-nums;white-space:nowrap}
+.roll .dig,.roll .sep{display:inline-block;height:1em;line-height:1;vertical-align:bottom}
+.roll .dig{overflow:hidden}
+.roll .dig u{display:block;text-decoration:none;will-change:transform}
+.roll .dig u b{display:block!important;font-weight:inherit;font-size:inherit;height:1em;line-height:1;letter-spacing:inherit}
+#topbar{position:fixed;inset:0 0 auto 0;z-index:6;padding:var(--sat) 16px 0;height:calc(var(--sat) + 44px);
+  display:flex;align-items:center;justify-content:center;background:var(--bar);
+  box-shadow:0 .5px 0 var(--sep);opacity:0;transform:translateY(-8px);pointer-events:none;
+  visibility:hidden;
+  transition:opacity .2s ease-out,transform .2s var(--ease),visibility 0s linear .2s}
+#topbar.on{opacity:1;transform:none;visibility:visible;transition-delay:0s,0s,0s;
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
+#topbar span{font-size:16px;font-weight:600;letter-spacing:-.01em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#topbar span.n{font-family:var(--num);direction:ltr}
+#pull{position:fixed;inset:calc(var(--sat) + 2px) 0 auto 0;z-index:4;display:flex;flex-direction:column;align-items:center;gap:4px;
+  opacity:0;pointer-events:none;color:var(--muted);font-size:13px}
+#pull .ring{width:20px;height:20px;border-radius:50%;border:2.2px solid var(--line);border-top-color:var(--muted)}
+#pull.go .ring{animation:ringspin .75s linear infinite}
+#pull .txt{font-family:var(--num);direction:ltr}
+@keyframes ringspin{to{transform:rotate(360deg)}}
+.moving .tabbar,.moving .sheet header,.moving .sheet footer,.moving #topbar.on{
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.toast{position:fixed;inset:auto 0 calc(76px + var(--sab)) 0;width:max-content;max-width:calc(100% - 40px);margin:0 auto;background:var(--toast);color:var(--ontoast);border-radius:22px;padding:11px 20px;text-align:center;z-index:30;font-size:15px}
+
+@media (prefers-reduced-transparency:reduce){
+  .tabbar,.sheet header,.sheet footer{background:var(--bg)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+}
+@media (prefers-contrast:more){
+  :root{--sep:#3C3C4399;--muted:#48484A}
+  .panel,.chips div,.hero .deltas div,.grp{outline:1px solid #8E8E93;outline-offset:-1px}
+}
+@media (prefers-reduced-motion:no-preference){
+  svg.chart .draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .9s .1s var(--ease) forwards}
+  svg.chart .pop{opacity:0;animation:pop .3s ease-out forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes pop{from{opacity:0}to{opacity:1}}
+  .toast{animation:toastin .25s ease-out}
+  @keyframes toastin{from{opacity:0;transform:translateY(8px)}}
+}
+</style>
+</head>
+<body>
+<div id="pull" aria-hidden="true"><span class="ring"></span><span class="txt"></span></div>
+<div id="topbar" aria-hidden="true"><span></span></div>
+<div id="app"><div class="view" id="view"></div></div>
+<div id="scrim" aria-hidden="true"></div>
+<nav class="tabbar" id="tabbar" hidden><div>
+  <button data-tab="home"><svg viewBox="0 0 24 24"><path d="M4 19V10M10 19V5M16 19v-7M21 19H3"/></svg>סקירה</button>
+  <button data-tab="updates"><svg viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h9"/></svg>עדכונים</button>
+  <button data-tab="compare"><svg viewBox="0 0 24 24"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/></svg>השוואה</button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>הגדרות</button>
+</div></nav>
+<div id="layer"></div>
+<script>
+'use strict';
+/* ---------- model ---------- */
+/* accounts are not part of the code: they arrive with the backup file and live only on the device */
+let ACCOUNTS=[],FIELDS=[];
+function setConfig(list){const ok=[];for(const a of Array.isArray(list)?list:[]){if(!a||!a.id||!Array.isArray(a.fields))continue;ok.push({id:String(a.id),name:String(a.name||a.id),short:String(a.short||a.name||a.id),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#44566A',cur:a.cur==='USD'?'USD':'ILS',fields:a.fields.filter(f=>Array.isArray(f)&&f[0]).map(f=>[String(f[0]),String(f[1]||f[0]),['cur','fx','cap','sav'].includes(f[2])?f[2]:'cap',!!f[3]])})}ACCOUNTS=ok;FIELDS=ok.flatMap(a=>a.fields.map(f=>f[0]))}
+const KEY='ft.data.v1', META='ft.meta.v1';
+let S={updates:[],ports:{},ptype:{},plink:{},priv:false,pmask:{},fh:'',tick:{},rec:{}}, cryptoKey=null, encMeta=null, tab='home';
+
+const num=v=>{
+  if(typeof v==='number')return Number.isFinite(v)?v:0;
+  const raw=String(v??'');
+  const paren=/\(\s*[\d.,]+\s*\)/.test(raw);               /* (1,000) means minus, in a bank file */
+  const x=parseFloat(raw.replace(/[^0-9.\-]/g,''));          /* commas, ₪, $, spaces, RTL marks */
+  if(!Number.isFinite(x))return 0;
+  return paren?-Math.abs(x):x;
+};
+/* ---------- private mode ----------
+   for when the screen is not only mine: an account can be left out altogether, or shown at
+   half its value. display only — while it is on nothing can be written, so a masked number
+   can never be saved back as real data. the backup and the CSV always hold the real amounts. */
+const PRIV=()=>!!S.priv;
+const maskOf=id=>{const m=S.pmask&&S.pmask[id];return m==='half'||m==='hide'?m:'full'};
+const facOf=id=>!PRIV()?1:(maskOf(id)==='hide'?0:maskOf(id)==='half'?.5:1);
+const isHidden=id=>PRIV()&&maskOf(id)==='hide';
+const visAcc=()=>ACCOUNTS.filter(a=>!isHidden(a.id));
+const anyMask=()=>ACCOUNTS.some(a=>maskOf(a.id)!=='full');
+const share=(v,t)=>t?(v/t*100).toFixed(1):'0.0';
+
+function calcAt(u,raw){
+  const r={acc:{},usdAcc:{},total:0,usd:0};
+  for(const a of ACCOUNTS){const q=raw?1:facOf(a.id);let s=0;for(const [k] of a.fields){const m=a.cur==='USD'?num(u.rate):1;const v=num(u.vals[k])*m*q;s+=v;if(a.cur==='USD'){r.usd+=num(u.vals[k])*q;r.usdAcc[a.id]=(r.usdAcc[a.id]||0)+num(u.vals[k])*q}}r.acc[a.id]=s;r.total+=s}
+  return r;
+}
+const calc=u=>calcAt(u,false);     /* what the screen shows */
+const calcRaw=u=>calcAt(u,true);   /* what leaves the app */
+const sorted=()=>[...S.updates].sort((a,b)=>a.date<b.date?-1:1);
+
+/* ---------- colour ----------
+   account colours are chosen by the person, so some of them are too dark to read on a dark
+   surface. rather than overriding their choice, the same hue is lifted to a readable lightness
+   while the scheme is dark, and handed back untouched while it is light. */
+const DARK=()=>matchMedia('(prefers-color-scheme: dark)').matches;
+const hex2hsl=h=>{
+  const n=parseInt(h.slice(1),16),r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn;
+  if(!d)return[0,0,l];
+  const s=l>.5?d/(2-mx-mn):d/(mx+mn);
+  let hh=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;
+  return[hh*60,s,l];
+};
+const hsl2hex=(h,s,l)=>{
+  const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;
+  const t=h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];
+  return '#'+t.map(v=>Math.round((v+m)*255).toString(16).padStart(2,'0')).join('');
+};
+const colCache={};
+function acol(hex){
+  if(!DARK()||!/^#[0-9a-f]{6}$/i.test(hex))return hex;
+  const k=hex.toLowerCase();if(colCache[k])return colCache[k];
+  const [h,sa,l]=hex2hsl(k);
+  /* lift, don't level: raising every colour to the same lightness would merge two accounts
+     whose hues are close and whose only difference was how dark they were. */
+  const nl=Math.max(.42,Math.min(.82,l+.20*(1-l)));
+  return colCache[k]=nl<=l+.005?hex:hsl2hex(h,Math.min(sa,.85),nl);
+}
+const chartInk=()=>DARK()?'#F2F2F7':'#1C1C1E';
+
+/* ---------- format ---------- */
+const nf0=new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
+const ils=v=>'₪'+nf0.format(Math.round(v));
+const usd=v=>'$'+nf0.format(Math.round(v));
+const signedBy=(v,f)=>(v>0?'+':v<0?'−':'')+f(Math.abs(v));   // e.g. +₪40,873 / −$1,989
+const signedIls=v=>signedBy(v,ils);
+const pct=(v,d=1)=>(v>0?'+':v<0?'−':'')+Math.abs(v*100).toFixed(d)+'%';
+const cls=v=>v>0.5?'up':v<-0.5?'down':'flat';
+const arrow=v=>v>0.5?'▲':v<-0.5?'▼':'●';
+const dshort=d=>{const [y,m,dd]=d.split('-');return +dd+'/'+ +m+'/'+y.slice(2)};
+const dlong=d=>{const [y,m,dd]=d.split('-');return +dd+'/'+ +m+'/'+y};
+const today=()=>{const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const compact=v=>{const a=Math.abs(v);return a>=1e6?(v/1e6).toFixed(a>=1e7?1:2)+'M':a>=1e4?(v/1e3).toFixed(a>=1e5?0:1)+'K':nf0.format(v)};
+
+/* ---------- storage (optionally encrypted on device) ---------- */
+const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function deriveKey(pass,salt){
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+function readRaw(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function meta(){try{return JSON.parse(localStorage.getItem(META)||'{}')}catch(e){return {}}}
+function setMeta(p){try{localStorage.setItem(META,JSON.stringify({...meta(),...p}))}catch(e){}}
+let saveChain=Promise.resolve();
+function save(){
+  saveChain=saveChain.then(async()=>{
+    const plain=JSON.stringify({v:3,accounts:ACCOUNTS,updates:S.updates,ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,td:S.td,tick:S.tick,rec:S.rec});
+    let out;
+    if(cryptoKey){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},cryptoKey,new TextEncoder().encode(plain));out={enc:1,salt:encMeta.salt,iv:b64(iv),ct:b64(ct)}}
+    else out={enc:0,data:JSON.parse(plain)};
+    localStorage.setItem(KEY,JSON.stringify(out));
+  }).catch(e=>toast('השמירה נכשלה: '+e.message));
+  return saveChain;
+}
+/* iOS keeps a home-screen app alive, so a code checked only at cold start would almost never be asked for */
+const LOCK_AFTER=120000;      // ask again once the app has been away this long
+let hiddenAt=0,coverEl=null;
+function cover(on){
+  if(on){ if(!coverEl&&cryptoKey){coverEl=document.createElement('div');coverEl.className='cover';document.body.appendChild(coverEl)} }
+  else if(coverEl){coverEl.remove();coverEl=null}
+}
+function lockNow(){
+  cover(false);
+  if(!cryptoKey||document.querySelector('.lock'))return;
+  cryptoKey=null;                       // the key leaves memory until the code is re-entered
+  closeAllLayers();
+  S.updates=[];S.ports={};S.ptype={};S.plink={};S.priv=false;S.pmask={};S.fh='';S.td='';S.tick={};S.rec={};PX={};$('#tabbar').hidden=true;view.innerHTML='';
+  lockScreen();
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){hiddenAt=Date.now();cover(true)}
+  else if(cryptoKey&&hiddenAt&&Date.now()-hiddenAt>LOCK_AFTER){hiddenAt=0;lockNow()}
+  else {hiddenAt=0;cover(false)}
+});
+window.addEventListener('pagehide',()=>{hiddenAt=Date.now();cover(true)});
+function applyPlain(pt){
+  const d=JSON.parse(new TextDecoder().decode(pt));
+  setConfig(d.accounts);S.updates=clean(d.updates);loadPorts(d);
+}
+async function unlock(pass){
+  const raw=readRaw();
+  if(raw.wrap){
+    /* written by the build that offered Face ID: the file is sealed with a random data key,
+       and that key is wrapped under the passcode. Read it, then rewrite in this build's format. */
+    const w=raw.wrap.pass;
+    if(!w)throw new Error('no-pass-wrap');
+    const kek=await deriveKey(pass,unb64(w.salt));
+    const dkRaw=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(w.iv)},kek,unb64(w.ct));
+    const dk=await crypto.subtle.importKey('raw',dkRaw,{name:'AES-GCM'},false,['decrypt']);
+    applyPlain(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},dk,unb64(raw.ct)));
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    cryptoKey=await deriveKey(pass,salt);encMeta={salt:b64(salt)};
+    await save();
+    return;
+  }
+  const k=await deriveKey(pass,unb64(raw.salt));
+  applyPlain(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},k,unb64(raw.ct)));
+  cryptoKey=k;encMeta={salt:raw.salt};
+}
+function loadPorts(d){
+  S.ports={};S.ptype={};S.plink={};S.priv=!!d.priv;S.pmask={};
+  S.fh=typeof d.fh==='string'?d.fh.trim().slice(0,80):'';
+  S.td=typeof d.td==='string'?d.td.trim().slice(0,80):'';
+  S.tick={};for(const k in (d.tick||{})){const v=String(d.tick[k]||'').toUpperCase().replace(/[^A-Z0-9.\-]/g,'').slice(0,12);if(v)S.tick[String(k)]=v}
+  S.rec={};for(const k in (d.rec||{})){const r=d.rec[k];if(r&&typeof r==='object')S.rec[String(k)]={ts:num(r.ts),sb:num(r.sb),b:num(r.b),h:num(r.h),s:num(r.s),ss:num(r.ss),period:String(r.period||''),tm:num(r.tm),tl:num(r.tl),th:num(r.th),px:num(r.px)}}
+  const ok=new Set(ACCOUNTS.map(a=>a.id));
+  for(const id in (d.pmask||{}))if(ok.has(id)&&['half','hide'].includes(d.pmask[id]))S.pmask[id]=d.pmask[id];
+  for(const id in (d.ports||{})){
+    if(!ok.has(id))continue;
+    const list=(d.ports[id]||[]).filter(p=>p&&/^\d{4}-\d{2}-\d{2}$/.test(p.date));
+    if(list.length)S.ports[id]=list;
+  }
+  for(const k in (d.ptype||{}))if(['stock','bond','fund'].includes(d.ptype[k]))S.ptype[String(k)]=d.ptype[k];
+  for(const id in (d.plink||{}))if(ok.has(id))S.plink[id]=String(d.plink[id]);
+}
+function clean(list){
+  const out=[];const seen=new Set();
+  for(const u of Array.isArray(list)?list:[]){
+    if(!u||!/^\d{4}-\d{2}-\d{2}$/.test(u.date)||seen.has(u.date))continue;seen.add(u.date);
+    const vals={};for(const k of FIELDS)vals[k]=num(u.vals&&u.vals[k]);
+    out.push({date:u.date,vals,rate:num(u.rate)});
+  }
+  return out;
+}
+
+/* ---------- charts ---------- */
+function niceTicks(lo,hi,n=4){
+  if(lo===hi){const p=Math.abs(lo)*0.01||1;lo-=p;hi+=p}
+  const pad=(hi-lo)*0.18;lo-=pad;hi+=pad;
+  const raw=(hi-lo)/n,mag=Math.pow(10,Math.floor(Math.log10(raw)));const f=raw/mag;const step=(f<1.5?1:f<3?2:f<7?5:10)*mag;
+  const a=Math.floor(lo/step)*step,b=Math.ceil(hi/step)*step;const t=[];for(let v=a;v<=b+step/2;v+=step)t.push(v);
+  return {min:a,max:b,ticks:t};
+}
+function tickFmt(ticks){const span=ticks[ticks.length-1]-ticks[0];const mx=Math.max(...ticks.map(Math.abs));
+  if(mx>=1e6){const d=span/ (ticks.length-1)>=1e5?1:span/(ticks.length-1)>=1e4?2:3;return v=>(v/1e6).toFixed(d)+'M'}
+  if(mx>=1e4){const d=span/(ticks.length-1)>=1e3?0:1;return v=>(v/1e3).toFixed(d)+'K'}
+  return v=>nf0.format(v)}
+/* line with point markers; y-axis hugs the data (a bit below the lowest, a bit above the highest) */
+function lineChart(pts,color,o={}){
+  const W=340,H=o.h||170,AX=46,PR=10,T=14,B=24,dark=!!o.dark;   // AX: width reserved for the value axis, on the left
+  const vs=pts.map(p=>p.v);const {min,max,ticks}=niceTicks(Math.min(...vs),Math.max(...vs));const tf=tickFmt(ticks);
+  const x=i=>pts.length===1?(AX+(W-PR-AX)/2):AX+10+i*(W-PR-AX-20)/(pts.length-1);const y=v=>T+(max-v)*(H-T-B)/(max-min);
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label||'גרף')}">`;
+  for(const t of ticks){s+=`<line class="g" x1="${AX}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke-width="1"/><text x="${AX-7}" y="${y(t)+3.5}" text-anchor="end">${tf(t)}</text>`}
+  const step=Math.max(1,Math.ceil(pts.length/5));
+  pts.forEach((p,i)=>{if(i%step===0||i===pts.length-1){if(i!==pts.length-1&&(pts.length-1-i)<step*0.6)return;s+=`<text x="${x(i)}" y="${H-7}" text-anchor="middle">${dshort(p.d)}</text>`}});
+  s+=`<line class="cross" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
+  if(pts.length>1)s+=`<polyline ${o.anim?'class="draw" pathLength="1"':''} fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${pts.map((p,i)=>x(i)+','+y(p.v)).join(' ')}"/>`;
+  const r=pts.length>30?0:pts.length>16?3:4.5;
+  if(r)pts.forEach((p,i)=>{s+=`<circle ${o.anim?`class="pop" style="animation-delay:${(.25+.75*i/Math.max(pts.length-1,1)).toFixed(2)}s"`:''} cx="${x(i)}" cy="${y(p.v)}" r="${r}" fill="${color}" stroke-width="2"/>`});
+  s+=`<rect class="hit" x="0" y="0" width="${W}" height="${H}" fill="transparent" data-xs="${pts.map((p,i)=>x(i).toFixed(1)).join(',')}"/></svg>`;
+  return s;
+}
+function spark(vs,color){if(vs.length<2)return '';const lo=Math.min(...vs),hi=Math.max(...vs),sp=hi-lo||1;
+  const p=vs.map((v,i)=>(3+i*54/(vs.length-1)).toFixed(1)+','+(19-(v-lo)*16/sp).toFixed(1)).join(' ');
+  const last=p.split(' ').pop().split(',');
+  return `<svg class="spark" viewBox="0 0 60 22" aria-hidden="true"><polyline fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${p}"/><circle cx="${last[0]}" cy="${last[1]}" r="2.6" fill="${color}"/></svg>`}
+function readoutText(p,prev,fmt){let t=`<span class="n">${dlong(p.d)}</span> · <b class="n">${fmt(p.v)}</b>`;if(prev){const d=p.v-prev.v;t+=` · <span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,fmt)}</span>`}return t}
+function wireChart(box,pts,fmt){
+  if(!box||offscreen)return;
+  const svg=box.querySelector('svg.chart'),out=box.querySelector('.readout');if(!svg||!out)return;
+  const hit=svg.querySelector('.hit'),cross=svg.querySelector('.cross');const xs=hit.dataset.xs.split(',').map(Number);
+  const show=i=>{out.innerHTML=readoutText(pts[i],pts[i-1],fmt)};
+  show(pts.length-1);
+  const move=e=>{const r=svg.getBoundingClientRect();const px=(e.clientX-r.left)*340/r.width;let b=0;xs.forEach((v,i)=>{if(Math.abs(v-px)<Math.abs(xs[b]-px))b=i});
+    cross.setAttribute('x1',xs[b]);cross.setAttribute('x2',xs[b]);cross.setAttribute('visibility','visible');show(b)};
+  hit.addEventListener('pointerdown',move);hit.addEventListener('pointermove',move);
+}
+
+/* ---------- rolling numbers ----------
+   a total that jumps has no relation to the one before it. each digit column is a strip that
+   springs to its new face, and only the columns that actually changed move. the springs are
+   interruptible, so a second change mid-flight redirects rather than queues. */
+const rollMem={};
+function roll(el,id,val,fmt,o={}){
+  const next=fmt(val),prev=rollMem[id];
+  rollMem[id]=val;
+  if(prev===undefined||prev===val||calm()||PRIV()){el.classList.remove('roll');el.textContent=next;return}
+  const a=[...fmt(prev)],b=[...next];
+  el.textContent='';el.classList.add('roll');
+  /* the strips spell out every digit face, so the value is carried separately for a screen reader */
+  const sr=document.createElement('span');sr.className='sr';sr.textContent=next;el.appendChild(sr);
+  const cells=document.createElement('span');cells.setAttribute('aria-hidden','true');el.appendChild(cells);
+  const moves=[];
+  b.forEach((ch,i)=>{
+    const cell=document.createElement('span');
+    const j=a.length-(b.length-i);                   // line the two numbers up from the right
+    const from=/\d/.test(ch)&&j>=0&&/\d/.test(a[j])?+a[j]:null;
+    if(from===null||from===+ch){                     /* a digit that does not move is just a digit */
+      cell.className='sep';cell.textContent=ch;cells.appendChild(cell);return;
+    }
+    cell.className='dig';
+    const strip=document.createElement('u'),to=+ch;
+    const lo=Math.min(from,to),hi=Math.max(from,to); /* only the faces it actually passes */
+    for(let d=lo;d<=hi;d++){const f=document.createElement('b');f.textContent=d;strip.appendChild(f)}
+    const n=hi-lo+1;
+    cell.appendChild(strip);
+    const sp=Spring(y=>{strip.style.transform=`translateY(${(-(y-lo)*100/n).toFixed(3)}%)`});
+    sp.jump(from);
+    moves.push([sp,to]);
+    cells.appendChild(cell);
+  });
+  const gap=o.stagger!=null?o.stagger:34,res=o.response||.5;
+  moves.forEach(([sp,target],k)=>{
+    const go=()=>sp.to(target,{damping:.8,response:res});
+    gap?setTimeout(go,k*gap):go();
+  });
+}
+const ILSROLL=v=>ils(v);
+function paintRolls(){
+  if(offscreen)return;
+  document.querySelectorAll('[data-roll]').forEach(el=>roll(el,el.dataset.roll,+el.dataset.rv,ILSROLL));
+}
+
+/* ---------- views ---------- */
+const $=s=>document.querySelector(s);let view=$('#view');const layer=$('#layer');
+let offscreen=false;   /* true while a page is being built for the strip, not for the screen */
+function toast(msg){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+let firstPaint=true,shownTab=null,topText='',topNum=false;
+/* the large title scrolls away; a compact one takes over so the figure stays reachable */
+function syncTop(){
+  const bar=$('#topbar');if(!bar)return;
+  const anchor=document.querySelector('.hero .total')||document.querySelector('.pagehead h1');
+  if(!anchor||!topText){bar.classList.remove('on');return}
+  const limit=(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat'))||0)+44;
+  bar.classList.toggle('on',anchor.getBoundingClientRect().bottom<limit);
+}
+function setTop(text,isNum){
+  if(offscreen)return;
+  topText=text;topNum=!!isNum;
+  const sp=$('#topbar').firstElementChild;
+  sp.textContent=text;sp.className=isNum?'n':'';
+  syncTop();
+}
+addEventListener('scroll',syncTop,{passive:true});
+const TABS=['home','updates','compare','settings'];
+const VIEWS={home:viewHome,updates:viewUpdates,compare:viewCompare,settings:viewSettings};
+/* build a page into a node of our own, with every wiring step standing down */
+let pageCache={};
+function warmPages(){
+  const i=TABS.indexOf(tab);if(i<0)return;
+  for(const t of [TABS[i-1],TABS[i+1]])if(t&&!pageCache[t]){try{pageCache[t]=buildPage(t)}catch(e){}}
+}
+function buildPage(t){
+  const node=document.createElement('div');node.className='view';
+  const keepView=view,keepTab=tab,keepOff=offscreen,keepFirst=firstPaint;
+  view=node;tab=t;offscreen=true;firstPaint=false;
+  try{VIEWS[t]()}catch(e){node.innerHTML=''}
+  view=keepView;tab=keepTab;offscreen=keepOff;firstPaint=keepFirst;
+  return node;
+}
+function render(){
+  document.querySelectorAll('.tabbar button').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===tab?'page':'false'));
+  const dir=shownTab&&shownTab!==tab?Math.sign(TABS.indexOf(tab)-TABS.indexOf(shownTab)):0;
+  VIEWS[tab]();
+  window.scrollTo(0,0);firstPaint=false;shownTab=tab;
+  pageCache={};                       /* the data may have changed, so the spares are stale */
+  (window.requestIdleCallback||(f=>setTimeout(f,120)))(warmPages);
+  /* the tabs sit in a fixed order, so the page arrives from the side it lives on */
+  if(dir&&!calm()&&!tabSwipe.busy){
+    const a=view.animate([{transform:`translateX(${-dir*30}px)`,opacity:0},{transform:'none',opacity:1}],
+      {duration:300,easing:'cubic-bezier(.32,.72,0,1)'});
+    view.style.willChange='transform,opacity';moving(true);
+    const done=()=>{view.style.willChange='';if(!TICK.live.size)moving(false)};
+    a.finished.then(done,done);
+  }
+  syncTop();
+}
+function emptyState(){return ACCOUNTS.length?`<div class="empty"><h2>אין עדיין עדכונים</h2><p>הוסיפו את העדכון הראשון, או טענו גיבוי קיים.</p><div class="stackbtns"><button class="btn" data-act="new">עדכון חדש</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div>`
+  :`<div class="empty"><h2>בואו נתחיל</h2><p>הגדירו את החשבונות שלכם — לכל אחד שם, מטבע ומה יש בו. הכול נשמר רק במכשיר הזה. אם יש לכם כבר קובץ גיבוי, אפשר לטעון אותו במקום.</p><div class="stackbtns"><button class="btn" data-act="accnew">הוספת חשבון</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div>`}
+
+function viewHome(){
+  const U=sorted();
+  if(!U.length){view.innerHTML=`<div class="pagehead"><h1>מעקב כספים</h1><p>הנתונים נשמרים במכשיר הזה בלבד</p></div>`+emptyState();setTop('מעקב כספים');return}
+  const C=U.map(calc),n=U.length,last=C[n-1],prev=C[n-2],first=C[0];
+  const dPrev=prev?last.total-prev.total:0,dFirst=last.total-first.total;
+  const win=U.slice(-12),winC=C.slice(-12);
+  let h=`<div class="hero"><h1>הון כולל${PRIV()?' '+PMARK:''}</h1><div class="total" data-roll="total" data-rv="${last.total}">${ils(last.total)}</div><div class="asof">נכון ל-<span class="n">${dlong(U[n-1].date)}</span></div>
+  <div class="deltas"><div><small>מהעדכון הקודם</small>${prev?`<b class="${cls(dPrev)}">${arrow(dPrev)} ${signedIls(dPrev)}</b> <span class="n ${cls(dPrev)}">${prev.total?pct(dPrev/prev.total,2):''}</span>`:'<b class="flat">—</b>'}</div>
+  <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dFirst)}">${arrow(dFirst)} ${signedIls(dFirst)}</b> <span class="n ${cls(dFirst)}">${first.total?pct(dFirst/first.total,2):''}</span>`:'<b class="flat">—</b>'}</div></div>
+  <div id="ch-total" class="panel pad">${lineChart(win.map((u,i)=>({d:u.date,v:winC[i].total})),chartInk(),{label:'סה״כ הון לאורך זמן',anim:firstPaint})}<p class="readout"></p></div></div>`;
+  const m=meta();const days=m.lastBackup?Math.floor((Date.now()-m.lastBackup)/864e5):null;
+  if(days===null||days>30)h+=`<div class="note"><span>${days===null?'עוד לא נשמר גיבוי.':'עברו '+days+' ימים מהגיבוי האחרון.'} הנתונים קיימים רק במכשיר הזה.</span><button data-act="backup">גיבוי עכשיו</button></div>`;
+  h+=`<section><h2>לפי חשבון</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="חלוקת ההון לפי חשבון">${visAcc().map(a=>`<i style="flex:${Math.max(last.acc[a.id],0)} 0 0;background:${acol(a.color)}" title="${esc(a.name)}"></i>`).join('')}</div></div>`;
+  for(const a of visAcc()){const v=last.acc[a.id],d=prev?v-prev.acc[a.id]:0;
+    h+=`<button class="row" data-acc="${a.id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${share(v,last.total)}%</span> מההון</div></span>
+    <span class="val"><b data-roll="acc:${a.id}" data-rv="${v}">${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
+  h+=`</div></section>`;
+  h+=PRIV()?'':`<section><button class="btn" data-act="new">עדכון חדש</button></section>`;
+  const moved=!offscreen&&rollMem.total!==undefined&&rollMem.total!==last.total;
+  view.innerHTML=h;
+  paintRolls();
+  if(moved&&!calm()&&!PRIV())view.querySelectorAll('.hero .deltas>div').forEach((el,i)=>
+    el.animate([{opacity:0,transform:`translateY(${dPrev<0?-7:7}px)`},{opacity:1,transform:'none'}],
+      {duration:400,delay:90+i*55,easing:'cubic-bezier(.32,.72,0,1)',fill:'backwards'}));
+  wireChart($('#ch-total'),win.map((u,i)=>({d:u.date,v:winC[i].total})),ils);
+  setTop(ils(last.total),true);
+}
+
+/* a heading that folds the block under it away. the panel carries the id the heading names,
+   so wiring is the same wherever it is used. */
+const foldHead=(id,title,extra='',open=false)=>
+  `<button class="foldh" aria-expanded="${open}" aria-controls="${id}"><h2>${title}${extra}</h2><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
+function wireFolds(root,onToggle){
+  (root||document).querySelectorAll('.foldh').forEach(hd=>{
+    const panel=document.getElementById(hd.getAttribute('aria-controls'));
+    if(!panel)return;
+    hd.onclick=()=>{
+      const open=hd.getAttribute('aria-expanded')==='true';
+      hd.setAttribute('aria-expanded',String(!open));
+      panel.hidden=open;
+      if(onToggle)onToggle(panel.id,!open);
+      if(!open&&!calm())panel.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],
+        {duration:200,easing:'cubic-bezier(.32,.72,0,1)'});
+    };
+  });
+}
+
+function openAccount(id,from){
+  const a=ACCOUNTS.find(x=>x.id===id);if(!a||isHidden(id))return;
+  let origin=null;
+  if(from&&!calm()){const r=from.getBoundingClientRect();
+    if(r.width>40&&r.height>10)origin={cx:r.left+r.width/2,cy:r.top+r.height/2,dy:r.top+r.height/2-innerHeight/2};}
+  const q=facOf(id),U=sorted(),C=U.map(calc),n=U.length;
+  const pts=U.map((u,i)=>({d:u.date,v:C[i].acc[id]}));const vs=pts.map(p=>p.v);
+  const v=vs[n-1],dP=n>1?v-vs[n-2]:0,dF=v-vs[0];const isUsd=a.cur==='USD';
+  const hi=Math.max(...vs),lo=Math.min(...vs);
+  let h=`<div class="sheet push" role="dialog" aria-label="${esc(a.name)}"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>סקירה</span></button><h2>${esc(a.short)}</h2><span></span></header><div class="body">
+  <div class="acc-head"><h1><span style="color:${acol(a.color)}">●</span> ${esc(a.name)}</h1><div class="big">${ils(v)}</div>
+  <div class="meta"><span class="n">${share(v,C[n-1].total)}%</span> מההון · נכון ל-<span class="n">${dlong(U[n-1].date)}</span>${isUsd?` · <span class="n">${usd(C[n-1].usdAcc[id]||0)}</span>`:''}</div></div>
+  <div class="chips"><div><small>מהעדכון הקודם</small>${n>1?`<b class="${cls(dP)}">${arrow(dP)} ${signedIls(dP)}</b> <span class="n ${cls(dP)}">${vs[n-2]?pct(dP/vs[n-2],2):''}</span>`:'<b class="flat">—</b>'}</div>
+  <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dF)}">${arrow(dF)} ${signedIls(dF)}</b> <span class="n ${cls(dF)}">${vs[0]?pct(dF/vs[0],2):''}</span>`:'<b class="flat">—</b>'}</div></div>
+  <section><h2>שינוי בין העדכונים</h2><div class="panel pad" id="ch-acc">${lineChart(pts,acol(a.color),{label:a.name})}<p class="readout"></p></div></section>
+`;
+  if(isUsd){h+=`<section><h2>שווי בדולרים</h2><div class="panel pad" id="ch-usd">${lineChart(U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),acol(a.color),{label:'שווי בדולרים'})}<p class="readout"></p></div></section>`}
+  const tr=a.fields.filter(f=>f[3]);
+  tr.forEach((f,i)=>{h+=`<section><h2>${esc(f[1])}</h2><div class="panel pad" id="ch-t${i}">${lineChart(U.map(u=>({d:u.date,v:u.vals[f[0]]*q})),acol(a.color),{label:f[1]})}<p class="readout"></p></div></section>`});
+  h+=`<section><h2>פירוט היתרות <small>עדכון אחרון</small></h2><div class="panel">`;
+  const last=U[n-1],prev=U[n-2];const f=isUsd?usd:ils;
+  const linked=S.plink[id];
+  const pLast=linked?portsOf(id).slice(-1)[0]:null;
+  for(const [k,nm] of a.fields){const fv=last.vals[k]*q,d=prev?fv-prev.vals[k]*q:0;
+    const tapable=k===linked;
+    const sub=!tapable?'':pLast?`<div class="sub"><span class="n">${pLast.hold?pLast.hold.length:'—'}</span> אחזקות · <span class="n">${dlong(pLast.date)}</span></div>`
+      :'<div class="sub">העלאת קובץ אחזקות מהבנק</div>';
+    h+=`<${tapable?'button':'div'} class="row${tapable?' link':''}"${tapable?` data-port="${id}"`:''}><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm"${tapable?'':' style="font-weight:500"'}>${esc(nm)}</span>${sub}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,f)}</span>`:''}</span>${tapable?'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>':''}</${tapable?'button':'div'}>`}
+  h+=`</div></section>`;
+  h+=`<section><div class="panel facts"><div><small>הגבוה ביותר</small><b>${ils(hi)}</b></div><div><small>הנמוך ביותר</small><b>${ils(lo)}</b></div></div></section>`;
+  h+=`<section>${foldHead('hist','היסטוריה')}<div class="panel" id="hist" hidden>`;
+  for(let i=n-1;i>=0;i--){const d=i?vs[i]-vs[i-1]:0;
+    h+=`<div class="row dotted"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
+  h+=`</div></section></div></div>`;
+  openLayer(h,true,origin);
+  wireFolds(stack[stack.length-1].el);
+  wireChart($('#ch-acc'),pts,ils);
+  if($('#ch-usd'))wireChart($('#ch-usd'),U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),usd);
+  tr.forEach((f,i)=>wireChart($('#ch-t'+i),U.map(u=>({d:u.date,v:u.vals[f[0]]*q})),isUsd?usd:ils));
+}
+
+function viewUpdates(){
+  const U=sorted();let h=`<div class="pagehead"><h1>עדכונים</h1><p>${U.length?U.length+' עדכונים במעקב':'כל עדכון הוא תמונת מצב של היתרות ביום מסוים'}</p></div>`;
+  if(!U.length){view.innerHTML=h+emptyState();return}
+  const C=U.map(calc);
+  h+=PRIV()?'':`<section><button class="btn" data-act="new">עדכון חדש</button></section>`;
+  h+=`<section><div class="panel">`;
+  const EL=PRIV()?'div':'button';
+  for(let i=U.length-1;i>=0;i--){const d=i?C[i].total-C[i-1].total:0;
+    h+=`<${EL} class="row${PRIV()?' dotted':''}"${PRIV()?'':` data-edit="${U[i].date}"`}><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span><span class="nm n">${dlong(U[i].date)}</span><div class="sub">שער דולר <span class="n">${U[i].rate?U[i].rate.toFixed(3):'—'}</span></div></span>
+    <span class="val"><b>${ils(C[i].total)}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${C[i-1].total?' ('+pct(d/C[i-1].total,2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span>${PRIV()?'':'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>'}</${EL}>`}
+  const span=Math.round((new Date(U[U.length-1].date)-new Date(U[0].date))/864e5);
+  h+=`</div></section><section><h2>נתוני מפתח</h2><div class="panel facts">
+  <div><small>מספר עדכונים</small><b>${U.length}</b></div><div><small>תקופת המעקב</small><b>${span} ימים</b></div>
+  <div><small>שער דולר נוכחי</small><b id="liverate" class="flat">—</b></div></div></section>`;
+  view.innerHTML=h;
+  setTop('עדכונים');
+  showLiveRate('#liverate');
+}
+
+function openForm(date,pre){
+  if(PRIV()){toast('מצב פרטי מופעל — אין עריכה');return}
+  const U=sorted();const editing=date?U.find(u=>u.date===date):null;const base=editing||U[U.length-1];
+  const f={date:editing?editing.date:(pre&&pre.date||today()),rate:editing?editing.rate:'',vals:{}};
+  for(const k of FIELDS)f.vals[k]=base?base.vals[k]:'';
+  if(pre&&pre.vals)for(const k in pre.vals)f.vals[k]=pre.vals[k];
+  let h=`<div class="sheet modal" role="dialog" aria-label="עדכון"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>${editing?'עריכת עדכון':'עדכון חדש'}</h2><span></span></header><div class="body"><form id="frm" novalidate>
+  <div class="err" id="ferr" hidden role="alert"></div>
+  <div class="grp"><div class="fld"><label for="f-date">תאריך העדכון</label><input id="f-date" type="date" value="${f.date}" required></div></div>`;
+  if(!editing&&base)h+=`<p class="hint" style="padding-top:10px">השדות מולאו מהעדכון הקודם (<span class="n">${dlong(base.date)}</span>). שנו רק את מה שהשתנה.</p>`;
+  const rateAcc=(ACCOUNTS.find(a=>a.cur==='USD')||{}).id;
+  for(const a of ACCOUNTS){
+    h+=`<div class="grp" style="--c:${acol(a.color)}"><h3>${esc(a.name)}${a.cur==='USD'?'<small>בדולרים</small>':'<small>בש״ח</small>'}</h3>`;
+    for(const [k,nm] of a.fields)h+=`<div class="fld"><label for="f-${k}">${esc(nm)}</label><input id="f-${k}" data-k="${k}" inputmode="decimal" autocomplete="off" value="${f.vals[k]===''?'':f.vals[k]}" placeholder="0"></div>`;
+    if(a.id===rateAcc)h+=`<div class="fld"><label for="f-rate">שער דולר<small>USD/ILS ביום העדכון</small></label><div class="inl"><input id="f-rate" inputmode="decimal" autocomplete="off" value="${f.rate||''}" placeholder="3.160"><button type="button" id="getrate">רענון</button></div></div><p class="hint" id="ratehint">השער נמשך לבד לפי התאריך. שער נוכחי: <b id="liverate2" class="n">—</b></p>`;
+    if(S.plink[a.id])h+=`<input type="file" id="af-${a.id}" accept=".xlsx,.csv,.txt" hidden><div class="fld"><label for="af-${a.id}">קובץ אחזקות<small>לא חובה</small></label><div class="inl"><label class="atbtn" for="af-${a.id}" id="al-${a.id}">צירוף קובץ</label></div></div>`;
+    h+=`</div>`}
+  if(editing)h+=`<section><button type="button" class="btn danger" id="del">מחיקת העדכון</button></section>`;
+  h+=`</form></div><footer><div class="sum"><small>סה״כ הון בעדכון הזה</small><b id="fsum">—</b></div><button class="btn" id="fsave">שמירה</button></footer></div>`;
+  openLayer(h);
+  const read=()=>{const u={date:$('#f-date').value,rate:$('#f-rate')?num($('#f-rate').value):0,vals:{}};layer.querySelectorAll('input[data-k]').forEach(i=>u.vals[i.dataset.k]=num(i.value));return u};
+  const upd=()=>roll($('#fsum'),'fsum',calc(read()).total,ILSROLL,{stagger:0,response:.34});
+  rollMem.fsum=undefined;upd();
+  layer.querySelector('#frm').addEventListener('input',upd);
+  showLiveRate('#liverate2');
+  let rateTouched=!!f.rate;
+  const rateInput=$('#f-rate');
+  if(rateInput)rateInput.addEventListener('input',()=>{rateTouched=true});
+  const pullRate=async force=>{
+    const d=$('#f-date').value,hint=$('#ratehint');if(!rateInput||!d)return;
+    if(rateTouched&&!force)return;
+    hint.innerHTML='מושך שער…';
+    try{const r=await fetchRate(d);rateInput.value=String(Math.round(r.rate*1e4)/1e4);rateTouched=false;
+      hint.innerHTML=`שער ${esc(r.src)} ל-<span class="n">${dlong(r.date||d)}</span> · שער נוכחי: <b id="liverate2" class="n">—</b>`;upd()}
+    catch(e){hint.innerHTML='לא הצלחתי למשוך שער. הקלידו אותו ידנית · שער נוכחי: <b id="liverate2" class="n">—</b>'}
+    showLiveRate('#liverate2');
+  };
+  if($('#getrate'))$('#getrate').onclick=()=>pullRate(true);
+  const dateEl=$('#f-date');
+  if(dateEl)dateEl.addEventListener('change',()=>pullRate(false));
+  if(rateInput&&!f.rate)pullRate(false);
+  const attach={};                                  // optional holdings file, per account that has a portfolio
+  for(const a of ACCOUNTS){
+    const inp=$('#af-'+a.id);if(!inp)continue;
+    inp.onchange=async e=>{
+      const file=e.target.files[0];inp.value='';if(!file)return;
+      const lab=$('#al-'+a.id);lab.textContent='קורא…';
+      try{
+        const hold=parsePortfolio(await readSheet(file));
+        attach[a.id]=hold;
+        const tot=summarize(hold).total,fld=S.plink[a.id];
+        if(fld&&$('#f-'+fld)){$('#f-'+fld).value=Math.round(tot);upd()}
+        lab.textContent=hold.length+' אחזקות · '+ils(tot);lab.classList.add('on');
+      }catch(err){lab.textContent='צירוף קובץ';toast(err.message||'לא הצלחתי לקרוא את הקובץ')}
+    };
+  }
+  $('#fsave').onclick=async()=>{const u=read(),err=$('#ferr');let msg='';
+    const usdSum=ACCOUNTS.filter(a=>a.cur==='USD').flatMap(a=>a.fields).reduce((s,[k])=>s+u.vals[k],0);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(u.date))msg='בחרו תאריך לעדכון.';
+    else if(S.updates.some(x=>x.date===u.date&&(!editing||x.date!==editing.date)))msg='כבר קיים עדכון בתאריך הזה. בחרו תאריך אחר או ערכו את הקיים.';
+    else if(usdSum!==0&&!(u.rate>=2&&u.rate<=6))msg='יש יתרה בדולרים, אז צריך שער דולר בין 2 ל-6.';
+    else if(layer.querySelector('input[data-k]')&&[...layer.querySelectorAll('input[data-k]')].some(i=>i.value.trim()!==''&&!/^-?[\d,]*\.?\d*$/.test(i.value.trim())))msg='באחד השדות יש ערך שאינו מספר.';
+    if(msg){err.textContent=msg;err.hidden=false;layer.querySelector('.body').scrollTo({top:0,behavior:'smooth'});return}
+    if(editing)S.updates=S.updates.filter(x=>x.date!==editing.date);
+    S.updates.push(u);for(const id in attach)addSnapshot(id,u.date,attach[id]);closeLayer();tab='home';render();save();toast(Object.keys(attach).length?'העדכון והאחזקות נשמרו':'העדכון נשמר')};
+  if(editing)$('#del').onclick=async()=>{if(!confirm('למחוק את העדכון מ-'+dlong(editing.date)+'?'))return;S.updates=S.updates.filter(x=>x.date!==editing.date);closeLayer();render();save();toast('העדכון נמחק')};
+}
+let liveRate=null,liveAt=0;
+async function showLiveRate(sel){
+  if(offscreen)return;
+  const el=$(sel);if(!el)return;
+  if(liveRate&&Date.now()-liveAt<3600000){el.textContent='₪'+liveRate.toFixed(3);el.classList.remove('flat');return}
+  el.textContent='…';
+  try{const r=await fetchRate(today());liveRate=r.rate;liveAt=Date.now();
+    const e2=$(sel);if(e2){e2.textContent='₪'+r.rate.toFixed(3);e2.classList.remove('flat')}}
+  catch(e){const e2=$(sel);if(e2)e2.textContent='לא זמין'}
+}
+function findRate(j){let found=null;(function walk(o,key){if(found!==null||o==null)return;if(typeof o==='number'){if(o>=2&&o<=6&&(/rate|ils|value/i.test(key||'')))found=o;return}if(typeof o==='object')for(const k in o)walk(o[k],k)})(j,'');return found}
+async function fetchRate(d){
+  const srcs=[[`https://api.frankfurter.dev/v2/rate/usd/ils?date=${d}&providers=boi`,'יציג (בנק ישראל)'],[`https://api.frankfurter.dev/v1/${d}?base=USD&symbols=ILS`,'אירופי (ECB)']];
+  for(const [url,src] of srcs){try{const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),7000);const r=await fetch(url,{signal:ctl.signal});clearTimeout(t);if(!r.ok)continue;const j=await r.json();const rate=findRate(j);
+    if(rate)return {rate,src,date:(Array.isArray(j)?j[0]&&j[0].date:j.date)||d}}catch(e){}}
+  throw new Error('no rate');
+}
+
+function viewCompare(){
+  const U=sorted();let h=`<div class="pagehead"><h1>השוואה</h1><p>שני תאריכים, זה מול זה</p></div>`;
+  if(U.length<2){view.innerHTML=h+`<div class="empty"><h2>צריך לפחות שני עדכונים</h2><p>אחרי העדכון השני אפשר יהיה להשוות ביניהם.</p><button class="btn" data-act="new">עדכון חדש</button></div>`;return}
+  const st=viewCompare.st||(viewCompare.st={});if(!U.some(u=>u.date===st.a))st.a=U[U.length-2].date;if(!U.some(u=>u.date===st.b))st.b=U[U.length-1].date;
+  const A=U.find(u=>u.date===st.a),B=U.find(u=>u.date===st.b),ca=calc(A),cb=calc(B);
+  const opts=s=>U.map(u=>`<option value="${u.date}" ${u.date===s?'selected':''}>${dlong(u.date)}</option>`).join('');
+  h+=`<section><div class="pick"><div><label for="ca">תאריך בסיס</label><select id="ca">${opts(st.a)}</select></div><div><label for="cb">תאריך להשוואה</label><select id="cb">${opts(st.b)}</select></div></div></section>`;
+  const tbl=(title,rows)=>{let t=`<section><h2>${title}</h2><div class="panel"><table class="cmp"><thead><tr><th></th><th class="n">${dshort(A.date)}</th><th class="n">${dshort(B.date)}</th><th>שינוי</th></tr></thead><tbody>`;
+    let sa=0,sb=0;for(const [nm,va,vb,col] of rows){sa+=va;sb+=vb;const d=vb-va;
+      t+=`<tr><td>${col?`<span style="color:${col}">●</span> `:''}${nm}</td><td class="n">${compact(va)}</td><td class="n">${compact(vb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span><small class="n ${cls(d)}">${va?pct(d/va):''}</small></td></tr>`}
+    const d=sb-sa;return t+`<tr class="tot"><td>סה״כ</td><td class="n">${compact(sa)}</td><td class="n">${compact(sb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span><small class="n ${cls(d)}">${sa?pct(d/sa,2):''}</small></td></tr></tbody></table></div></section>`};
+  h+=tbl('לפי חשבון',visAcc().map(a=>[esc(a.short),ca.acc[a.id],cb.acc[a.id],acol(a.color)]));
+  h+=`<section><div class="panel facts"><div><small>ימים בין התאריכים</small><b>${Math.round((new Date(B.date)-new Date(A.date))/864e5)}</b></div><div><small>שער דולר</small><b>${A.rate?A.rate.toFixed(3):'—'} → ${B.rate?B.rate.toFixed(3):'—'}</b></div></div></section>`;
+  view.innerHTML=h;
+  setTop('השוואה');
+  if(offscreen)return;
+  $('#ca').onchange=e=>{st.a=e.target.value;viewCompare()};$('#cb').onchange=e=>{st.b=e.target.value;viewCompare()};
+}
+
+/* ---------- the account book ----------
+   accounts are not in the code: they are built here, on the device, and travel only in the backup.
+   anyone can set the app up from scratch: add an account, tick what it holds, and say whether it
+   takes a bank file or is filled in by hand. */
+const PARTS=[['עו״ש','cur'],['מט״ח','fx'],['ניירות ערך','cap'],['פקדונות','sav'],['קרנות','cap']];
+const PALETTE=['#8A2D0C','#E0A008','#E2571C','#2F9E6E','#3B82F6','#6D4AC4','#C2255C','#44566A'];
+const fresh=p=>p+Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-3);
+
+/* a working copy of one account: the standard components, plus anything it already holds that
+   is not one of them, so editing an existing account never drops a field by surprise */
+function accDraft(a){
+  const used=new Set();
+  const rows=PARTS.map(([lbl,t])=>{
+    const f=(a?a.fields:[]).find(x=>x[1]===lbl&&!used.has(x[0]));
+    if(f)used.add(f[0]);
+    return {key:f?f[0]:fresh('f'),label:lbl,type:t,on:!!f,trend:f?!!f[3]:false,std:true};
+  });
+  for(const f of (a?a.fields:[]))if(!used.has(f[0]))rows.push({key:f[0],label:f[1],type:f[2],on:true,trend:!!f[3],std:false});
+  return {id:a?a.id:fresh('a'),name:a?a.name:'',short:a?a.short:'',cur:a?a.cur:'ILS',
+    color:a?a.color:PALETTE[ACCOUNTS.length%PALETTE.length],rows,link:a?(S.plink[a.id]||''):'',focus:''};
+}
+function accBody(d,editing){
+  const on=d.rows.filter(r=>r.on);
+  return `<section><div class="grp">
+  <div class="fld wide"><label for="ac-name">שם החשבון</label><input id="ac-name" value="${esc(d.name)}" placeholder="למשל: הבנק שלי" maxlength="40" autocomplete="off"></div>
+  <div class="fld wide"><label for="ac-short">שם קצר<small>לטבלאות</small></label><input id="ac-short" value="${esc(d.short)}" placeholder="לא חובה" maxlength="18" autocomplete="off"></div></div></section>
+  <section><h2>מטבע</h2><div class="segbar" role="tablist">${[['ILS','שקל ₪'],['USD','דולר $']].map(([k,t])=>`<button role="tab" data-cur="${k}" aria-selected="${d.cur===k}">${t}</button>`).join('')}</div>
+  <p class="hint">חשבון דולרי מוזן בדולרים ומומר לפי שער היום של העדכון.</p></section>
+  <section><h2>צבע</h2><div class="panel pad"><div class="swatches">${PALETTE.map(c=>`<button class="sw-c" data-color="${c}" style="background:${c}" aria-label="צבע" aria-pressed="${d.color.toLowerCase()===c.toLowerCase()}"></button>`).join('')}</div></div></section>
+  <section><h2>מה יש בחשבון</h2><div class="panel">
+  ${d.rows.map((r,i)=>`<div class="row plain"><span>${r.std?`<span class="nm">${esc(r.label)}</span>`
+    :`<input class="lblin" data-lbl="${i}" value="${esc(r.label)}" placeholder="שם הרכיב" maxlength="24" autocomplete="off" aria-label="שם הרכיב">`}</span>
+  <span class="val"><button class="sw" data-row="${i}" role="switch" aria-checked="${r.on}" aria-label="${esc(r.label)||'רכיב'}"><i></i></button></span></div>`).join('')}
+  <button class="row plain" id="ac-other"><span><span class="nm" style="color:var(--tint)">אחר</span></span><span class="val" style="color:var(--tint);font-size:22px;line-height:1">+</span></button>
+  </div><p class="hint">כל רכיב מסומן הופך לשדה בעדכון ולשורה בפירוט היתרות. ״אחר״ מוסיף רכיב בשם שתכתבו.</p></section>
+  <section><h2>קובץ מהבנק</h2><div class="panel">
+  <div class="row plain"><span><span class="nm">העלאת קובץ אחזקות</span><div class="sub">${d.link?'מופעל':'הזנה ידנית בלבד'}</div></span>
+  <span class="val"><button class="sw" data-link role="switch" aria-checked="${!!d.link}" aria-label="העלאת קובץ אחזקות"><i></i></button></span></div>
+  ${d.link?`<div class="fld"><label for="ac-link">הקובץ ממלא את</label><select id="ac-link" class="pick1">${on.map(r=>`<option value="${r.key}" ${r.key===d.link?'selected':''}>${esc(r.label)}</option>`).join('')}</select></div>`:''}
+  </div><p class="hint">כשזה מופעל מופיע בדף החשבון ״תיק ניירות ערך״, ובעדכון חדש אפשר לצרף את קובץ האחזקות שהבנק מייצא. גם אז אפשר תמיד להזין ידנית.</p></section>
+  ${editing?`<section><button type="button" class="btn danger" id="ac-del">מחיקת החשבון</button></section>`:''}
+  <section><button class="btn" id="ac-save">${editing?'שמירה':'הוספת החשבון'}</button></section>`;
+}
+function openAccEditor(id){
+  if(PRIV()){toast('מצב פרטי מופעל');return}
+  const a=id?ACCOUNTS.find(x=>x.id===id):null;
+  if(id&&!a)return;
+  const d=accDraft(a);
+  openLayer(`<div class="sheet modal" role="dialog" aria-label="חשבון"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>${a?'עריכת חשבון':'חשבון חדש'}</h2><span></span></header><div class="body"></div></div>`);
+  const L=stack[stack.length-1];
+  const paint=()=>{const b=L.el.querySelector('.body');const y=b.scrollTop;b.innerHTML=accBody(d,!!a);b.scrollTop=y;wire();
+    if(d.focus){const i=d.rows.findIndex(r=>r.key===d.focus),el=i<0?null:L.el.querySelector(`[data-lbl="${i}"]`);
+      d.focus='';if(el){el.scrollIntoView({block:'center'});el.focus()}}};
+  const grab=()=>{const n=L.el.querySelector('#ac-name'),h=L.el.querySelector('#ac-short'),l=L.el.querySelector('#ac-link');
+    if(n)d.name=n.value;if(h)d.short=h.value;if(l)d.link=l.value;
+    L.el.querySelectorAll('[data-lbl]').forEach(i=>{d.rows[+i.dataset.lbl].label=i.value});};
+  function wire(){
+    L.el.querySelectorAll('[data-cur]').forEach(b=>b.onclick=()=>{grab();d.cur=b.dataset.cur;paint()});
+    L.el.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{grab();d.color=b.dataset.color;paint()});
+    L.el.querySelectorAll('[data-row]').forEach(b=>b.onclick=()=>{grab();const r=d.rows[+b.dataset.row];r.on=!r.on;if(!r.on&&d.link===r.key)d.link='';paint()});
+    const lk=L.el.querySelector('[data-link]');
+    if(lk)lk.onclick=()=>{grab();
+      if(d.link){d.link=''}
+      else{const on=d.rows.filter(r=>r.on);if(!on.length){toast('בחרו קודם מה יש בחשבון');return}
+        d.link=(on.find(r=>r.type==='cap')||on[0]).key}
+      paint()};
+    L.el.querySelector('#ac-other').onclick=()=>{grab();
+      const r={key:fresh('f'),label:'',type:'cap',on:true,trend:false,std:false};
+      d.rows.push(r);d.focus=r.key;paint()};
+    const sel=L.el.querySelector('#ac-link');if(sel)sel.onchange=()=>{d.link=sel.value};
+    const del=L.el.querySelector('#ac-del');
+    if(del)del.onclick=async()=>{
+      if(!confirm('למחוק את החשבון? הסכומים שהוזנו עבורו יימחקו מכל העדכונים.'))return;
+      delete S.ports[a.id];delete S.plink[a.id];delete S.pmask[a.id];
+      setConfig(ACCOUNTS.filter(x=>x.id!==a.id));S.updates=clean(S.updates);
+      closeLayer();setTimeout(render,340);save();toast('החשבון נמחק');
+    };
+    L.el.querySelector('#ac-save').onclick=async()=>{
+      grab();
+      const name=d.name.trim();if(!name){toast('צריך שם לחשבון');return}
+      d.rows.forEach(r=>{if(!r.std)r.label=r.label.trim()});
+      const on=d.rows.filter(r=>r.on&&r.label);if(!on.length){toast('בחרו מה יש בחשבון');return}
+      if(d.rows.some(r=>r.on&&!r.label)){toast('תנו שם לרכיב שהוספתם');return}
+      const rec={id:d.id,name,short:(d.short.trim()||name).slice(0,18),color:d.color,cur:d.cur,
+        fields:on.map(r=>[r.key,r.label,r.type,!!r.trend])};
+      const list=ACCOUNTS.slice();const i=list.findIndex(x=>x.id===d.id);
+      if(i<0)list.push(rec);else list[i]=rec;
+      setConfig(list);
+      if(d.link&&on.some(r=>r.key===d.link))S.plink[d.id]=d.link;
+      else{delete S.plink[d.id];delete S.ports[d.id]}
+      S.updates=clean(S.updates);
+      closeLayer();setTimeout(render,340);save();toast(i<0?'החשבון נוסף':'נשמר');
+    };
+  }
+  paint();
+}
+const PMARK='<svg class="pmk" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 2.5l19 19M10.6 5.2a9 9 0 0110.1 6.8 9 9 0 01-2.4 4M6.3 6.4A9 9 0 003.3 12a9 9 0 0011.9 5.5M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
+function openPrivCfg(){
+  if(PRIV())return;
+  if(!ACCOUNTS.length){toast('צריך קודם להגדיר חשבונות');return}
+  const opt=[['full','רגיל'],['half','חצי'],['hide','מוסתר']];
+  openLayer(`<div class="sheet modal" role="dialog" aria-label="מה מוסתר"><header><span class="grab" aria-hidden="true"></span><button data-close>סגירה</button><h2>מה מוסתר</h2><span></span></header><div class="body">
+  <section><p class="hint" style="padding:0 4px 12px">לכל חשבון אפשר לקבוע מה יוצג כשמצב פרטי מופעל. ההגדרה נשמרת, והיא לא משנה דבר כל עוד המצב כבוי.</p>
+  ${ACCOUNTS.map(a=>`<div class="panel" style="margin-bottom:10px"><div class="row dotted"><span class="spine" style="background:${acol(a.color)}"></span><span class="nm">${esc(a.name)}</span></div>
+  <div class="pad" style="padding-top:2px"><div class="segbar" role="tablist" aria-label="${esc(a.short)}">${opt.map(([k,t])=>`<button role="tab" data-pm="${a.id}|${k}" aria-selected="${maskOf(a.id)===k}">${t}</button>`).join('')}</div></div></div>`).join('')}
+  </section></div></div>`);
+  layer.querySelectorAll('[data-pm]').forEach(b=>b.onclick=async()=>{
+    const i=b.dataset.pm.lastIndexOf('|'),id=b.dataset.pm.slice(0,i),k=b.dataset.pm.slice(i+1);
+    if(k==='full')delete S.pmask[id];else S.pmask[id]=k;
+    await save();
+    b.parentNode.querySelectorAll('button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  });
+}
+function viewSettings(){
+  setTop('הגדרות');
+  setTimeout(()=>{const k=$('#fhkey');if(k)k.onchange=()=>{S.fh=k.value.trim().slice(0,80);save()};
+    const t=$('#tdkey');if(t)t.onchange=()=>{S.td=t.value.trim().slice(0,80);PX={};save()}},0);
+  const m=meta();const locked=!!cryptoKey;const p=PRIV();
+  view.innerHTML=`<div class="pagehead"><h1>הגדרות</h1><p>גיבוי, נעילה ונתונים</p></div>
+  <section><h2>מצב פרטי</h2><div class="panel">
+  <div class="row plain"><span><span class="nm">מצב פרטי</span><div class="sub">${p?'מופעל — הסכומים המוצגים אינם האמיתיים':'כבוי — הכול מוצג כרגיל'}</div></span>
+  <span class="val"><button class="sw" data-act="privtog" role="switch" aria-checked="${p}" aria-label="מצב פרטי"><i></i></button></span></div>
+  ${p?'':`<button class="row plain" data-act="privcfg"><span><span class="nm">מה מוסתר</span></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
+  </div></section>
+  ${p?'':`<section><h2>חשבונות</h2><div class="panel">
+  ${ACCOUNTS.map(a=>`<button class="row" data-acced="${a.id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub">${a.fields.length===1?'רכיב אחד':a.fields.length+' רכיבים'}${a.cur==='USD'?' · דולר':''}${S.plink[a.id]?' · קובץ מהבנק':''}</div></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`).join('')}
+  ${ACCOUNTS.length?'':'<div class="row plain"><span class="nm flat">עוד לא הוגדרו חשבונות</span></div>'}
+  </div><div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="accnew">הוספת חשבון</button></div></section>`}
+  ${p?'':`<section><h2>המלצות אנליסטים</h2><div class="panel">
+  <div class="fld wide"><label for="fhkey">מפתח API</label><input id="fhkey" type="password" value="${esc(S.fh)}" placeholder="finnhub.io" autocomplete="off" spellcheck="false"></div>
+  </div><div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="recall">רענון כל ההמלצות</button></div>
+  <p class="hint">מפתח חינמי מ-finnhub.io. הוא נשמר מוצפן במכשיר הזה בלבד — לא בקוד של האתר. ההמלצות זמינות למניות הנסחרות בארה״ב; למניות בתל אביב, לאג״ח ולקרנות אין כיסוי.</p></section>
+  <section><h2>גרף מחיר</h2><div class="panel">
+  <div class="fld wide"><label for="tdkey">מפתח API</label><input id="tdkey" type="password" value="${esc(S.td)}" placeholder="twelvedata.com" autocomplete="off" spellcheck="false"></div>
+  </div>
+  <p class="hint">מפתח חינמי מ-twelvedata.com, גם הוא מוצפן במכשיר בלבד. הוא מביא שנה של מחירי סגירה יומיים לניירות הנסחרים בארה״ב, ונמשך כשנכנסים לנייר. לכל יתר הניירות הגרף נבנה מהקבצים שהעלית.</p></section>`}
+  <section><h2>גיבוי</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">הנתונים נשמרים רק במכשיר הזה. מחיקת האפליקציה ממסך הבית או ניקוי נתוני Safari מוחקים אותם, אז כדאי לשמור גיבוי אחרי כל עדכון.${m.lastBackup?` גיבוי אחרון: <span class="n">${new Date(m.lastBackup).toLocaleDateString('he-IL')}</span>.`:''}</p>
+  <div class="stackbtns"><button class="btn" data-act="backup">שמירת גיבוי</button><button class="btn ghost" data-act="csv">ייצוא לאקסל (CSV)</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div></section>
+  <section><h2>נעילה</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">${locked?'האפליקציה נעולה בקוד, והנתונים שמורים מוצפנים במכשיר. הקוד נדרש בפתיחה, ושוב אחרי שהאפליקציה הייתה ברקע יותר משתי דקות.':'אפשר לנעול את האפליקציה בקוד. הנתונים יישמרו מוצפנים, ובלי הקוד אי אפשר לשחזר אותם.'}</p>
+  <div class="stackbtns">${locked?'<button class="btn ghost" data-act="locknow">נעילה עכשיו</button><button class="btn ghost" data-act="setpass">החלפת קוד</button><button class="btn ghost" data-act="rmpass">ביטול הנעילה</button>':'<button class="btn ghost" data-act="setpass">הגדרת קוד נעילה</button>'}</div></div></section>
+  <section><h2>נתונים</h2><div class="panel pad"><button class="btn danger" data-act="wipe">מחיקת כל הנתונים מהמכשיר</button></div></section>
+  <section><p style="font-size:13px;color:var(--muted);text-align:center;margin:0 12px">שום נתון לא נשלח לשרת. הפעולה היחידה שפונה לאינטרנט היא ״משיכה״ של שער הדולר, והיא שולחת רק תאריך.</p></section>`;
+}
+
+/* ---------- a holding's own price history ----------
+   every bank file carries the closing price of each security, so each upload leaves one point
+   behind. no outside source, no key, nothing sent anywhere: the resolution is simply the rate at
+   which files are uploaded. shekel-quoted securities are priced in agorot, as the bank quotes them. */
+function priceSeries(accId,holdId,days){
+  const from=days?new Date(Date.now()-days*864e5).toISOString().slice(0,10):'';
+  const out=[];
+  for(const snap of portsRaw(accId)){
+    if(!snap.hold)continue;                      /* the oldest snapshots keep only their totals */
+    if(from&&snap.date<from)continue;
+    const h=snap.hold.find(y=>String(y.id)===String(holdId));
+    if(h&&h.price>0)out.push({d:snap.date,v:h.price});
+  }
+  return out;
+}
+/* ---------- a year of daily closes, for the securities a free source covers ----------
+   Twelve Data's free plan is US listings only, so this reaches the shares and the ETFs quoted in
+   dollars and nothing else; everything else keeps the chart built from the uploaded files above.
+   The series is held in memory for the session and never written to the stored blob: it is market
+   data, it is one request to get back, and 250 points per security would bloat every save. */
+let PX={};                                   /* ticker -> {ts, pts:[{d,v}]} */
+const pxBusy=new Set(),pxErr={};
+const PXDAY=12*60*60*1000;
+const pxTick=x=>x.cur==='דולר'?tickOf(x):'';
+async function fetchPx(sym){
+  if(!S.td)throw new Error('no-key');
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),12000);
+  try{
+    const r=await fetch('https://api.twelvedata.com/time_series?interval=1day&outputsize=260&symbol='+
+      encodeURIComponent(sym)+'&apikey='+encodeURIComponent(S.td),{signal:ctl.signal});
+    const j=await r.json();
+    if(j.code===401||j.code===403)throw new Error('key');
+    if(j.code===429)throw new Error('rate');
+    if(!Array.isArray(j.values)||!j.values.length)throw new Error('empty');
+    const pts=j.values.map(v=>({d:String(v.datetime).slice(0,10),v:parseFloat(v.close)}))
+      .filter(v=>Number.isFinite(v.v)).reverse();                 /* the API returns newest first */
+    if(pts.length<2)throw new Error('empty');
+    return {ts:Date.now(),pts};
+  }finally{clearTimeout(t)}
+}
+/* which series the chart draws, and where it came from */
+function priceData(x,accId){
+  const t=pxTick(x),m=t&&PX[t];
+  if(m)return {src:'market',t,pts:m.pts};
+  return {src:'own',t,pts:priceSeries(accId,x.id,365)};
+}
+const pxFmt=()=>v=>nf0.format(Math.round(v*100)/100);
+function priceBlock(x,accId){
+  const {src,t,pts}=priceData(x,accId);
+  const unit=x.cur==='שקל'?'אגורות':esc(x.cur);
+  const head=`<section id="pxsec"><h2>מחיר הנייר · ${unit}</h2>`;
+  if(src==='own'&&t&&pxBusy.has(t))
+    return head+`<div class="panel pad"><div class="recwait"><span class="ring"></span><span>מושך נתוני שוק…</span></div></div></section>`;
+  if(pts.length<2){
+    const why=t&&pxErr[t]==='key'?'מפתח Twelve Data נדחה. הגדרות ← גרף מחיר.'
+      :t&&pxErr[t]==='rate'?'חריגה ממגבלת הבקשות לדקה. נסה שוב בעוד רגע.'
+      :t&&pxErr[t]?'לא הצלחתי למשוך נתוני שוק לנייר הזה.'
+      :pts.length===1?'יש צילום אחד בלבד. כל העלאת קובץ מוסיפה נקודה לגרף.':'';
+    const retry=t&&pxErr[t]&&S.td?`<div class="stackbtns"><button class="btn ghost" data-pxload="1">נסה שוב</button></div>`:'';
+    return why?head+`<p class="hint">${why}</p>${retry}</section>`:'';
+  }
+  const first=pts[0].v,last=pts[pts.length-1].v,d=last-first;
+  const fmt=pxFmt();
+  const col=d>0?'var(--up)':d<0?'var(--down)':'var(--muted)';
+  const at=src==='market'&&PX[t]?new Date(PX[t].ts).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}):'';
+  const note=src==='market'
+    ?`מחירי סגירה יומיים, <span class="n">${pts.length}</span> ימי מסחר מ-${dlong(pts[0].d)}. מקור: Twelve Data, נמשך ב-<span class="n">${at}</span>.`
+    :`<span class="n">${pts.length}</span> צילומים, מ-${dlong(pts[0].d)} עד ${dlong(pts[pts.length-1].d)}. הגרף נבנה מהקבצים שהעלית, ולא ממקור חיצוני.`;
+  return head+`
+  <div class="panel pad chartbox" id="pxbox">
+    <div class="chart-top"><b class="n">${fmt(last)}</b><span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,fmt)}${first?' · '+pct(d/first,1):''}</span></div>
+    <div class="readout"></div>
+    ${lineChart(pts,col,{h:150,label:'מחיר '+x.name,anim:src!=='market'})}
+  </div>
+  <p class="hint">${note}</p>
+  ${src==='market'?`<div class="stackbtns"><button class="btn ghost" data-pxload="1">${pxBusy.has(t)?'מושך…':'רענון'}</button></div>`:''}</section>`;
+}
+
+/* ---------- analyst consensus ----------
+   Only for shares listed abroad: the free sources cover US-listed companies, and bonds and
+   funds have no analyst coverage at all. The key lives in the encrypted store on this device,
+   never in the code, because the page itself is public. */
+const hmonth=d=>{try{return new Date(d+'T00:00:00').toLocaleDateString('he-IL',{month:'long',year:'numeric'})}catch(e){return d}};
+const RECDAY=20*60*60*1000;                       /* a consensus does not move hourly */
+const RECSOON=30*60*1000;                         /* what a deliberate pull down counts as stale */
+const recBusy=new Set();                          /* symbols being fetched right now */
+const recErr={};                                  /* and the ones that just failed, so a retry can be offered */
+const isForeignStock=x=>catOf(x)==='stock-intl';
+/* the bank file already carries a ״סימבול״ column, and for a US-listed share it IS the ticker,
+   so nothing needs typing. Anything else in that column is not one: bonds arrive as
+   "BA 2.7 2/2" and non-US listings as "VITB SS" (Stockholm) or "CSU CN" (Toronto), and the free
+   sources cover US listings only — so those are left for the user to fill in or leave empty. */
+const autoTick=x=>{
+  const s=String((x&&x.sym)||'').toUpperCase().replace(/[^A-Z0-9./\- ]/g,'').trim();
+  if(!/^[A-Z][A-Z0-9]{0,4}([./][A-Z])?$/.test(s))return '';
+  return s.replace('/','.');                 /* BRK/B is BRK.B at Finnhub */
+};
+const tickOf=x=>S.tick[x.id]||autoTick(x);
+const tickMan=x=>!!S.tick[x.id];
+const recOf=x=>{const t=tickOf(x);return t?S.rec[t]:null};
+function recScore(r){
+  const n=r.sb+r.b+r.h+r.s+r.ss;
+  if(!n)return null;
+  return {n,score:(r.sb*1+r.b*2+r.h*3+r.s*4+r.ss*5)/n};
+}
+function recVerdict(r){
+  const v=recScore(r);if(!v)return null;
+  const q=v.score;
+  const label=q<1.5?'קנייה חזקה':q<2.5?'קנייה':q<3.5?'החזקה':q<4.5?'מכירה':'מכירה חזקה';
+  const cls=q<2.5?'buy':q<3.5?'hold':'sell';
+  return {label,cls,n:v.n};
+}
+async function fetchRec(sym){
+  if(!S.fh)throw new Error('no-key');
+  const base='https://finnhub.io/api/v1/';
+  const get=async path=>{
+    const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),9000);
+    try{const r=await fetch(base+path+'&token='+encodeURIComponent(S.fh),{signal:ctl.signal});
+      clearTimeout(t);
+      if(r.status===401||r.status===403)throw new Error('key');
+      if(!r.ok)throw new Error('http');
+      return await r.json();
+    }finally{clearTimeout(t)}
+  };
+  const list=await get('stock/recommendation?symbol='+encodeURIComponent(sym));
+  if(!Array.isArray(list)||!list.length)throw new Error('empty');
+  const a=list[0];
+  const out={ts:Date.now(),sb:num(a.strongBuy),b:num(a.buy),h:num(a.hold),s:num(a.sell),ss:num(a.strongSell),
+    period:String(a.period||''),tm:0,tl:0,th:0,px:0};
+  /* the price target and the quote may sit behind a paid plan; they are a bonus, not a requirement */
+  try{const pt=await get('stock/price-target?symbol='+encodeURIComponent(sym));
+    out.tm=num(pt.targetMean);out.tl=num(pt.targetLow);out.th=num(pt.targetHigh)}catch(e){}
+  try{const q=await get('quote?symbol='+encodeURIComponent(sym));out.px=num(q.c)}catch(e){}
+  return out;
+}
+/* force: fetch everything. maxAge: how old a cached answer may be. budget: give up after this
+   long, so a pull down cannot hang on a slow network. The gap between symbols keeps a whole
+   portfolio under the free tier's per-minute ceiling. */
+async function refreshRecs(force,maxAge,budget){
+  if(!S.fh)return 0;
+  const age=force?0:(maxAge||RECDAY),end=budget?Date.now()+budget:0;
+  const want=new Set();
+  for(const id in S.ports)for(const x of (portsRaw(id).slice(-1)[0]||{}).hold||[])
+    if(isForeignStock(x)&&tickOf(x))want.add(tickOf(x));
+  let got=0,n=0;
+  for(const sym of want){
+    const cur=S.rec[sym];
+    if(cur&&Date.now()-cur.ts<age)continue;
+    if(recBusy.has(sym))continue;
+    if(end&&Date.now()>end)break;
+    if(n++)await new Promise(r=>setTimeout(r,120));
+    recBusy.add(sym);
+    try{S.rec[sym]=await fetchRec(sym);delete recErr[sym];got++}
+    catch(e){recErr[sym]=e.message;if(e.message==='key'){toast('מפתח ה-API נדחה');recBusy.delete(sym);break}}
+    finally{recBusy.delete(sym)}
+  }
+  if(got){save();recPaintOpen()}
+  return got;
+}
+/* whatever is on screen and shows a consensus is redrawn where it stands, so nothing has to be
+   reopened for the numbers to appear */
+function recPaintOpen(){
+  const L=stack[stack.length-1];if(!L)return;
+  if(L.el.querySelector('#recsec')&&recPaintOpen.hold)recPaintOpen.hold();
+  else if(L.el.querySelector('[data-hold]')&&recPaintOpen.list)recPaintOpen.list();
+}
+function recBadge(x){
+  if(!isForeignStock(x))return '';
+  const t=tickOf(x);
+  if(!t)return S.fh?'<span class="rec none">ללא טיקר</span>':'';
+  const r=S.rec[t],v=r&&recVerdict(r);
+  return v?`<span class="rec ${v.cls}">${v.label}</span>`:`<span class="rec none">${esc(t)}</span>`;
+}
+function recBlock(x){
+  if(!isForeignStock(x))return '';
+  const t=tickOf(x),r=t?S.rec[t]:null,v=r&&recVerdict(r);
+  const src=t?(tickMan(x)?'ידני':'מהקובץ'):'לא מקושר';
+  const busy=t&&recBusy.has(t),fail=t&&recErr[t];
+  let h=`<section id="recsec"><h2>המלצות אנליסטים</h2><div class="panel">
+  <button class="row plain" data-tick="${esc(x.id)}"><span><span class="nm">טיקר</span><div class="sub">${src}</div></span><span class="val n">${t?esc(t):'—'}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button></div>`;
+  if(!S.fh)return h+`<p class="hint">כדי למשוך המלצות צריך מפתח API חינמי. הגדרות ← המלצות אנליסטים.</p></section>`;
+  if(!t)return h+`<p class="hint">ניירות שמופיע להם סימבול אמריקאי בקובץ מקושרים מעצמם. לנייר הזה אין, אפשר לקשר אותו ידנית.</p></section>`;
+  if(!v){
+    if(busy)return h+`<div class="panel pad" style="margin-top:10px"><div class="recwait"><span class="ring"></span><span>מושך המלצות…</span></div></div></section>`;
+    const why=fail==='empty'?'אין כיסוי אנליסטים לנייר הזה.':fail==='key'?'מפתח ה-API נדחה. הגדרות ← המלצות אנליסטים.':'לא הצלחתי למשוך כרגע.';
+    return h+`<p class="hint">${why}</p><div class="stackbtns"><button class="btn ghost" data-recload="${esc(t)}">נסה שוב</button></div></section>`;
+  }
+  const tot=r.sb+r.b+r.h+r.s+r.ss;
+  const seg=(n,c)=>n?`<i style="flex:${n};background:${c}"></i>`:'';
+  h+=`<div class="panel pad" style="margin-top:10px">
+  <div class="sub">קונצנזוס של <span class="n">${v.n}</span> אנליסטים</div>
+  <div class="bigrec ${v.cls}">${v.label}</div>
+  <div class="cons">${seg(r.sb,'var(--up)')}${seg(r.b,'var(--up2)')}${seg(r.h,'var(--muted)')}${seg(r.s,'var(--down)')}${seg(r.ss,'var(--down)')}</div>
+  <div class="legend">
+    ${r.sb?`<span><b style="background:var(--up)"></b>קנייה חזקה <span class="n">${r.sb}</span></span>`:''}
+    ${r.b?`<span><b style="background:var(--up2)"></b>קנייה <span class="n">${r.b}</span></span>`:''}
+    ${r.h?`<span><b style="background:var(--muted)"></b>החזקה <span class="n">${r.h}</span></span>`:''}
+    ${r.s||r.ss?`<span><b style="background:var(--down)"></b>מכירה <span class="n">${r.s+r.ss}</span></span>`:''}
+  </div></div>`;
+  if(r.tm)h+=`<div class="panel facts" style="margin-top:10px">
+    ${r.px?`<div><small>מחיר נוכחי</small><b class="n">${r.px.toFixed(2)}</b></div>`:''}
+    <div><small>יעד ממוצע</small><b class="n ${r.px&&r.tm>r.px?'up':r.px?'down':''}">${r.tm.toFixed(2)}</b></div>
+    ${r.tl&&r.th?`<div><small>היעד הנמוך</small><b class="n">${r.tl.toFixed(2)}</b></div><div><small>היעד הגבוה</small><b class="n">${r.th.toFixed(2)}</b></div>`:''}
+    </div>`;
+  h+=`<p class="hint">${r.period?'נכון לחודש '+esc(hmonth(r.period))+'. ':''}נמשך ${dlong(new Date(r.ts).toISOString().slice(0,10))}. המלצות אנליסטים הן דעה ולא תחזית, והן נוטות להיות אופטימיות ולהגיב באיחור.</p>
+  <div class="stackbtns"><button class="btn ghost" data-recload="${esc(t)}">${busy?'מושך…':'רענון'}</button></div></section>`;
+  return h;
+}
+function openTicker(holdId,accId){
+  const cur=S.tick[holdId]||'';
+  const hx=((portsRaw(accId).slice(-1)[0]||{}).hold||[]).find(h=>String(h.id)===String(holdId));
+  const auto=hx?autoTick(hx):'';
+  openLayer(`<div class="sheet modal" role="dialog" aria-label="טיקר"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>קישור לטיקר</h2><span></span></header><div class="body">
+  <section><div class="grp"><div class="fld"><label for="tk">טיקר</label><input id="tk" value="${esc(cur)}" placeholder="${esc(auto||'NVDA')}" maxlength="12" autocomplete="off" autocapitalize="characters"></div></div>
+  <p class="hint">${auto?`בקובץ מופיע הסימבול <span class="n">${esc(auto)}</span>, והוא בשימוש כברירת מחדל. מה שייכתב כאן ידרוס אותו.`:'הסמל של הנייר בבורסה האמריקאית. הקישור נשמר לפי מספר הנייר, כך שהוא שורד העלאה של קובץ חדש.'}</p></section>
+  <section><button class="btn" id="tksave">שמירה</button></section>
+  ${cur?`<section><button class="btn danger" id="tkdel">${auto?'חזרה לסימבול מהקובץ':'ניתוק'}</button></section>`:''}</div></div>`);
+  const done=async()=>{closeLayer();save();setTimeout(()=>{if(accId)paintPortfolio(accId,true)},300)};
+  $('#tksave').onclick=async()=>{
+    const v=$('#tk').value.toUpperCase().replace(/[^A-Z0-9.\-]/g,'').slice(0,12);
+    if(!v){toast('צריך טיקר');return}
+    S.tick[holdId]=v;
+    done();
+    if(S.fh&&!S.rec[v]){toast('מושך המלצות…');try{S.rec[v]=await fetchRec(v);save();toast('עודכן')}
+      catch(e){toast(e.message==='key'?'מפתח ה-API נדחה':e.message==='empty'?'אין כיסוי לנייר הזה':'לא הצלחתי למשוך')}}
+  };
+  const d=$('#tkdel');if(d)d.onclick=()=>{delete S.tick[holdId];done()};
+}
+
+/* ---------- backup ---------- */
+async function shareFile(name,text,type){
+  const file=new File([text],name,{type});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return true}}catch(e){if(e.name==='AbortError')return false}
+  const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return true;
+}
+async function doBackup(){if(!S.updates.length){toast('אין עדיין נתונים לגיבוי');return}
+  const ok=await shareFile(`finance-backup-${today()}.json`,JSON.stringify({app:'finance-tracker',v:3,exported:new Date().toISOString(),accounts:ACCOUNTS,updates:sorted(),ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,td:S.td,tick:S.tick,rec:S.rec},null,1),'application/json');
+  if(ok){setMeta({lastBackup:Date.now()});toast('הגיבוי נוצר');render()}}
+async function doCsv(){if(!S.updates.length){toast('אין עדיין נתונים לייצוא');return}
+  const head=['תאריך',...ACCOUNTS.flatMap(a=>a.fields.map(f=>a.short+' – '+f[1])),'שער דולר','סה״כ הון (₪)'];
+  const rows=sorted().map(u=>[dlong(u.date),...FIELDS.map(k=>u.vals[k]),u.rate,Math.round(calcRaw(u).total*100)/100]);
+  await shareFile(`finance-${today()}.csv`,'﻿'+[head,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n'),'text/csv');}
+function openImport(){
+  openLayer(`<div class="sheet modal" role="dialog" aria-label="טעינת גיבוי"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>טעינת גיבוי</h2><span></span></header><div class="body">
+  <div class="err" id="ierr" hidden role="alert"></div>
+  <section><h2>מקובץ</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">בחרו קובץ גיבוי (‎.json‎) מ״קבצים״.</p><label class="btn" style="cursor:pointer">בחירת קובץ<input id="ifile" type="file" accept=".json,application/json,text/plain" hidden></label></div></section>
+  <section><h2>או בהדבקה</h2><div class="panel pad"><textarea id="itext" placeholder='{"app":"finance-tracker", ...}' aria-label="תוכן הגיבוי"></textarea><button class="btn ghost" id="ipaste" style="margin-top:10px">טעינה מהטקסט</button></div></section>
+  <section><p style="font-size:13px;color:var(--muted);margin:0 6px">עדכונים מהגיבוי יתווספו לקיימים. אם קיים עדכון באותו תאריך, הגרסה מהגיבוי תחליף אותו.</p></section></div></div>`);
+  const run=async txt=>{try{const j=JSON.parse(txt);if(Array.isArray(j.accounts)&&j.accounts.length)setConfig(j.accounts);if(j.ports||j.ptype||j.plink)loadPorts(j);if(!ACCOUNTS.length)throw 0;S.updates=clean(S.updates);const list=clean(j.updates);if(!list.length&&!S.updates.length&&!j.accounts)throw 0;
+      const map=new Map(S.updates.map(u=>[u.date,u]));list.forEach(u=>map.set(u.date,u));S.updates=[...map.values()];closeLayer();tab='home';render();save();toast('נטענו '+list.length+' עדכונים')}
+    catch(e){const el=$('#ierr');el.textContent='הקובץ אינו גיבוי תקין של האפליקציה.';el.hidden=false}};
+  $('#ifile').onchange=async e=>{const f=e.target.files[0];if(f)run(await f.text())};
+  $('#ipaste').onclick=()=>run($('#itext').value);
+}
+const calm=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
+/* A spring, not a timed animation: it starts from wherever the surface is right now and
+   carries the finger's velocity, so a page can be grabbed and reversed mid-flight. */
+const TICK={live:new Set(),raf:0,last:0};
+const moving=on=>document.documentElement.classList.toggle('moving',on);
+function tickAll(now){
+  TICK.raf=0;
+  let dt=(now-TICK.last)/1000;TICK.last=now;
+  if(dt>1/20)dt=1/20;if(dt<=0)dt=1/60;
+  for(const sp of [...TICK.live])sp._step(dt);
+  if(TICK.live.size)TICK.raf=requestAnimationFrame(tickAll);
+  else moving(false);
+}
+function tickOn(sp){TICK.live.add(sp);moving(true);
+  if(!TICK.raf){TICK.last=performance.now();TICK.raf=requestAnimationFrame(tickAll)}}
+function Spring(set,scale){
+  const S0=scale||1;
+  let x=0,v=0,t=0,z=1,r=.4,cb=null;
+  const api={
+    get value(){return x},get velocity(){return v},
+    _step(dt){
+      const w=2*Math.PI/r,k=w*w,c=2*z*w,n=Math.max(1,Math.ceil(dt*360)),h=dt/n;
+      for(let i=0;i<n;i++){v+=(-k*(x-t)-c*v)*h;x+=v*h}
+      /* the tail of a critically damped spring is a long time spent covering no distance.
+         it snaps to the exact target when it stops, so stopping sooner costs nothing to see
+         and gives the next gesture its turn. */
+      if(Math.abs(x-t)<4e-3*S0&&Math.abs(v)<4e-2*S0){x=t;v=0;set(x);TICK.live.delete(api);const f=cb;cb=null;if(f)f();return}
+      set(x);
+    },
+    jump(val){TICK.live.delete(api);x=val;v=0;set(x)},
+    to(target,o,done){o=o||{};t=target;
+      if(o.damping!=null)z=o.damping;if(o.response!=null)r=o.response;if(o.velocity!=null)v=o.velocity;
+      cb=done||null;
+      if(calm()){api.stop();x=t;v=0;set(x);if(done)done();return}
+      tickOn(api);},
+    stop(){TICK.live.delete(api);cb=null}
+  };
+  return api;
+}
+const project=(v,d=.998)=>v/1000*d/(1-d);               // where a flick is heading
+const rubber=(o,dim,c=.55)=>o*dim*c/(dim+c*Math.abs(o)); // resist, never stop dead
+function Velocity(){const h=[];return{add(p){const t=performance.now();h.push([p,t]);
+  while(h.length>6||(h.length>2&&t-h[0][1]>110))h.shift()},
+  get(){if(h.length<2)return 0;const a=h[0],b=h[h.length-1],dt=(b[1]-a[1])/1000;return dt>.004?(b[0]-a[0])/dt:0}}}
+
+let stack=[];
+function stageNode(el){return el||$('#app')}
+function underTx(el,p){
+  const n=stageNode(el);if(!n)return;
+  if(!n.style.willChange)n.style.willChange='transform';
+  n.style.transform=`translateX(${(p*22).toFixed(2)}%)`;
+}
+function underZoom(el,p){
+  const n=stageNode(el);if(!n)return;
+  if(!n.style.willChange)n.style.willChange='transform';
+  n.style.transform=`scale(${(1-.035*p).toFixed(4)})`;
+}
+function clearStage(){for(const n of [$('#app'),$('#tabbar')]){if(!n)continue;n.style.transform='';n.style.opacity='';n.style.willChange=''}}
+function openLayer(html,push,origin){
+  const kind=push?'push':'modal';
+  const sc=document.createElement('div');sc.className='scrim';
+  const box=document.createElement('div');box.innerHTML=html;
+  const el=box.firstElementChild;if(!el)return;
+  layer.append(sc,el);
+  const under=stack.length?stack[stack.length-1].el:null;
+  /* a zoom matches the row's rectangle at p=0 and the screen at p=1. the box is opaque the
+     whole way, so what you see is that rectangle growing; the contents fade in once it is
+     nearly there, which is what hides the squash of the early frames. */
+
+  const set=p=>{
+    if(origin){
+      const e=p<0?0:p>1?1:p;
+      if(e>=.995){
+        el.style.transform='';el.style.opacity='';el.style.transformOrigin='';
+        sc.style.opacity='.1';underZoom(under,1);return;
+      }
+      const k=.94+.06*e, o=(1-e)*.5;
+      el.style.transformOrigin=`${origin.cx.toFixed(0)}px ${origin.cy.toFixed(0)}px`;
+      el.style.transform=`translate3d(0,${(origin.dy*o).toFixed(1)}px,0) scale(${k.toFixed(4)})`;
+      el.style.opacity=Math.min(1,e*2.6).toFixed(3);
+      sc.style.opacity=(p*.1).toFixed(3);
+      underZoom(under,e);
+      return;
+    }
+    el.style.transform=kind==='push'?`translateX(${(-(1-p)*100).toFixed(3)}%)`:`translateY(${((1-p)*100).toFixed(3)}%)`;
+    sc.style.opacity=(p*(kind==='push'?.1:.4)).toFixed(3);
+    if(kind==='push')underTx(under,p);
+  };
+  const s=Spring(set);s.jump(0);
+  el.style.willChange=origin?'transform,opacity':'transform';
+  const L={el,sc,s,set,kind,under,origin};stack.push(L);
+  /* inserting a full screen and animating it in the same frame makes the first frames of the
+     motion compete with laying it out. Give the browser that frame, then move. */
+  const go=()=>s.to(1,{damping:1,response:origin?.38:kind==='push'?.36:.36},
+    ()=>{el.style.willChange=''});        /* a page that has arrived needs no layer of its own */
+  if(calm())go(); else requestAnimationFrame(()=>requestAnimationFrame(go));
+  grab(L);
+  const body=el.querySelector('.body'),head=el.querySelector('header');
+  if(body&&head)body.addEventListener('scroll',()=>head.classList.toggle('edge',body.scrollTop>2),{passive:true});
+  return L;
+}
+function closeLayer(vel){
+  const L=stack.pop();if(!L)return;
+  /* give the page a layer of its own for the way out too, or every frame of the close
+     repaints the whole thing instead of moving a picture that is already drawn */
+  L.el.style.willChange=L.origin?'transform,opacity':'transform';
+  L.s.to(0,{damping:1,response:L.kind==='push'?.22:.26,velocity:vel||0},()=>{
+    L.el.style.willChange='';L.el.remove();L.sc.remove();
+    if(!stack.length)clearStage();
+  });
+}
+function closeAllLayers(){stack.forEach(L=>{L.s.stop();L.el.remove();L.sc.remove()});stack=[];clearStage();layer.innerHTML=''}
+/* edge-swipe back on a pushed page; drag-down on a sheet. 1:1 with the finger, then momentum. */
+function grab(L){
+  const {el,kind,s}=L,area=kind==='push'?el:el.querySelector('header');if(!area)return;
+  let armed=false,on=false,sx=0,sy=0,start=0,base=0,vt=null,pid=0;
+  const dim=()=>kind==='push'?innerWidth:(el.offsetHeight||innerHeight);
+  const top=()=>stack[stack.length-1]===L;
+  area.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    if(!top())return;
+    if(kind==='push'&&e.clientX<innerWidth-28)return;
+    armed=true;on=false;sx=e.clientX;sy=e.clientY;pid=e.pointerId;
+  });
+  area.addEventListener('pointermove',e=>{
+    if(!armed||e.pointerId!==pid)return;
+    const x=e.clientX,y=e.clientY;
+    if(!on){
+      if(L.origin&&!el.style.transform)el.style.overflow='hidden';
+      const dx=Math.abs(x-sx),dy=Math.abs(y-sy);
+      if(kind==='push'){if(dy>10&&dy>dx){armed=false;return}if(dx<8)return}
+      else {if(dx>10&&dx>dy){armed=false;return}if(dy<6)return}
+      on=true;start=kind==='push'?x:y;base=s.value;s.stop();
+      vt=Velocity();vt.add(start);
+      try{area.setPointerCapture(pid)}catch(err){}
+    }
+    const now=kind==='push'?x:y,d=now-start;
+    vt.add(now);
+    let p=base+(kind==='push'?d/dim():-d/dim());
+    if(p>1)p=1+rubber(p-1,1);
+    if(p<0)p=0;
+    s.jump(p);
+    if(e.cancelable)e.preventDefault();
+  },{passive:false});
+  const end=e=>{
+    if(!armed||e.pointerId!==pid)return;armed=false;
+    if(!on)return;on=false;
+    const toOpen=vt.get()*(kind==='push'?1:-1),D=dim();
+    const projected=s.value+project(toOpen)/D,vp=toOpen/D;
+    if(projected>.5)s.to(1,{damping:1,response:.4,velocity:vp});
+    else closeLayer(vp);
+  };
+  area.addEventListener('pointerup',end);area.addEventListener('pointercancel',end);
+}
+
+/* ---------- passcode ---------- */
+function lockScreen(){
+  const el=document.createElement('div');el.className='lock';el.innerHTML=`<h1>מעקב כספים</h1><p>הקלידו את קוד הנעילה</p><form><input id="lp" type="password" inputmode="numeric" autocomplete="current-password" aria-label="קוד נעילה" autofocus><div class="msg" role="alert"></div><button class="btn">פתיחה</button></form>`;
+  document.body.appendChild(el);
+  el.querySelector('form').onsubmit=async e=>{e.preventDefault();const b=el.querySelector('button');b.disabled=true;
+    try{await unlock(el.querySelector('#lp').value);el.remove();start()}catch(err){el.querySelector('.msg').textContent='הקוד שגוי. נסו שוב.';el.querySelector('#lp').value='';b.disabled=false}};
+}
+function setPass(){
+  if(!(window.crypto&&crypto.subtle)){toast('נעילה בקוד זמינה רק כשהאפליקציה נטענת ב-https');return}
+  openLayer(`<div class="sheet modal" role="dialog" aria-label="קוד נעילה"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>קוד נעילה</h2><span></span></header><div class="body"><form id="pfrm">
+  <div class="err" id="perr" hidden role="alert"></div>
+  <div class="grp"><div class="fld"><label for="p1">קוד חדש<small>לפחות 4 תווים</small></label><input id="p1" type="password" inputmode="numeric" autocomplete="new-password"></div>
+  <div class="fld"><label for="p2">הקוד שוב</label><input id="p2" type="password" inputmode="numeric" autocomplete="new-password"></div></div>
+  <p class="hint" style="padding-top:10px">בלי הקוד אי אפשר לפתוח את האפליקציה או לשחזר את הנתונים. שמרו גיבוי לפני שמפעילים נעילה.</p>
+  <section><button class="btn">הפעלת נעילה</button></section></form></div></div>`);
+  $('#pfrm').onsubmit=async e=>{e.preventDefault();const a=$('#p1').value,b=$('#p2').value,err=$('#perr');
+    const msg=a.length<4?'הקוד קצר מדי. צריך לפחות 4 תווים.':a!==b?'שני הקודים לא זהים.':'';
+    if(msg){err.textContent=msg;err.hidden=false;return}
+    const salt=crypto.getRandomValues(new Uint8Array(16));cryptoKey=await deriveKey(a,salt);encMeta={salt:b64(salt)};await save();closeLayer();render();toast('הנעילה הופעלה')};
+}
+async function rmPass(){if(!confirm('לבטל את הנעילה? הנתונים יישמרו במכשיר בלי הצפנה.'))return;cryptoKey=null;encMeta=null;await save();render();toast('הנעילה בוטלה')}
+
+/* ---------- reading a spreadsheet: .xlsx unzipped by the browser itself, or .csv ---------- */
+const TD=new TextDecoder();
+async function inflateRaw(bytes){
+  if(!('DecompressionStream' in window))throw new Error('הדפדפן הזה לא יודע לפתוח קובץ Excel. ייצאו את הקובץ כ-CSV.');
+  const st=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(st).arrayBuffer());
+}
+async function unzip(buf){
+  const u=new Uint8Array(buf),dv=new DataView(buf),out={};
+  let eo=-1;
+  for(let i=u.length-22;i>=0&&i>u.length-66000;i--)if(dv.getUint32(i,true)===0x06054b50){eo=i;break}
+  if(eo<0)throw new Error('הקובץ אינו קובץ Excel תקין.');
+  let n=dv.getUint16(eo+10,true),off=dv.getUint32(eo+16,true);
+  for(let k=0;k<n&&off+46<=u.length;k++){
+    if(dv.getUint32(off,true)!==0x02014b50)break;
+    const method=dv.getUint16(off+10,true),csize=dv.getUint32(off+20,true);
+    const nl=dv.getUint16(off+28,true),el=dv.getUint16(off+30,true),cl=dv.getUint16(off+32,true);
+    const lho=dv.getUint32(off+42,true),name=TD.decode(u.subarray(off+46,off+46+nl));
+    const start=lho+30+dv.getUint16(lho+26,true)+dv.getUint16(lho+28,true);
+    out[name]={method,data:u.subarray(start,start+csize)};
+    off+=46+nl+el+cl;
+  }
+  return out;
+}
+async function zipText(z,name){const e=z[name];if(!e)return null;return TD.decode(e.method===0?e.data:await inflateRaw(e.data))}
+const colOf=ref=>{let n=0;for(const ch of ref){const c=ch.charCodeAt(0);if(c<65||c>90)break;n=n*26+(c-64)}return n-1};
+function parseCsv(txt){
+  const rows=[];let row=[],f='',q=false;
+  txt=txt.replace(/^﻿/,'');
+  for(let i=0;i<txt.length;i++){
+    const c=txt[i];
+    if(q){ if(c==='"'){ if(txt[i+1]==='"'){f+='"';i++} else q=false } else f+=c }
+    else if(c==='"')q=true;
+    else if(c===','||c==='\t'){row.push(f);f=''}
+    else if(c==='\n'){row.push(f);rows.push(row);row=[];f=''}
+    else if(c!=='\r')f+=c;
+  }
+  if(f!==''||row.length){row.push(f);rows.push(row)}
+  return rows.map(r=>r.map(v=>{const t=v.trim();if(t==='')return null;const n=+t.replace(/,/g,'');return Number.isFinite(n)&&/^[-+]?[\d,]*\.?\d+$/.test(t)?n:t}));
+}
+async function readSheet(file){
+  if(/\.(csv|txt|tsv)$/i.test(file.name))return parseCsv(await file.text());
+  const z=await unzip(await file.arrayBuffer());
+  let target='xl/worksheets/sheet1.xml';
+  try{
+    const wb=new DOMParser().parseFromString(await zipText(z,'xl/workbook.xml'),'application/xml');
+    const sh=wb.getElementsByTagName('sheet')[0];
+    const rid=sh.getAttribute('r:id')||sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');
+    const rl=new DOMParser().parseFromString(await zipText(z,'xl/_rels/workbook.xml.rels'),'application/xml');
+    for(const r of rl.getElementsByTagName('Relationship'))if(r.getAttribute('Id')===rid){
+      let t=r.getAttribute('Target');target=t.replace(/^\//,'').replace(/^\.\//,'');if(!target.startsWith('xl/'))target='xl/'+target;
+    }
+  }catch(e){}
+  const ss=[],ssx=await zipText(z,'xl/sharedStrings.xml');
+  if(ssx){const d=new DOMParser().parseFromString(ssx,'application/xml');
+    for(const si of d.getElementsByTagName('si')){let s='';for(const t of si.getElementsByTagName('t'))s+=t.textContent;ss.push(s)}}
+  const sx=await zipText(z,target);
+  if(!sx)throw new Error('לא נמצא גיליון בקובץ.');
+  const d=new DOMParser().parseFromString(sx,'application/xml'),rows=[];
+  for(const row of d.getElementsByTagName('row')){
+    const arr=[];
+    for(const c of row.getElementsByTagName('c')){
+      const i=colOf(c.getAttribute('r')||''),t=c.getAttribute('t');let v=null;
+      if(t==='inlineStr'){const e=c.getElementsByTagName('t')[0];v=e?e.textContent:''}
+      else{const e=c.getElementsByTagName('v')[0];if(e){v=e.textContent;if(t==='s')v=ss[+v]??'';else if(t!=='str'&&t!=='e')v=+v}}
+      if(i>=0)arr[i]=v;
+    }
+    rows.push(arr);
+  }
+  return rows;
+}
+
+/* ---------- turning those rows into holdings ---------- */
+const PF={num:['מס.ניע','מס ניע','מספר נייר','מס נ"ע'],name:['שם ניע','שם נייר','שם נ"ע'],price:['שער אחרון','שער'],
+  value:['שווי אחזקה','שווי בשח','שווי'],qty:['כמות'],cur:['מטבע'],valueCur:['שווי במטבע'],sym:['סימבול'],
+  gain:['שינוי מרכישה'],taxGain:['רוון הון תיאורטי','רווח הון תיאורטי'],tax:['מס תיאורטי'],sub:['מס. משני','מס משני']};
+const norm=s=>String(s??'').replace(/[‎‏‪-‮]/g,'').replace(/["'״׳]/g,'"').replace(/\s+/g,' ').trim();
+function mapHeader(rows){
+  for(let r=0;r<Math.min(rows.length,25);r++){
+    const m={},seen={};
+    (rows[r]||[]).forEach((cell,i)=>{
+      const h=norm(cell);if(!h)return;
+      for(const k in PF)if(!(k in m)&&PF[k].some(x=>norm(x)===h)){m[k]=i;seen[k]=1}
+    });
+    if(m.num!=null&&m.name!=null&&m.value!=null&&Object.keys(m).length>=5)return {row:r,map:m};
+  }
+  return null;
+}
+const ETFWORDS=/ISHARES|SHARES|SPDR|VANGUARD|INVESCO|FIRST TRUST|\bFT\b|ROUNDHILL|SELECT|\bSEL\b|\bTRUST\b|\bETF\b|INDEX|NASDAQ/i;
+function guessType(h){
+  const n=norm(h.name);
+  /* a foreign bond's symbol carries its coupon ("BA 2.7 2/2"), which the mangled name does not
+     always show; a share's symbol never looks like that */
+  if(/^[A-Z.]+ \d+(\.\d+)?/.test(norm(h.sym)))return 'bond';
+  if(/אג"ח|אגח|ממשל|ממשלתית|מלווה/.test(n))return 'bond';
+  if(/\d+\.\d+\s*\d*\/?\d*$|\d+\.\d+\s/.test(n)&&!/[א-ת]/.test(n))return 'bond';
+  if(/(?:^|[^א-ת])סל(?:[^א-ת]|$)|תעודת|מחקה|קרן סל|תכלית|קסם|פסגות סל|MTF|הראל סל/.test(n))return 'fund';
+  if(ETFWORDS.test(n))return 'fund';
+  return 'stock';
+}
+const TYPECOL={stock:'#3B82F6',bond:'#2F9E6E',fund:'#E2571C'};
+function parsePortfolio(rows){
+  const hit=mapHeader(rows);
+  if(!hit)throw new Error('לא זיהיתי את הכותרות בקובץ. ודאו שזו שורת האחזקות המקורית מהבנק.');
+  const m=hit.map,out=[];
+  for(let r=hit.row+1;r<rows.length;r++){
+    const row=rows[r]||[];const id=row[m.num];
+    if(id==null||id==='')continue;
+    const name=norm(row[m.name]);if(!name)continue;
+    const v=num(row[m.value]);
+    out.push({id:String(id),name,sym:m.sym!=null?norm(row[m.sym]):'',qty:num(row[m.qty]),price:num(row[m.price]),
+      v,vc:m.valueCur!=null?num(row[m.valueCur]):v,cur:m.cur!=null?norm(row[m.cur])||'שקל':'שקל',
+      gain:m.gain!=null?num(row[m.gain]):0,tg:m.taxGain!=null?num(row[m.taxGain]):0,tx:m.tax!=null?num(row[m.tax]):0});
+  }
+  if(!out.length)throw new Error('לא נמצאו אחזקות בקובץ.');
+  return out;
+}
+const ptypeOf=h=>S.ptype[h.id]||guessType(h);
+function summarize(hold){
+  const s={total:0,cur:{},cat:{},count:{},gain:0,loss:0,tax:0,shield:0};
+  for(const h of hold){
+    s.total+=h.v;
+    s.cur[h.cur]=(s.cur[h.cur]||0)+h.v;
+    const c=catOf(h);s.cat[c]=(s.cat[c]||0)+h.v;s.count[c]=(s.count[c]||0)+1;
+    if(h.tg>0)s.gain+=h.tg;else s.loss+=h.tg;
+    if(h.tx>0)s.tax+=h.tx;else s.shield+=h.tx;
+  }
+  return s;
+}
+const portsRaw=id=>(S.ports[id]||[]).slice().sort((a,b)=>a.date<b.date?-1:1);
+/* what the portfolio pages read: the same snapshots, scaled when private mode asks for it,
+   so a holdings list always adds up to the account figure shown beside it */
+function portsOf(id){
+  const list=portsRaw(id),q=facOf(id);
+  if(q===1)return list;
+  const sc=n=>typeof n==='number'?n*q:n;
+  const scm=o=>Object.fromEntries(Object.entries(o||{}).map(([k,v])=>[k,sc(v)]));
+  return list.map(p=>({...p,
+    hold:p.hold?p.hold.map(h=>({...h,qty:sc(h.qty),v:sc(h.v),vc:sc(h.vc),gain:sc(h.gain),tg:sc(h.tg),tx:sc(h.tx)})):p.hold,
+    sum:p.sum?{...p.sum,total:sc(p.sum.total),gain:sc(p.sum.gain),loss:sc(p.sum.loss),tax:sc(p.sum.tax),shield:sc(p.sum.shield),
+      cur:scm(p.sum.cur),cat:scm(p.sum.cat)}:p.sum}));
+}
+const KEEP_ROWS=24;
+function addSnapshot(accId,date,hold){
+  const list=(S.ports[accId]||[]).filter(p=>p.date!==date);
+  list.push({date,hold});
+  list.sort((a,b)=>a.date<b.date?-1:1);
+  list.forEach((p,i)=>{if(i<list.length-KEEP_ROWS&&p.hold){p.sum=p.sum||summarize(p.hold);delete p.hold}});
+  S.ports[accId]=list;
+}
+
+/* ---------- portfolio page, reached from the account it belongs to ---------- */
+/* colour carries the asset type only; Israel vs abroad is carried by the label and a hollow dot,
+   so the six buckets stay apart for anyone, including colour-blind readers */
+const marketOf=h=>/[א-ת]/.test(h.name)?'il':(h.cur==='שקל'?'il':'intl');
+const catOf=h=>{const t=ptypeOf(h);return t==='stock'?'stock-'+marketOf(h):t};
+const CATS=[['stock-il','מניות ישראל'],['stock-intl','מניות חו״ל'],['fund','קרנות סל ו-ETF'],['bond','אג״ח']];
+const CATLBL=Object.fromEntries(CATS);
+const catCol=c=>acol(TYPECOL[c.split('-')[0]]||'#6C6C70');
+const catHollow=c=>c.endsWith('-intl');
+const dot=(c,extra='')=>`<span class="spine${catHollow(c)?' hollow':''}" style="--c:${catCol(c)};background:${catCol(c)}"${extra}></span>`;
+
+function openPortfolio(accId){
+  const a=ACCOUNTS.find(x=>x.id===accId);if(!a||isHidden(accId))return;
+  openPortfolio.filt=null;openPortfolio.taxOpen=false;
+  openLayer(`<div class="sheet push" role="dialog" aria-label="תיק ניירות ערך"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>${esc(a.short)}</span></button><h2>תיק ניירות ערך</h2><span></span></header><div class="body"></div></div>`,true);
+  paintPortfolio(accId);
+  refreshRecs(false).catch(()=>{});          /* nothing stale means no request at all */
+}
+function paintPortfolio(accId,keep){
+  const L=stack[stack.length-1];if(!L)return;
+  const body=L.el.querySelector('.body');if(!body)return;
+  const y=keep?body.scrollTop:0;
+  body.innerHTML=portfolioBody(accId);
+  body.scrollTop=y;
+  wirePortfolio(accId);
+}
+function portfolioBody(accId){
+  const a=ACCOUNTS.find(x=>x.id===accId);
+  const list=portsOf(accId),last=list[list.length-1],prev=list[list.length-2];
+  const inp=PRIV()?'':`<input type="file" id="pfile" accept=".xlsx,.csv,.txt" hidden>`;
+  if(!last||!last.hold)
+    return inp+`<div class="empty"><h2>${last?'אין פירוט לצילום הזה':'עוד לא הועלה קובץ'}</h2><p>העלו את קובץ האחזקות שייצאתם מ${esc(a.short)} (‎.xlsx‎ או ‎.csv‎). הקובץ נקרא במכשיר ולא נשלח לשום מקום.</p><label class="btn" style="cursor:pointer" for="pfile">בחירת קובץ</label></div>`;
+  const hold=last.hold,s=summarize(hold),ps=prev&&prev.hold?summarize(prev.hold):null;
+  const d=ps?s.total-ps.total:0;
+  const filt=openPortfolio.filt,srt=openPortfolio.sort||(openPortfolio.sort='v');
+  let h=inp+`<div class="acc-head"><h1>תיק ניירות ערך</h1><div class="big">${ils(s.total)}</div>
+  <div class="meta"><span class="n">${hold.length}</span> אחזקות · נכון ל-<span class="n">${dlong(last.date)}</span></div></div>`;
+  if(ps)h+=`<div class="chips"><div><small>מהצילום הקודם</small><b class="${cls(d)}">${arrow(d)} ${signedIls(d)}</b> <span class="n ${cls(d)}">${ps.total?pct(d/ps.total,2):''}</span></div>
+  <div><small>רווח על הנייר</small><b class="${cls(s.gain+s.loss)}">${signedIls(s.gain+s.loss)}</b></div></div>`;
+  // allocation — tapping a row filters the list below
+  const cats=CATS.filter(([k])=>s.cat[k]);
+  h+=`<section><h2>לפי סוג נכס <small>לחיצה מסננת</small></h2><div class="panel">
+  <div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי סוג נכס">${cats.map(([k])=>`<i style="flex:${s.cat[k]} 0 0;background:${catCol(k)};${catHollow(k)?'opacity:.55':''}"></i>`).join('')}</div></div>`;
+  for(const [k,lbl] of cats)
+    h+=`<button class="row dotted" data-filt="${k}" aria-pressed="${filt===k}">${dot(k)}<span><span class="nm">${lbl}</span><div class="sub"><span class="n">${s.count[k]}</span> אחזקות</div></span><span class="val"><b>${ils(s.cat[k])}</b><span class="n flat">${(s.cat[k]/s.total*100).toFixed(1)}%</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
+  h+=`</div></section>`;
+  const CURCOL={'שקל':acol('#2F9E6E'),'דולר':acol('#3B82F6')};
+  const curs=Object.keys(s.cur).sort((x,y)=>s.cur[y]-s.cur[x]);
+  h+=`<section><h2>לפי מטבע</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי מטבע">${curs.map(k=>`<i style="flex:${s.cur[k]} 0 0;background:${CURCOL[k]||acol('#8A2D0C')}"></i>`).join('')}</div></div>`;
+  for(const k of curs)h+=`<div class="row dotted"><span class="spine" style="background:${CURCOL[k]||acol('#8A2D0C')}"></span><span class="nm">${esc(k)}</span><span class="val"><b>${ils(s.cur[k])}</b><span class="n flat">${(s.cur[k]/s.total*100).toFixed(1)}%</span></span></div>`;
+  h+=`</div></section>`;
+  const taxOpen=!!openPortfolio.taxOpen;
+  h+=`<section>${foldHead('taxp','מס על הנייר',' <small>לפי חישוב הבנק</small>',taxOpen)}
+  <div id="taxp"${taxOpen?'':' hidden'}><div class="panel facts">
+  <div><small>רווח שטרם מומש</small><b class="up">${signedIls(s.gain)}</b></div>
+  <div><small>הפסד שטרם מומש</small><b class="${s.loss?'down':''}">${signedIls(s.loss)}</b></div>
+  <div><small>מס תיאורטי על הרווח</small><b>${ils(s.tax)}</b></div>
+  <div><small>מגן מס מההפסד</small><b>${ils(Math.abs(s.shield))}</b></div></div>
+  <p class="hint">הסכומים הם על הנייר. הפסד מקוזז לצורכי מס רק אחרי מכירה בפועל.</p></div></section>`;
+  // holdings, filtered
+  const shown=filt?hold.filter(x=>catOf(x)===filt):hold;
+  const sub=filt?shown.reduce((t,x)=>t+x.v,0):s.total;
+  const sorters={v:(x,y)=>y.v-x.v,g:(x,y)=>y.tg-x.tg,l:(x,y)=>x.tg-y.tg};
+  h+=`<section id="holds"><h2>אחזקות</h2>
+  <div class="chiprow">${[['','הכול']].concat(cats).map(([k,lbl])=>`<button data-filt="${k}" aria-pressed="${(filt||'')===k}">${k?dot(k):''}${esc(lbl||'הכול')}</button>`).join('')}</div>
+  <div class="segbar" role="tablist">${[['v','לפי שווי'],['g','הרווחים'],['l','ההפסדים']].map(([k,t])=>`<button role="tab" data-sort="${k}" aria-selected="${k===srt}">${t}</button>`).join('')}</div>
+  <p class="hint" style="padding:0 4px 8px">${filt?`<span class="n">${shown.length}</span> מתוך <span class="n">${hold.length}</span> אחזקות · <b class="n">${ils(sub)}</b> · <span class="n">${(sub/s.total*100).toFixed(1)}%</span> מהתיק`:`<span class="n">${hold.length}</span> אחזקות`}</p>
+  <div class="panel">`;
+  if(!shown.length)h+=`<div class="row"><span class="nm flat">אין אחזקות בקטגוריה הזו</span></div>`;
+  for(const x of shown.slice().sort(sorters[srt])){
+    const c=catOf(x);
+    h+=`<button class="row dotted" data-hold="${esc(x.id)}">${dot(c)}<span><span class="nm">${esc(x.name)}</span><div class="sub">${esc(CATLBL[c])} · <span class="n">${(x.v/s.total*100).toFixed(1)}%</span>${x.cur!=='שקל'?' · '+esc(x.cur):''}</div>${recBadge(x)?`<div class="sub" style="margin-top:4px">${recBadge(x)}</div>`:''}</span>
+    <span class="val"><b>${ils(x.v)}</b><span class="n ${cls(x.tg)}">${x.tg?arrow(x.tg)+' '+signedIls(x.tg):''}</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
+  }
+  h+=`</div></section>`;
+  if(list.length>1){
+    h+=`<section><h2>צילומים קודמים</h2><div class="panel">`;
+    const tot=p=>p.hold?summarize(p.hold).total:(p.sum?p.sum.total:0);
+    for(let i=list.length-1;i>=0;i--){
+      const dd=i?tot(list[i])-tot(list[i-1]):0;
+      h+=`<div class="row dotted"><span class="spine" style="background:${i?(dd>0?'var(--up)':dd<0?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n">${dlong(list[i].date)}</span><span class="val"><b>${ils(tot(list[i]))}</b>${i?`<span class="n ${cls(dd)}">${arrow(dd)} ${signedIls(dd)}</span>`:'<span class="flat">ראשון</span>'}</span></div>`;
+    }
+    h+=`</div></section>`;
+  }
+  return h+(PRIV()?'':`<section class="stackbtns"><label class="btn" style="cursor:pointer" for="pfile">העלאת קובץ חדש</label></section>`);
+}
+function wirePortfolio(accId){
+  wireFolds(layer,(id,open)=>{if(id==='taxp')openPortfolio.taxOpen=open});
+  const f=$('#pfile');
+  if(f)f.onchange=async e=>{const file=e.target.files[0];f.value='';if(file)await importPortfolio(accId,file)};
+  layer.querySelectorAll('[data-sort]').forEach(b=>b.onclick=()=>{openPortfolio.sort=b.dataset.sort;paintPortfolio(accId,true)});
+  layer.querySelectorAll('[data-filt]').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.filt||null;
+    const fromList=b.classList.contains('row');
+    openPortfolio.filt=(openPortfolio.filt===k)?null:k;
+    paintPortfolio(accId,!fromList);
+    if(fromList){const el=$('#holds');if(el)el.scrollIntoView({block:'start',behavior:calm()?'auto':'smooth'})}
+  });
+  layer.querySelectorAll('[data-hold]').forEach(b=>b.onclick=()=>openHolding(accId,b.dataset.hold));
+  recPaintOpen.list=()=>{const T=stack[stack.length-1];if(T&&T.el.querySelector('[data-hold]'))paintPortfolio(accId,true)};
+}
+function openHolding(accId,id){
+  const list=portsOf(accId),last=list[list.length-1];if(!last||!last.hold)return;
+  const x=last.hold.find(y=>y.id===id);if(!x)return;
+  const prev=list[list.length-2],old=prev&&prev.hold?prev.hold.find(y=>y.id===id):null;
+  const t=ptypeOf(x),c=catOf(x),f=x.cur==='שקל'?ils:v=>nf0.format(Math.round(v))+' '+x.cur;
+  openLayer(`<div class="sheet modal" role="dialog" aria-label="${esc(x.name)}"><header><span class="grab" aria-hidden="true"></span><button data-close>סגירה</button><h2>${esc(x.name)}</h2><span></span></header><div class="body">
+  <div class="acc-head"><div class="big">${ils(x.v)}</div><div class="meta">${esc(CATLBL[c])} · <span class="n">${(x.v/summarize(last.hold).total*100).toFixed(1)}%</span> מהתיק${x.sym?' · '+esc(x.sym):''}</div></div>
+  ${priceBlock(x,accId)}
+  <section><div class="panel facts">
+  <div><small>כמות</small><b>${nf0.format(x.qty)}</b></div>
+  <div><small>שער אחרון</small><b>${nf0.format(Math.round(x.price*100)/100)}</b></div>
+  ${x.cur!=='שקל'?`<div><small>שווי במטבע</small><b>${f(x.vc)}</b></div>`:''}
+  <div><small>רווח מרכישה</small><b class="${cls(x.gain)}">${signedIls(x.gain)}</b></div>
+  <div><small>רווח הון על הנייר</small><b class="${cls(x.tg)}">${signedIls(x.tg)}</b></div>
+  <div><small>מס תיאורטי</small><b class="${cls(x.tx)}">${signedIls(x.tx)}</b></div>
+  ${old?`<div><small>שינוי מהצילום הקודם</small><b class="${cls(x.v-old.v)}">${signedIls(x.v-old.v)}</b></div>`:''}
+  </div></section>
+  <p class="hint">${esc(CATLBL[c])}. הסיווג נקבע לפי שם הנייר, והשיוך לישראל או לחו״ל לפי שפת השם והמטבע.</p>
+  ${recBlock(x)}</div></div>`);
+  const L=stack[stack.length-1];
+  const mine=()=>stack[stack.length-1]===L&&L.el.isConnected;      /* the sheet may be gone by the time a fetch lands */
+  const paint=()=>{
+    if(!mine())return;
+    const sec=L.el.querySelector('#recsec');if(!sec)return;
+    const tmp=document.createElement('div');tmp.innerHTML=recBlock(x);
+    const neu=tmp.firstElementChild;if(!neu)return;
+    sec.replaceWith(neu);wire();
+  };
+  const wire=()=>{
+    const tk=L.el.querySelector('[data-tick]');if(tk)tk.onclick=()=>openTicker(x.id,accId);
+    const rl=L.el.querySelector('[data-recload]');
+    if(rl)rl.onclick=()=>pull(true);
+  };
+  const pull=async force=>{
+    const t=tickOf(x);
+    if(!isForeignStock(x)||!t||!S.fh||recBusy.has(t))return;
+    const cur=S.rec[t];
+    if(!force&&cur&&Date.now()-cur.ts<RECDAY)return;
+    recBusy.add(t);paint();
+    try{S.rec[t]=await fetchRec(t);delete recErr[t];save()}
+    catch(e){recErr[t]=e.message}
+    finally{recBusy.delete(t);paint()}
+  };
+  wire();
+  const wirePx=()=>{
+    const px=L.el.querySelector('#pxbox');if(!px)return;
+    wireChart(px,priceData(x,accId).pts,pxFmt());
+    /* wireChart opens on the last point, which the headline already states; leave the line for
+       the reader's own finger instead of saying the same number twice */
+    const ro=px.querySelector('.readout');if(ro)ro.innerHTML='<span class="flat">גע בגרף כדי לראות נקודה</span>';
+  };
+  const wirePxBtn=()=>{const pl=L.el.querySelector('[data-pxload]');if(pl)pl.onclick=()=>pullPx(true)};
+  const paintPx=()=>{
+    if(!mine())return;
+    const sec=L.el.querySelector('#pxsec');if(!sec)return;
+    const tmp=document.createElement('div');tmp.innerHTML=priceBlock(x,accId);
+    const neu=tmp.firstElementChild;
+    if(!neu){sec.remove();return}
+    sec.replaceWith(neu);wirePx();wirePxBtn();
+  };
+  const pullPx=async force=>{
+    const t=pxTick(x);
+    if(!t||!S.td||pxBusy.has(t))return;
+    const cur=PX[t];
+    if(!force&&cur&&Date.now()-cur.ts<PXDAY)return;
+    pxBusy.add(t);paintPx();
+    try{PX[t]=await fetchPx(t);delete pxErr[t]}
+    catch(e){pxErr[t]=e.message}
+    finally{pxBusy.delete(t);paintPx()}
+  };
+  wirePx();wirePxBtn();
+  pullPx(false);
+  recPaintOpen.hold=paint;
+  pull(false);                                                     /* opening the share is the request */
+}
+async function importPortfolio(accId,file){
+  const a=ACCOUNTS.find(x=>x.id===accId);
+  try{
+    const hold=parsePortfolio(await readSheet(file));
+    const s=summarize(hold);
+    const fields=a.fields.map(([k,nm])=>[k,nm]);
+    const guess=S.plink[accId]||(fields.find(([k,nm])=>/שוק ההון|קרנות|השקעות/.test(nm))||fields[fields.length-1])[0];
+    openLayer(`<div class="sheet modal" role="dialog" aria-label="קובץ חדש"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>קובץ נקרא</h2><span></span></header><div class="body">
+    <div class="acc-head"><div class="big">${ils(s.total)}</div><div class="meta"><span class="n">${hold.length}</span> אחזקות ב${esc(a.short)}</div></div>
+    <div class="grp"><div class="fld"><label for="pdate">תאריך הצילום</label><input id="pdate" type="date" value="${today()}"></div>
+    <div class="fld"><label for="pfld">ממלא את השדה</label><select id="pfld" style="height:40px;border:0;background:transparent;color:var(--tint);font-size:17px">${fields.map(([k,nm])=>`<option value="${k}" ${k===guess?'selected':''}>${esc(nm)}</option>`).join('')}</select></div></div>
+    <p class="hint">הצילום יישמר בתיק של ${esc(a.short)}, והסכום יוצע לעדכון היתרות של אותו תאריך.</p>
+    <section><button class="btn" id="psave">שמירה</button></section></div></div>`);
+    $('#psave').onclick=async()=>{
+      const date=$('#pdate').value,fld=$('#pfld').value;
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast('בחרו תאריך');return}
+      addSnapshot(accId,date,hold);S.plink[accId]=fld;await save();
+      refreshRecs(false);                       /* new holdings get their consensus without being asked */
+      closeLayer();
+      const u=S.updates.find(x=>x.date===date);
+      setTimeout(async()=>{
+        if(u){ if(confirm('לעדכן את היתרה בעדכון מ-'+dlong(date)+' ל-'+ils(s.total)+'?')){u.vals[fld]=Math.round(s.total);await save();toast('היתרה עודכנה')} }
+        else if(confirm('אין עדכון יתרות בתאריך הזה. ליצור אחד עם הסכום?')){closeLayer();setTimeout(()=>openForm(null,{date,vals:{[fld]:Math.round(s.total)}}),330);return}
+        openPortfolio.filt=null;paintPortfolio(accId);
+      },260);
+    };
+  }catch(err){toast(err.message||'לא הצלחתי לקרוא את הקובץ')}
+}
+
+/* ---------- drag sideways between the four pages ----------
+   the neighbour is built once, at the moment the drag is recognised, and then both pages ride
+   the finger on one spring. letting go hands the spring the finger's speed, so a flick lands
+   where it was thrown and a slow drag settles back. */
+const tabSwipe={busy:false};
+(function tabPager(){
+  const app=$('#app');
+  let armed=false,on=false,sx=0,sy=0,pid=0,vt=null,dirn=0,ghost=null,W=1,eat=false;
+  /* a sideways drag is never a tap, even when there is no page to move to */
+  addEventListener('click',e=>{if(eat){eat=false;e.preventDefault();e.stopPropagation()}},true);
+  let pending=null;
+  /* putting a finger down while the last page is still coasting finishes it there and then,
+     so a second swipe never waits for the first to stop moving */
+  const finishNow=()=>{
+    if(!pending)return;
+    const go=pending.go;pending=null;sp.stop();
+    const next=go?TABS[TABS.indexOf(tab)+dirn]:null;
+    cleanup();
+    /* an abandoned drag moved nothing but a transform, so there is no scroll to put back */
+    if(next){tab=next;shownTab=next;render();window.scrollTo(0,0)}
+  };
+  const canStart=()=>!stack.length&&!document.querySelector('.lock')&&!tabSwipe.busy&&TABS.includes(tab);
+  const place=u=>{
+    const x=u*W;
+    view.style.transform=`translate3d(${x.toFixed(2)}px,0,0)`;
+    if(ghost)ghost.style.transform=`translate3d(${(x-dirn*W).toFixed(2)}px,0,0)`;
+  };
+  const sp=Spring(place);
+  const cleanup=()=>{
+    if(ghost){ghost.remove();ghost=null}
+    view.style.transform='';view.style.willChange='';
+    tabSwipe.busy=false;
+  };
+  addEventListener('pointerdown',e=>{
+    if(pending)finishNow();
+    if(!canStart())return;
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    if(e.target.closest('.sheet,input,select,textarea,.chiprow,.segbar'))return;
+    armed=true;on=false;eat=false;sx=e.clientX;sy=e.clientY;pid=e.pointerId;
+  },{passive:true});
+  addEventListener('pointermove',e=>{
+    if(!armed||e.pointerId!==pid)return;
+    const dx=e.clientX-sx,dy=e.clientY-sy;
+    if(!on){
+      if(Math.abs(dy)>8&&Math.abs(dy)>Math.abs(dx)){armed=false;return}
+      if(Math.abs(dx)<14)return;
+      /* in a right-to-left bar the next page sits to the left, so dragging left advances */
+      const step=dx>0?1:-1;
+      const want=TABS.indexOf(tab)+step;
+      if(want<0||want>=TABS.length){armed=false;eat=true;return}
+      on=true;tabSwipe.busy=true;eat=true;
+      W=innerWidth;dirn=step;
+      ghost=pageCache[TABS[want]]||buildPage(TABS[want]);
+      delete pageCache[TABS[want]];
+      /* a fixed overlay, so bringing it in moves nothing that was already laid out */
+      ghost.style.cssText='position:fixed;inset:0;overflow:hidden;z-index:3;background:var(--bg);will-change:transform';
+      view.style.willChange='transform';
+      document.body.appendChild(ghost);
+      sp.jump(0);place(0);
+      vt=Velocity();vt.add(e.clientX);
+      try{app.setPointerCapture(pid)}catch(err){}
+    }
+    vt.add(e.clientX);
+    let x=dx;
+    if(dirn>0&&x<0)x=rubber(x,W);
+    if(dirn<0&&x>0)x=rubber(x,W);
+    sp.jump(x/W);
+  },{passive:true});
+  const release=()=>{
+    if(!armed)return;armed=false;
+    if(!on)return;
+    on=false;
+    const v=vt?vt.get():0,land=sp.value+project(v)/W*.35;
+    const go=dirn>0?land>.3:land<-.3;
+    const target=go?dirn:0;
+    pending={go};
+    sp.to(target,{damping:1,response:go?.22:.26,velocity:Math.max(-8,Math.min(8,v/W))},finishNow);
+  };
+  addEventListener('pointerup',release);addEventListener('pointercancel',release);
+})();
+
+/* ---------- pull down for the rate ----------
+   the page itself gives under the finger and resists further the further it goes, which is the
+   same rubber the sheets use. letting go past the mark fetches today's rate. */
+(function pullToRefresh(){
+  const ind=$('#pull'),app=$('#app'),txt=ind.querySelector('.txt');
+  const TRIG=62;let y0=null,on=false,busy=false,pid=0;
+  const sp=Spring(y=>{
+    app.style.transform=y?`translateY(${y.toFixed(1)}px)`:'';
+    ind.style.opacity=Math.min(1,y/38).toFixed(2);
+    ind.style.transform=`translateY(${(Math.min(y,TRIG)-30).toFixed(1)}px)`;
+  },TRIG);
+  const atTop=()=>(document.scrollingElement||document.documentElement).scrollTop<=0;
+  addEventListener('pointerdown',e=>{
+    if(busy||stack.length||tabSwipe.busy||document.querySelector('.lock')||e.pointerType==='mouse'&&e.button!==0)return;
+    if(!atTop())return;
+    y0=e.clientY;on=false;pid=e.pointerId;
+  },{passive:true});
+  addEventListener('pointermove',e=>{
+    if(y0===null||e.pointerId!==pid||busy||tabSwipe.busy)return;
+    const dy=e.clientY-y0;
+    if(!on){if(dy<10||!atTop()){if(dy<-6)y0=null;return}on=true;sp.stop()}
+    sp.jump(rubber(Math.max(0,dy),innerHeight*.9));
+  },{passive:true});
+  const release=async()=>{
+    if(y0===null)return;const was=on;y0=null;on=false;
+    if(!was)return;
+    if(sp.value<TRIG*.8){sp.to(0,{damping:1,response:.4});return}
+    busy=true;ind.classList.add('go');txt.textContent='';
+    sp.to(TRIG,{damping:1,response:.36});
+    const recs=refreshRecs(false,RECSOON,5000).catch(()=>0);   /* alongside the rate, not after it */
+    let head='';
+    try{
+      const r=await Promise.race([fetchRate(today()),
+        new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),6000))]);  /* don't hang on a dead connection */
+      liveRate=r.rate;liveAt=Date.now();
+      head='₪'+r.rate.toFixed(3);
+      const el=$('#liverate');if(el){el.textContent='₪'+r.rate.toFixed(3);el.classList.remove('flat')}
+    }catch(e){head='לא זמין'}
+    txt.textContent=head;
+    ind.classList.remove('go');
+    setTimeout(()=>{sp.to(0,{damping:1,response:.42});busy=false;setTimeout(()=>{txt.textContent=''},300)},850);
+    /* the page comes back up at the rate's pace; the consensus lands when it lands */
+    const n=await recs;
+    if(n)toast(n===1?'המלצה אחת עודכנה':n+' המלצות עודכנו');
+  };
+  addEventListener('pointerup',release);addEventListener('pointercancel',release);
+})();
+
+/* ---------- events / boot ---------- */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-tab],[data-act],[data-acc],[data-acced],[data-edit],[data-close],[data-port]');if(!t)return;
+  if(t.dataset.tab){tab=t.dataset.tab;render()}
+  else if(t.dataset.acced!==undefined)openAccEditor(t.dataset.acced);
+  else if(t.dataset.acc)openAccount(t.dataset.acc,t);
+  else if(t.dataset.port)openPortfolio(t.dataset.port);
+  else if(t.dataset.edit)openForm(t.dataset.edit);
+  else if('close' in t.dataset)closeLayer();
+  else ({new:()=>ACCOUNTS.length?openForm():openImport(),backup:doBackup,csv:doCsv,import:openImport,setpass:setPass,rmpass:rmPass,locknow:lockNow,
+    privcfg:openPrivCfg,
+    recall:async()=>{const k=$('#fhkey');if(k)S.fh=k.value.trim().slice(0,80);
+      if(!S.fh){toast('צריך מפתח');return}
+      await save();toast('מושך…');const n=await refreshRecs(true);
+      toast(n?'עודכנו '+n+' ניירות':'אין ניירות מקושרים');},
+    accnew:()=>openAccEditor(null),
+    privtog:async()=>{
+      if(!S.priv&&!anyMask()){openPrivCfg();toast('בחרו קודם מה יוסתר');return}
+      S.priv=!S.priv;closeAllLayers();render();save();toast(S.priv?'מצב פרטי מופעל':'מצב פרטי כבוי');
+    },
+    wipe:async()=>{if(!confirm('למחוק את כל הנתונים מהמכשיר? אי אפשר לבטל את הפעולה.'))return;if(!confirm('בטוחים? ודאו שיש לכם גיבוי.'))return;S.updates=[];S.ports={};S.ptype={};S.plink={};setConfig([]);await save();tab='home';render();toast('הנתונים נמחקו')}})[t.dataset.act]?.();
+});
+function start(){$('#tabbar').hidden=false;render();
+  /* quietly top up anything stale, once the screen is up and idle */
+  (window.requestIdleCallback||(f=>setTimeout(f,1200)))(()=>{refreshRecs(false).catch(()=>{})});}
+(function boot(){
+  const raw=readRaw();
+  if(raw&&raw.enc){lockScreen();return}
+  if(raw&&raw.data){setConfig(raw.data.accounts);S.updates=clean(raw.data.updates);loadPorts(raw.data)}
+  start();
+})();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{
+  for(const k in colCache)delete colCache[k];
+  if(cryptoKey||!readRaw()||!readRaw().enc)render();
+});
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
