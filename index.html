@@ -254,6 +254,10 @@ svg.chart text{font-family:var(--num);font-size:10.5px;fill:#8E8E93}
 svg.chart .g{stroke:var(--cgrid)}
 svg.chart .cross{stroke:var(--ccross)}
 svg.chart circle{stroke:var(--cring)}
+.chart-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
+.chart-top b{font-size:22px;font-family:var(--num);letter-spacing:-.2px}
+.chart-top .n{font-size:14px;font-weight:600}
+.chartbox .readout{min-height:17px;font-size:12.5px;color:var(--muted);margin:0 0 4px;direction:rtl}
 .roll .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .roll{display:inline-flex;direction:ltr;font-variant-numeric:tabular-nums;white-space:nowrap}
 .roll .dig,.roll .sep{display:inline-block;height:1em;line-height:1;vertical-align:bottom}
@@ -978,6 +982,38 @@ function viewSettings(){
   <section><p style="font-size:13px;color:var(--muted);text-align:center;margin:0 12px">שום נתון לא נשלח לשרת. הפעולה היחידה שפונה לאינטרנט היא ״משיכה״ של שער הדולר, והיא שולחת רק תאריך.</p></section>`;
 }
 
+/* ---------- a holding's own price history ----------
+   every bank file carries the closing price of each security, so each upload leaves one point
+   behind. no outside source, no key, nothing sent anywhere: the resolution is simply the rate at
+   which files are uploaded. shekel-quoted securities are priced in agorot, as the bank quotes them. */
+function priceSeries(accId,holdId,days){
+  const from=days?new Date(Date.now()-days*864e5).toISOString().slice(0,10):'';
+  const out=[];
+  for(const snap of portsRaw(accId)){
+    if(!snap.hold)continue;                      /* the oldest snapshots keep only their totals */
+    if(from&&snap.date<from)continue;
+    const h=snap.hold.find(y=>String(y.id)===String(holdId));
+    if(h&&h.price>0)out.push({d:snap.date,v:h.price});
+  }
+  return out;
+}
+function priceBlock(x,accId){
+  const pts=priceSeries(accId,x.id,365);
+  if(pts.length<2)return pts.length===1
+    ?`<section><h2>מחיר הנייר</h2><p class="hint">יש צילום אחד בלבד. כל העלאת קובץ מוסיפה נקודה לגרף.</p></section>`:'';
+  const first=pts[0].v,last=pts[pts.length-1].v,d=last-first;
+  const unit=x.cur==='שקל'?'אגורות':esc(x.cur);
+  const fmt=v=>nf0.format(Math.round(v*100)/100);
+  const col=d>0?'var(--up)':d<0?'var(--down)':'var(--muted)';
+  return `<section><h2>מחיר הנייר · ${unit}</h2>
+  <div class="panel pad chartbox" id="pxbox">
+    <div class="chart-top"><b class="n">${fmt(last)}</b><span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,fmt)}${first?' · '+pct(d/first,1):''}</span></div>
+    <div class="readout"></div>
+    ${lineChart(pts,col,{h:150,label:'מחיר '+x.name,anim:true})}
+  </div>
+  <p class="hint"><span class="n">${pts.length}</span> צילומים, מ-${dlong(pts[0].d)} עד ${dlong(pts[pts.length-1].d)}. הגרף נבנה מהקבצים שהעלית, ולא ממקור חיצוני.</p></section>`;
+}
+
 /* ---------- analyst consensus ----------
    Only for shares listed abroad: the free sources cover US-listed companies, and bonds and
    funds have no analyst coverage at all. The key lives in the encrypted store on this device,
@@ -1590,6 +1626,7 @@ function openHolding(accId,id){
   const t=ptypeOf(x),c=catOf(x),f=x.cur==='שקל'?ils:v=>nf0.format(Math.round(v))+' '+x.cur;
   openLayer(`<div class="sheet modal" role="dialog" aria-label="${esc(x.name)}"><header><span class="grab" aria-hidden="true"></span><button data-close>סגירה</button><h2>${esc(x.name)}</h2><span></span></header><div class="body">
   <div class="acc-head"><div class="big">${ils(x.v)}</div><div class="meta">${esc(CATLBL[c])} · <span class="n">${(x.v/summarize(last.hold).total*100).toFixed(1)}%</span> מהתיק${x.sym?' · '+esc(x.sym):''}</div></div>
+  ${priceBlock(x,accId)}
   <section><div class="panel facts">
   <div><small>כמות</small><b>${nf0.format(x.qty)}</b></div>
   <div><small>שער אחרון</small><b>${nf0.format(Math.round(x.price*100)/100)}</b></div>
@@ -1626,6 +1663,13 @@ function openHolding(accId,id){
     finally{recBusy.delete(t);paint()}
   };
   wire();
+  const px=L.el.querySelector('#pxbox');
+  if(px){
+    wireChart(px,priceSeries(accId,x.id,365),v=>nf0.format(Math.round(v*100)/100));
+    /* wireChart opens on the last point, which the headline already states; leave the line for
+       the reader's own finger instead of saying the same number twice */
+    const ro=px.querySelector('.readout');if(ro)ro.innerHTML='<span class="flat">גע בגרף כדי לראות נקודה</span>';
+  }
   recPaintOpen.hold=paint;
   pull(false);                                                     /* opening the share is the request */
 }
