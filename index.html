@@ -1046,13 +1046,15 @@ function priceBlock(x,accId){
       :t&&pxErr[t]==='rate'?'חריגה ממגבלת הבקשות לדקה. נסה שוב בעוד רגע.'
       :t&&pxErr[t]?'לא הצלחתי למשוך נתוני שוק לנייר הזה.'
       :pts.length===1?'יש צילום אחד בלבד. כל העלאת קובץ מוסיפה נקודה לגרף.':'';
-    return why?head+`<p class="hint">${why}</p></section>`:'';
+    const retry=t&&pxErr[t]&&S.td?`<div class="stackbtns"><button class="btn ghost" data-pxload="1">נסה שוב</button></div>`:'';
+    return why?head+`<p class="hint">${why}</p>${retry}</section>`:'';
   }
   const first=pts[0].v,last=pts[pts.length-1].v,d=last-first;
   const fmt=pxFmt();
   const col=d>0?'var(--up)':d<0?'var(--down)':'var(--muted)';
+  const at=src==='market'&&PX[t]?new Date(PX[t].ts).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}):'';
   const note=src==='market'
-    ?`מחירי סגירה יומיים, <span class="n">${pts.length}</span> ימי מסחר מ-${dlong(pts[0].d)}. מקור: Twelve Data.`
+    ?`מחירי סגירה יומיים, <span class="n">${pts.length}</span> ימי מסחר מ-${dlong(pts[0].d)}. מקור: Twelve Data, נמשך ב-<span class="n">${at}</span>.`
     :`<span class="n">${pts.length}</span> צילומים, מ-${dlong(pts[0].d)} עד ${dlong(pts[pts.length-1].d)}. הגרף נבנה מהקבצים שהעלית, ולא ממקור חיצוני.`;
   return head+`
   <div class="panel pad chartbox" id="pxbox">
@@ -1060,7 +1062,8 @@ function priceBlock(x,accId){
     <div class="readout"></div>
     ${lineChart(pts,col,{h:150,label:'מחיר '+x.name,anim:src!=='market'})}
   </div>
-  <p class="hint">${note}</p></section>`;
+  <p class="hint">${note}</p>
+  ${src==='market'?`<div class="stackbtns"><button class="btn ghost" data-pxload="1">${pxBusy.has(t)?'מושך…':'רענון'}</button></div>`:''}</section>`;
 }
 
 /* ---------- analyst consensus ----------
@@ -1719,26 +1722,27 @@ function openHolding(accId,id){
        the reader's own finger instead of saying the same number twice */
     const ro=px.querySelector('.readout');if(ro)ro.innerHTML='<span class="flat">גע בגרף כדי לראות נקודה</span>';
   };
+  const wirePxBtn=()=>{const pl=L.el.querySelector('[data-pxload]');if(pl)pl.onclick=()=>pullPx(true)};
   const paintPx=()=>{
     if(!mine())return;
     const sec=L.el.querySelector('#pxsec');if(!sec)return;
     const tmp=document.createElement('div');tmp.innerHTML=priceBlock(x,accId);
     const neu=tmp.firstElementChild;
     if(!neu){sec.remove();return}
-    sec.replaceWith(neu);wirePx();
+    sec.replaceWith(neu);wirePx();wirePxBtn();
   };
-  const pullPx=async()=>{
+  const pullPx=async force=>{
     const t=pxTick(x);
     if(!t||!S.td||pxBusy.has(t))return;
     const cur=PX[t];
-    if(cur&&Date.now()-cur.ts<PXDAY)return;
+    if(!force&&cur&&Date.now()-cur.ts<PXDAY)return;
     pxBusy.add(t);paintPx();
     try{PX[t]=await fetchPx(t);delete pxErr[t]}
     catch(e){pxErr[t]=e.message}
     finally{pxBusy.delete(t);paintPx()}
   };
-  wirePx();
-  pullPx();
+  wirePx();wirePxBtn();
+  pullPx(false);
   recPaintOpen.hold=paint;
   pull(false);                                                     /* opening the share is the request */
 }
