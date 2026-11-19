@@ -108,6 +108,8 @@ button.row:active{background:#E5E5EA}
 .rec.hold{background:color-mix(in srgb,var(--muted) 20%,transparent);color:var(--ink2)}
 .rec.sell{background:color-mix(in srgb,var(--down) 14%,transparent);color:var(--down)}
 .rec.none{background:color-mix(in srgb,var(--muted) 14%,transparent);color:var(--muted);font-weight:500}
+.recwait{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px}
+.recwait .ring{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--muted);animation:ringspin .75s linear infinite;flex:0 0 auto}
 .bigrec{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:1px 0 2px}
 .bigrec.buy{color:var(--up)}.bigrec.sell{color:var(--down)}
 .cons{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;margin:6px 0 12px}
@@ -982,6 +984,9 @@ function viewSettings(){
    never in the code, because the page itself is public. */
 const hmonth=d=>{try{return new Date(d+'T00:00:00').toLocaleDateString('he-IL',{month:'long',year:'numeric'})}catch(e){return d}};
 const RECDAY=20*60*60*1000;                       /* a consensus does not move hourly */
+const RECSOON=30*60*1000;                         /* what a deliberate pull down counts as stale */
+const recBusy=new Set();                          /* symbols being fetched right now */
+const recErr={};                                  /* and the ones that just failed, so a retry can be offered */
 const isForeignStock=x=>catOf(x)==='stock-intl';
 /* the bank file already carries a ״סימבול״ column, and for a US-listed share it IS the ticker,
    so nothing needs typing. Anything else in that column is not one: bonds arrive as
@@ -1030,19 +1035,36 @@ async function fetchRec(sym){
   try{const q=await get('quote?symbol='+encodeURIComponent(sym));out.px=num(q.c)}catch(e){}
   return out;
 }
-async function refreshRecs(force){
+/* force: fetch everything. maxAge: how old a cached answer may be. budget: give up after this
+   long, so a pull down cannot hang on a slow network. The gap between symbols keeps a whole
+   portfolio under the free tier's per-minute ceiling. */
+async function refreshRecs(force,maxAge,budget){
   if(!S.fh)return 0;
+  const age=force?0:(maxAge||RECDAY),end=budget?Date.now()+budget:0;
   const want=new Set();
   for(const id in S.ports)for(const x of (portsRaw(id).slice(-1)[0]||{}).hold||[])
     if(isForeignStock(x)&&tickOf(x))want.add(tickOf(x));
-  let got=0;
+  let got=0,n=0;
   for(const sym of want){
     const cur=S.rec[sym];
-    if(!force&&cur&&Date.now()-cur.ts<RECDAY)continue;
-    try{S.rec[sym]=await fetchRec(sym);got++}catch(e){if(e.message==='key'){toast('מפתח ה-API נדחה');break}}
+    if(cur&&Date.now()-cur.ts<age)continue;
+    if(recBusy.has(sym))continue;
+    if(end&&Date.now()>end)break;
+    if(n++)await new Promise(r=>setTimeout(r,120));
+    recBusy.add(sym);
+    try{S.rec[sym]=await fetchRec(sym);delete recErr[sym];got++}
+    catch(e){recErr[sym]=e.message;if(e.message==='key'){toast('מפתח ה-API נדחה');recBusy.delete(sym);break}}
+    finally{recBusy.delete(sym)}
   }
-  if(got)save();
+  if(got){save();recPaintOpen()}
   return got;
+}
+/* whatever is on screen and shows a consensus is redrawn where it stands, so nothing has to be
+   reopened for the numbers to appear */
+function recPaintOpen(){
+  const L=stack[stack.length-1];if(!L)return;
+  if(L.el.querySelector('#recsec')&&recPaintOpen.hold)recPaintOpen.hold();
+  else if(L.el.querySelector('[data-hold]')&&recPaintOpen.list)recPaintOpen.list();
 }
 function recBadge(x){
   if(!isForeignStock(x))return '';
@@ -1055,11 +1077,16 @@ function recBlock(x){
   if(!isForeignStock(x))return '';
   const t=tickOf(x),r=t?S.rec[t]:null,v=r&&recVerdict(r);
   const src=t?(tickMan(x)?'ידני':'מהקובץ'):'לא מקושר';
-  let h=`<section><h2>המלצות אנליסטים</h2><div class="panel">
+  const busy=t&&recBusy.has(t),fail=t&&recErr[t];
+  let h=`<section id="recsec"><h2>המלצות אנליסטים</h2><div class="panel">
   <button class="row plain" data-tick="${esc(x.id)}"><span><span class="nm">טיקר</span><div class="sub">${src}</div></span><span class="val n">${t?esc(t):'—'}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button></div>`;
   if(!S.fh)return h+`<p class="hint">כדי למשוך המלצות צריך מפתח API חינמי. הגדרות ← המלצות אנליסטים.</p></section>`;
   if(!t)return h+`<p class="hint">ניירות שמופיע להם סימבול אמריקאי בקובץ מקושרים מעצמם. לנייר הזה אין, אפשר לקשר אותו ידנית.</p></section>`;
-  if(!v)return h+`<div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-recload="${esc(t)}">משיכת המלצות</button></div></section>`;
+  if(!v){
+    if(busy)return h+`<div class="panel pad" style="margin-top:10px"><div class="recwait"><span class="ring"></span><span>מושך המלצות…</span></div></div></section>`;
+    const why=fail==='empty'?'אין כיסוי אנליסטים לנייר הזה.':fail==='key'?'מפתח ה-API נדחה. הגדרות ← המלצות אנליסטים.':'לא הצלחתי למשוך כרגע.';
+    return h+`<p class="hint">${why}</p><div class="stackbtns"><button class="btn ghost" data-recload="${esc(t)}">נסה שוב</button></div></section>`;
+  }
   const tot=r.sb+r.b+r.h+r.s+r.ss;
   const seg=(n,c)=>n?`<i style="flex:${n};background:${c}"></i>`:'';
   h+=`<div class="panel pad" style="margin-top:10px">
@@ -1078,7 +1105,7 @@ function recBlock(x){
     ${r.tl&&r.th?`<div><small>היעד הנמוך</small><b class="n">${r.tl.toFixed(2)}</b></div><div><small>היעד הגבוה</small><b class="n">${r.th.toFixed(2)}</b></div>`:''}
     </div>`;
   h+=`<p class="hint">${r.period?'נכון לחודש '+esc(hmonth(r.period))+'. ':''}נמשך ${dlong(new Date(r.ts).toISOString().slice(0,10))}. המלצות אנליסטים הן דעה ולא תחזית, והן נוטות להיות אופטימיות ולהגיב באיחור.</p>
-  <div class="stackbtns"><button class="btn ghost" data-recload="${esc(t)}">רענון</button></div></section>`;
+  <div class="stackbtns"><button class="btn ghost" data-recload="${esc(t)}">${busy?'מושך…':'רענון'}</button></div></section>`;
   return h;
 }
 function openTicker(holdId,accId){
@@ -1471,6 +1498,7 @@ function openPortfolio(accId){
   openPortfolio.filt=null;openPortfolio.taxOpen=false;
   openLayer(`<div class="sheet push" role="dialog" aria-label="תיק ניירות ערך"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>${esc(a.short)}</span></button><h2>תיק ניירות ערך</h2><span></span></header><div class="body"></div></div>`,true);
   paintPortfolio(accId);
+  refreshRecs(false).catch(()=>{});          /* nothing stale means no request at all */
 }
 function paintPortfolio(accId,keep){
   const L=stack[stack.length-1];if(!L)return;
@@ -1553,6 +1581,7 @@ function wirePortfolio(accId){
     if(fromList){const el=$('#holds');if(el)el.scrollIntoView({block:'start',behavior:calm()?'auto':'smooth'})}
   });
   layer.querySelectorAll('[data-hold]').forEach(b=>b.onclick=()=>openHolding(accId,b.dataset.hold));
+  recPaintOpen.list=()=>{const T=stack[stack.length-1];if(T&&T.el.querySelector('[data-hold]'))paintPortfolio(accId,true)};
 }
 function openHolding(accId,id){
   const list=portsOf(accId),last=list[list.length-1];if(!last||!last.hold)return;
@@ -1572,12 +1601,33 @@ function openHolding(accId,id){
   </div></section>
   <p class="hint">${esc(CATLBL[c])}. הסיווג נקבע לפי שם הנייר, והשיוך לישראל או לחו״ל לפי שפת השם והמטבע.</p>
   ${recBlock(x)}</div></div>`);
-  const tk=layer.querySelector('[data-tick]');if(tk)tk.onclick=()=>openTicker(x.id,accId);
-  const rl=layer.querySelector('[data-recload]');
-  if(rl)rl.onclick=async()=>{const sym=rl.dataset.recload;rl.disabled=true;rl.textContent='מושך…';
-    try{S.rec[sym]=await fetchRec(sym);save();closeLayer();setTimeout(()=>{openHolding(accId,id)},320)}
-    catch(e){rl.disabled=false;rl.textContent='משיכת המלצות';
-      toast(e.message==='key'?'מפתח ה-API נדחה':e.message==='empty'?'אין כיסוי לנייר הזה':'לא הצלחתי למשוך')}};
+  const L=stack[stack.length-1];
+  const mine=()=>stack[stack.length-1]===L&&L.el.isConnected;      /* the sheet may be gone by the time a fetch lands */
+  const paint=()=>{
+    if(!mine())return;
+    const sec=L.el.querySelector('#recsec');if(!sec)return;
+    const tmp=document.createElement('div');tmp.innerHTML=recBlock(x);
+    const neu=tmp.firstElementChild;if(!neu)return;
+    sec.replaceWith(neu);wire();
+  };
+  const wire=()=>{
+    const tk=L.el.querySelector('[data-tick]');if(tk)tk.onclick=()=>openTicker(x.id,accId);
+    const rl=L.el.querySelector('[data-recload]');
+    if(rl)rl.onclick=()=>pull(true);
+  };
+  const pull=async force=>{
+    const t=tickOf(x);
+    if(!isForeignStock(x)||!t||!S.fh||recBusy.has(t))return;
+    const cur=S.rec[t];
+    if(!force&&cur&&Date.now()-cur.ts<RECDAY)return;
+    recBusy.add(t);paint();
+    try{S.rec[t]=await fetchRec(t);delete recErr[t];save()}
+    catch(e){recErr[t]=e.message}
+    finally{recBusy.delete(t);paint()}
+  };
+  wire();
+  recPaintOpen.hold=paint;
+  pull(false);                                                     /* opening the share is the request */
 }
 async function importPortfolio(accId,file){
   const a=ACCOUNTS.find(x=>x.id===accId);
@@ -1596,6 +1646,7 @@ async function importPortfolio(accId,file){
       const date=$('#pdate').value,fld=$('#pfld').value;
       if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast('בחרו תאריך');return}
       addSnapshot(accId,date,hold);S.plink[accId]=fld;await save();
+      refreshRecs(false);                       /* new holdings get their consensus without being asked */
       closeLayer();
       const u=S.updates.find(x=>x.date===date);
       setTimeout(async()=>{
@@ -1717,15 +1768,21 @@ const tabSwipe={busy:false};
     if(sp.value<TRIG*.8){sp.to(0,{damping:1,response:.4});return}
     busy=true;ind.classList.add('go');txt.textContent='';
     sp.to(TRIG,{damping:1,response:.36});
+    const recs=refreshRecs(false,RECSOON,5000).catch(()=>0);   /* alongside the rate, not after it */
+    let head='';
     try{
       const r=await Promise.race([fetchRate(today()),
         new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),6000))]);  /* don't hang on a dead connection */
       liveRate=r.rate;liveAt=Date.now();
-      txt.textContent='₪'+r.rate.toFixed(3);
+      head='₪'+r.rate.toFixed(3);
       const el=$('#liverate');if(el){el.textContent='₪'+r.rate.toFixed(3);el.classList.remove('flat')}
-    }catch(e){txt.textContent='לא זמין'}
+    }catch(e){head='לא זמין'}
+    txt.textContent=head;
     ind.classList.remove('go');
     setTimeout(()=>{sp.to(0,{damping:1,response:.42});busy=false;setTimeout(()=>{txt.textContent=''},300)},850);
+    /* the page comes back up at the rate's pace; the consensus lands when it lands */
+    const n=await recs;
+    if(n)toast(n===1?'המלצה אחת עודכנה':n+' המלצות עודכנו');
   };
   addEventListener('pointerup',release);addEventListener('pointercancel',release);
 })();
@@ -1752,7 +1809,9 @@ document.addEventListener('click',e=>{
     },
     wipe:async()=>{if(!confirm('למחוק את כל הנתונים מהמכשיר? אי אפשר לבטל את הפעולה.'))return;if(!confirm('בטוחים? ודאו שיש לכם גיבוי.'))return;S.updates=[];S.ports={};S.ptype={};S.plink={};setConfig([]);await save();tab='home';render();toast('הנתונים נמחקו')}})[t.dataset.act]?.();
 });
-function start(){$('#tabbar').hidden=false;render()}
+function start(){$('#tabbar').hidden=false;render();
+  /* quietly top up anything stale, once the screen is up and idle */
+  (window.requestIdleCallback||(f=>setTimeout(f,1200)))(()=>{refreshRecs(false).catch(()=>{})});}
 (function boot(){
   const raw=readRaw();
   if(raw&&raw.enc){lockScreen();return}
