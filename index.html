@@ -505,11 +505,27 @@ function tickFmt(ticks){const span=ticks[ticks.length-1]-ticks[0];const mx=Math.
 function lineChart(pts,color,o={}){
   const W=340,H=o.h||170,AX=46,PR=10,T=14,B=24,dark=!!o.dark;   // AX: width reserved for the value axis, on the left
   const vs=pts.map(p=>p.v);const {min,max,ticks}=niceTicks(Math.min(...vs),Math.max(...vs));const tf=tickFmt(ticks);
-  const x=i=>pts.length===1?(AX+(W-PR-AX)/2):AX+10+i*(W-PR-AX-20)/(pts.length-1);const y=v=>T+(max-v)*(H-T-B)/(max-min);
+  /* the x axis is time, not position in the list: a month of silence is drawn a month wide, so
+     entries made weekly and entries made quarterly no longer look alike. falls back to even
+     spacing if a date is missing or every point shares one date. */
+  const L0=AX+10,R0=W-PR-10;
+  const tms=pts.map(p=>Date.parse(p.d)),span=tms[tms.length-1]-tms[0];
+  const byTime=tms.every(Number.isFinite)&&span>0;
+  const x=i=>pts.length===1?(AX+(W-PR-AX)/2)
+    :byTime?L0+(tms[i]-tms[0])*(R0-L0)/span
+    :L0+i*(R0-L0)/(pts.length-1);
+  const y=v=>T+(max-v)*(H-T-B)/(max-min);
   let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label||'גרף')}">`;
   for(const t of ticks){s+=`<line class="g" x1="${AX}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke-width="1"/><text x="${AX-7}" y="${y(t)+3.5}" text-anchor="end">${tf(t)}</text>`}
-  const step=Math.max(1,Math.ceil(pts.length/5));
-  pts.forEach((p,i)=>{if(i%step===0||i===pts.length-1){if(i!==pts.length-1&&(pts.length-1-i)<step*0.6)return;s+=`<text x="${x(i)}" y="${H-7}" text-anchor="middle">${dshort(p.d)}</text>`}});
+  /* dates are now placed by where the point actually sits, so they are kept apart by pixels
+     rather than by every n-th point; the last one is always labelled */
+  const MINLBL=52,lab=[];
+  for(let i=0;i<pts.length;i++)if(!lab.length||x(i)-x(lab[lab.length-1])>=MINLBL)lab.push(i);
+  if(lab[lab.length-1]!==pts.length-1){
+    if(x(pts.length-1)-x(lab[lab.length-1])<MINLBL)lab.pop();
+    lab.push(pts.length-1);
+  }
+  for(const i of lab)s+=`<text x="${x(i)}" y="${H-7}" text-anchor="middle">${dshort(pts[i].d)}</text>`;
   s+=`<line class="cross" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
   if(pts.length>1)s+=`<polyline ${o.anim?'class="draw" pathLength="1"':''} fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${pts.map((p,i)=>x(i)+','+y(p.v)).join(' ')}"/>`;
   const r=pts.length>30?0:pts.length>16?3:4.5;
