@@ -18,7 +18,10 @@
 <style>
 :root{
   --bg:#F2F2F7; --surface:#FFFFFF; --ink:#1C1C1E; --ink2:#48484A; --muted:#6C6C70; --sep:#3C3C4329; --line:#E5E5EA; --fill:#7676801F;
-  --up:#248A3D; --down:#D70015; --tint:#007AFF; --focus:#007AFF; --ease:cubic-bezier(.32,.72,0,1);
+  --up:#1F7A35; --down:#D70015; --tint:#007AFF; --focus:#007AFF; --ease:cubic-bezier(.32,.72,0,1);
+  /* #007AFF is 4.0:1 on white — fine for an icon or a fill, short of the 4.5:1 a label needs.
+     --tink is the blue for text, --btn the blue a filled button can carry white on. */
+  --tink:#0A6BD4; --btn:#0A6BD4;
   --blur:saturate(1.6) blur(16px);
   --up2:#5BB974; --chev:#C7C7CC; --knob:#FFFFFF; --onTint:#FFFFFF; --bar:#F9F9F9D9; --barsheet:#F2F2F7CC; --grab:#C7C7CC;
   --press:#E8F0FE; --errbg:#FFE5E7; --errink:#A1000F; --toast:#3A3A3CF2; --ontoast:#FFFFFF;
@@ -33,6 +36,7 @@
     --bg:#000000; --surface:#1C1C1E; --ink:#FFFFFF; --ink2:#D1D1D6; --muted:#98989F;
     --sep:#54545899; --line:#38383A; --fill:#7676803D;
     --up:#30D158; --down:#FF453A; --tint:#0A84FF; --focus:#0A84FF;
+    --tink:#0A84FF; --btn:#0A6BD4;
     --up2:#2B9E4E; --chev:#48484A; --knob:#FFFFFF; --onTint:#FFFFFF; --bar:#1C1C1ED9; --barsheet:#1C1C1ECC; --grab:#48484A;
     --press:#0A84FF2E; --errbg:#3A1216; --errink:#FF6A6A; --toast:#48484AF2; --ontoast:#FFFFFF;
     --cline:#F2F2F7; --cgrid:#2C2C2E; --cring:#1C1C1E; --ccross:#636366; --knobshadow:rgba(0,0,0,.5);
@@ -70,12 +74,12 @@ button{cursor:pointer;border:0;background:none;padding:0}
 
 section{margin:28px 16px 0}
 section>h2{font-size:22px;font-weight:700;letter-spacing:-.016em;line-height:1.2;margin:0 4px 10px}
-section>h2 small{font-weight:400;font-size:15px;letter-spacing:0;color:var(--muted);margin-inline-start:6px}
+section>h2 small,.foldh h2 small{font-weight:400;font-size:15px;letter-spacing:0;color:var(--muted);margin-inline-start:6px}
 .panel{background:var(--surface);border-radius:14px;overflow:hidden}
-.foldh{display:flex;align-items:center;gap:8px;width:100%;background:0;border:0;padding:0;margin:0 4px 10px;
+.foldh{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;background:0;border:0;padding:0;margin:0 4px 6px;
   font:inherit;color:inherit;text-align:start;-webkit-tap-highlight-color:transparent}
 .foldh h2{font-size:22px;font-weight:700;letter-spacing:-.016em;line-height:1.2;margin:0}
-.foldh .chev{width:9px;height:15px;flex:0 0 auto;fill:none;stroke:var(--tint);stroke-width:2.6;
+.foldh .chev{width:9px;height:15px;flex:0 0 auto;fill:none;stroke:var(--tink);stroke-width:2.6;
   stroke-linecap:round;stroke-linejoin:round;transform:rotate(-90deg);transition:transform .22s var(--ease)}
 .foldh[aria-expanded="true"] .chev{transform:rotate(90deg)}
 .foldh:active h2{opacity:.5}
@@ -91,7 +95,10 @@ section>h2 small{font-weight:400;font-size:15px;letter-spacing:0;color:var(--mut
 .row::before,.facts div::before{content:"";position:absolute;top:0;inset-inline:38px 0;height:1px;background:var(--sep);transform:scaleY(.5);transform-origin:top}
 .row:first-child::before,.facts div:first-child::before{display:none}
 .row .spine{width:10px;height:10px;border-radius:50%}
-.row .nm{font-weight:400;font-size:17px}
+/* a name that wraps makes the row 82px while its neighbours are 64px, and the column stops
+   reading as a column. one line, ellipsis; the full name is on the holding's own page. */
+.row .nm{font-weight:400;font-size:17px;display:block;unicode-bidi:isolate;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row>span:nth-child(2){min-width:0}
 .row .sub{font-size:13px;color:var(--muted);margin-top:1px}
 .row .val{text-align:left}
 .row .val b{font-family:var(--num);font-size:17px;font-weight:600;display:block;direction:ltr}
@@ -105,12 +112,12 @@ button.row:active{background:#E5E5EA}
 .sw[aria-checked="true"] i{transform:translateX(-20px)}
 .sw:active i{width:29px}
 .pmk{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;opacity:.4;vertical-align:-1px}
-.rec{display:inline-flex;align-items:center;font-size:12.5px;font-weight:600;padding:1px 7px;border-radius:7px;line-height:1.5}
+.rec{display:inline-flex;align-items:center;font-size:13px;font-weight:600;padding:1px 7px;border-radius:7px;line-height:1.5}
 .rec.buy{background:color-mix(in srgb,var(--up) 15%,transparent);color:var(--up)}
 .rec.hold{background:color-mix(in srgb,var(--muted) 20%,transparent);color:var(--ink2)}
 .rec.sell{background:color-mix(in srgb,var(--down) 14%,transparent);color:var(--down)}
 .rec.none{background:color-mix(in srgb,var(--muted) 14%,transparent);color:var(--muted);font-weight:500}
-.recwait{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px}
+.recwait{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
 .recwait .ring{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--muted);animation:ringspin .75s linear infinite;flex:0 0 auto}
 .bigrec{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:1px 0 2px}
 .bigrec.buy{color:var(--up)}.bigrec.sell{color:var(--down)}
@@ -123,7 +130,7 @@ button.row:active{background:#E5E5EA}
 .sw-c{width:36px;height:36px;border-radius:50%;border:0;padding:0;position:relative;-webkit-tap-highlight-color:transparent}
 .sw-c::before{content:"";position:absolute;inset:-4px;border-radius:50%}  /* 44×44 to the finger */
 .sw-c[aria-pressed="true"]::after{content:"";position:absolute;inset:-4px;border-radius:50%;box-shadow:0 0 0 2px var(--ink)}
-.pick1{height:40px;border:0;background:transparent;color:var(--tint);font-size:17px;text-align:start}
+.pick1{min-height:44px;border:0;background:transparent;color:var(--tink);font-size:17px;text-align:start}
 .row .lblin{width:100%;border:0;background:transparent;font:inherit;font-size:17px;color:var(--ink);padding:3px 0;border-radius:6px;transition:background .15s}
 .row .lblin:focus{background:var(--bg);outline:0;padding:3px 7px;margin:0 -7px}
 .row .lblin::placeholder{color:var(--chev)}
@@ -147,14 +154,14 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 .facts small{font-size:17px;color:var(--ink)}
 .facts b{font-family:var(--num);font-size:17px;font-weight:400;color:var(--muted);direction:ltr}
 .facts b.up{color:var(--up)}.facts b.down{color:var(--down)}
-.row.link .nm{color:var(--tint);font-weight:500}
-.row.link .chev{stroke:var(--tint);stroke-width:2.4}
+.row.link .nm{color:var(--tink);font-weight:500}
+.row.link .chev{stroke:var(--tink);stroke-width:2.4}
 
 .note{font-size:15px;color:var(--ink2);background:var(--surface);border-radius:14px;padding:12px 16px;margin:18px 16px 0;display:flex;gap:12px;align-items:center;justify-content:space-between}
-.note button{color:var(--tint);font-weight:600;white-space:nowrap;min-height:32px}
+.note button{color:var(--tink);font-weight:600;white-space:nowrap;min-height:44px;padding-inline:4px}
 
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;border-radius:14px;background:var(--tint);color:var(--onTint);font-weight:600;font-size:17px;padding:0 18px;transition:opacity .09s ease-out,transform .09s ease-out}
-.btn.ghost{background:var(--fill);color:var(--tint)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;border-radius:14px;background:var(--btn);color:var(--onTint);font-weight:600;font-size:17px;padding:0 18px;transition:opacity .09s ease-out,transform .09s ease-out}
+.btn.ghost{background:var(--fill);color:var(--tink)}
 .btn.danger{background:var(--fill);color:var(--down)}
 .btn:active{opacity:.7;transform:scale(.985)}
 .btn[disabled]{opacity:.4}
@@ -162,16 +169,16 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 
 .tabbar{position:fixed;inset:auto 0 0 0;background:var(--bar);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:0 -.5px 0 var(--sep);display:flex;justify-content:center;padding-bottom:var(--sab);z-index:5}
 .tabbar div{display:flex;width:100%;max-width:560px}
-.tabbar button{flex:1;height:52px;font-size:10.5px;font-weight:500;color:#8E8E93;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.tabbar button{flex:1;height:52px;font-size:11px;font-weight:500;color:#8E8E93;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .tabbar svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.tabbar button[aria-current="page"]{color:var(--tint)}
+.tabbar button[aria-current="page"]{color:var(--tink)}
 
 /* pages: a detail page pushes in from the side, a form rises as a sheet */
 .sheet{position:fixed;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column;touch-action:pan-y;will-change:transform}
 .sheet header{position:relative;background:var(--barsheet);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:0 .5px 0 transparent;transition:box-shadow .2s;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:calc(var(--sat) + 4px) 10px 4px;min-height:calc(var(--sat) + 48px)}
 .sheet header.edge{box-shadow:0 .5px 0 var(--sep)}
 .sheet header h2{margin:0;font-size:17px;font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw}
-.sheet header button{color:var(--tint);font-size:17px;min-height:44px;padding:0 6px;justify-self:start;display:flex;align-items:center;gap:3px}
+.sheet header button{color:var(--tink);font-size:17px;min-height:44px;padding:0 6px;justify-self:start;display:flex;align-items:center;gap:3px}
 .sheet header button:active{opacity:.4}
 .sheet header button svg{width:12px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .sheet .body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(28px + var(--sab))}
@@ -185,11 +192,14 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 .grab{position:absolute;top:6px;left:0;right:0;height:5px;margin:0 auto;width:36px;border-radius:3px;background:var(--grab)}
 .scrim{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none}
 .segbar{display:flex;gap:2px;background:var(--segbg);border-radius:9px;padding:2px;margin:0 4px 10px}
-.segbar button{flex:1;min-height:32px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink)}
+.segbar button{position:relative;flex:1;min-height:36px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink)}
+.segbar button::before{content:"";position:absolute;inset:-4px 0;pointer-events:auto}
 .segbar button[aria-selected="true"]{background:var(--segon);font-weight:600;box-shadow:var(--segsh)}
-.chiprow{display:flex;gap:8px;overflow-x:auto;padding:0 16px 4px;margin:0 -16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chiprow{-webkit-mask-image:linear-gradient(to left,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);
+  mask-image:linear-gradient(to left,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);
+  scroll-padding-inline:16px;display:flex;gap:8px;overflow-x:auto;padding:0 16px 4px;margin:0 -16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .chiprow::-webkit-scrollbar{display:none}
-.chiprow button{flex:none;min-height:34px;padding:0 13px;border-radius:17px;background:var(--fill);font-size:14px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.chiprow button{flex:none;min-height:40px;padding:0 15px;border-radius:20px;background:var(--fill);font-size:14px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap}
 .chiprow button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .chiprow .spine{width:8px;height:8px;border-radius:50%;flex:none}
 .chiprow .spine.hollow{box-shadow:inset 0 0 0 2.5px var(--c)}
@@ -222,9 +232,9 @@ button.row[aria-pressed="true"] .nm{font-weight:600}
 .fld.wide{grid-template-columns:96px 1fr}
 .fld.wide input{direction:rtl;text-align:start;font-family:inherit;font-variant-numeric:normal}
 .fld .inl{display:flex;gap:4px;align-items:center}
-.fld .inl button{white-space:nowrap;font-size:15px;color:var(--tint);padding:0 4px;min-height:44px}
+.fld .inl button{white-space:nowrap;font-size:15px;color:var(--tink);padding:0 4px;min-height:44px}
 .fld .inl button:active{opacity:.4}
-.fld .inl .atbtn{color:var(--tint);font-size:15px;min-height:44px;display:flex;align-items:center;cursor:pointer;white-space:nowrap}
+.fld .inl .atbtn{color:var(--tink);font-size:15px;min-height:44px;display:flex;align-items:center;cursor:pointer;white-space:nowrap}
 .fld .inl .atbtn.on{color:var(--up);font-weight:600;font-size:13.5px}
 .hint{font-size:13px;color:var(--muted);padding:6px 16px 12px;margin:0}
 .err{margin:16px 16px 0;background:var(--errbg);color:var(--errink);border-radius:12px;padding:11px 14px;font-size:15px}
@@ -238,7 +248,7 @@ table.cmp tr.tot td{font-weight:600}
 table.cmp .d small{display:block;font-size:12px}
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .pick label{font-size:13px;color:var(--muted);display:block;margin:0 4px}
-.pick select{width:100%;height:48px;border:0;border-radius:12px;background:var(--surface);color:var(--tint);padding:0 12px;font-size:17px;margin-top:6px}
+.pick select{width:100%;height:48px;border:0;border-radius:12px;background:var(--surface);color:var(--tink);padding:0 12px;font-size:17px;margin-top:6px}
 .empty{text-align:center;padding:56px 28px;color:var(--muted)}
 .empty h2{font-size:22px;font-weight:700;letter-spacing:-.016em;margin:0 0 6px;color:var(--ink)}
 .empty p{margin:0 0 22px;font-size:15px}
@@ -252,7 +262,7 @@ table.cmp .d small{display:block;font-size:12px}
 .lock .msg{color:var(--down);min-height:20px;font-size:15px}
 textarea{width:100%;min-height:120px;border:0;border-radius:10px;background:var(--bg);padding:10px;font-size:13px;direction:ltr;font-family:ui-monospace,Menlo,monospace}
 svg.chart{display:block;width:100%;height:auto;touch-action:pan-y;direction:ltr}
-svg.chart text{font-family:var(--num);font-size:10.5px;fill:#8E8E93}
+svg.chart text{font-family:var(--num);font-size:11px;fill:#8E8E93}
 svg.chart .g{stroke:var(--cgrid)}
 svg.chart .cross{stroke:var(--ccross)}
 svg.chart circle{stroke:var(--cring)}
@@ -388,6 +398,19 @@ const ils=v=>'₪'+nf0.format(Math.round(v));
 const usd=v=>'$'+nf0.format(Math.round(v));
 const signedBy=(v,f)=>(v>0?'+':v<0?'−':'')+f(Math.abs(v));   // e.g. +₪40,873 / −$1,989
 const signedIls=v=>signedBy(v,ils);
+/* beside an arrow the sign is the third thing saying the same thing, after the arrow and the
+   colour; the magnitude alone reads cleaner and is shorter */
+const magIls=v=>ils(Math.abs(v));
+/* a plain CSS ellipsis cuts by pixel and lands inside a number — "ממשלתית צמודה 2% 0431"
+   became "…31 2%". trimming at the last space keeps every token whole; the CSS ellipsis
+   stays on as a backstop for a name of unusually wide glyphs. */
+function short(t,n=20){
+  const x=String(t||'').trim();
+  if(x.length<=n)return x;
+  const cut=x.slice(0,n), sp=cut.lastIndexOf(' ');
+  return (sp>n*0.5?cut.slice(0,sp):cut).replace(/[\s.,/-]+$/,'')+'…';
+}
+const magBy=(v,f)=>f(Math.abs(v));
 const pct=(v,d=1)=>(v>0?'+':v<0?'−':'')+Math.abs(v*100).toFixed(d)+'%';
 const cls=v=>v>0.5?'up':v<-0.5?'down':'flat';
 const arrow=v=>v>0.5?'▲':v<-0.5?'▼':'●';
@@ -493,8 +516,13 @@ function clean(list){
 function niceTicks(lo,hi,n=4){
   if(lo===hi){const p=Math.abs(lo)*0.01||1;lo-=p;hi+=p}
   const pad=(hi-lo)*0.18;lo-=pad;hi+=pad;
-  const raw=(hi-lo)/n,mag=Math.pow(10,Math.floor(Math.log10(raw)));const f=raw/mag;const step=(f<1.5?1:f<3?2:f<7?5:10)*mag;
-  const a=Math.floor(lo/step)*step,b=Math.ceil(hi/step)*step;const t=[];for(let v=a;v<=b+step/2;v+=step)t.push(v);
+  const mag=Math.pow(10,Math.floor(Math.log10((hi-lo)/n||1)));
+  let step=mag,a=0,b=0;
+  for(const f of [1,2,2.5,5,10,20,25,50,100]){                 /* climb until the grid is n+1 lines at most */
+    step=f*mag;a=Math.floor(lo/step)*step;b=Math.ceil(hi/step)*step;
+    if(Math.round((b-a)/step)+1<=n+1)break;
+  }
+  const t=[];for(let v=a;v<=b+step/2;v+=step)t.push(+v.toFixed(6));
   return {min:a,max:b,ticks:t};
 }
 function tickFmt(ticks){const span=ticks[ticks.length-1]-ticks[0];const mx=Math.max(...ticks.map(Math.abs));
@@ -537,7 +565,7 @@ function spark(vs,color){if(vs.length<2)return '';const lo=Math.min(...vs),hi=Ma
   const p=vs.map((v,i)=>(3+i*54/(vs.length-1)).toFixed(1)+','+(19-(v-lo)*16/sp).toFixed(1)).join(' ');
   const last=p.split(' ').pop().split(',');
   return `<svg class="spark" viewBox="0 0 60 22" aria-hidden="true"><polyline fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${p}"/><circle cx="${last[0]}" cy="${last[1]}" r="2.6" fill="${color}"/></svg>`}
-function readoutText(p,prev,fmt){let t=`<span class="n">${dlong(p.d)}</span> · <b class="n">${fmt(p.v)}</b>`;if(prev){const d=p.v-prev.v;t+=` · <span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,fmt)}</span>`}return t}
+function readoutText(p,prev,fmt){let t=`<span class="n">${dlong(p.d)}</span> · <b class="n">${fmt(p.v)}</b>`;if(prev){const d=p.v-prev.v;t+=` · <span class="n ${cls(d)}">${arrow(d)} ${magBy(d,fmt)}</span>`}return t}
 function wireChart(box,pts,fmt){
   if(!box||offscreen)return;
   const svg=box.querySelector('svg.chart'),out=box.querySelector('.readout');if(!svg||!out)return;
@@ -658,15 +686,15 @@ function viewHome(){
   const dPrev=prev?last.total-prev.total:0,dFirst=last.total-first.total;
   const win=U.slice(-12),winC=C.slice(-12);
   let h=`<div class="hero"><h1>הון כולל${PRIV()?' '+PMARK:''}</h1><div class="total" data-roll="total" data-rv="${last.total}">${ils(last.total)}</div><div class="asof">נכון ל-<span class="n">${dlong(U[n-1].date)}</span></div>
-  <div class="deltas"><div><small>מהעדכון הקודם</small>${prev?`<b class="${cls(dPrev)}">${arrow(dPrev)} ${signedIls(dPrev)}</b> <span class="n ${cls(dPrev)}">${prev.total?pct(dPrev/prev.total,2):''}</span>`:'<b class="flat">—</b>'}</div>
-  <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dFirst)}">${arrow(dFirst)} ${signedIls(dFirst)}</b> <span class="n ${cls(dFirst)}">${first.total?pct(dFirst/first.total,2):''}</span>`:'<b class="flat">—</b>'}</div></div>
+  <div class="deltas"><div><small>מהעדכון הקודם</small>${prev?`<b class="${cls(dPrev)}">${arrow(dPrev)} ${magIls(dPrev)}</b> <span class="n ${cls(dPrev)}">${prev.total?pct(dPrev/prev.total,2):''}</span>`:'<b class="flat">—</b>'}</div>
+  <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dFirst)}">${arrow(dFirst)} ${magIls(dFirst)}</b> <span class="n ${cls(dFirst)}">${first.total?pct(dFirst/first.total,2):''}</span>`:'<b class="flat">—</b>'}</div></div>
   <div id="ch-total" class="panel pad">${lineChart(win.map((u,i)=>({d:u.date,v:winC[i].total})),chartInk(),{label:'סה״כ הון לאורך זמן',anim:firstPaint})}<p class="readout"></p></div></div>`;
   const m=meta();const days=m.lastBackup?Math.floor((Date.now()-m.lastBackup)/864e5):null;
   if(days===null||days>30)h+=`<div class="note"><span>${days===null?'עוד לא נשמר גיבוי.':'עברו '+days+' ימים מהגיבוי האחרון.'} הנתונים קיימים רק במכשיר הזה.</span><button data-act="backup">גיבוי עכשיו</button></div>`;
   h+=`<section><h2>לפי חשבון</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="חלוקת ההון לפי חשבון">${visAcc().map(a=>`<i style="flex:${Math.max(last.acc[a.id],0)} 0 0;background:${acol(a.color)}" title="${esc(a.name)}"></i>`).join('')}</div></div>`;
   for(const a of visAcc()){const v=last.acc[a.id],d=prev?v-prev.acc[a.id]:0;
     h+=`<button class="row" data-acc="${a.id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${share(v,last.total)}%</span> מההון</div></span>
-    <span class="val"><b data-roll="acc:${a.id}" data-rv="${v}">${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
+    <span class="val"><b data-roll="acc:${a.id}" data-rv="${v}">${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
   h+=`</div></section>`;
   h+=PRIV()?'':`<section><button class="btn" data-act="new">עדכון חדש</button></section>`;
   const moved=!offscreen&&rollMem.total!==undefined&&rollMem.total!==last.total;
@@ -710,8 +738,8 @@ function openAccount(id,from){
   let h=`<div class="sheet push" role="dialog" aria-label="${esc(a.name)}"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>סקירה</span></button><h2>${esc(a.short)}</h2><span></span></header><div class="body">
   <div class="acc-head"><h1><span style="color:${acol(a.color)}">●</span> ${esc(a.name)}</h1><div class="big">${ils(v)}</div>
   <div class="meta"><span class="n">${share(v,C[n-1].total)}%</span> מההון · נכון ל-<span class="n">${dlong(U[n-1].date)}</span>${isUsd?` · <span class="n">${usd(C[n-1].usdAcc[id]||0)}</span>`:''}</div></div>
-  <div class="chips"><div><small>מהעדכון הקודם</small>${n>1?`<b class="${cls(dP)}">${arrow(dP)} ${signedIls(dP)}</b> <span class="n ${cls(dP)}">${vs[n-2]?pct(dP/vs[n-2],2):''}</span>`:'<b class="flat">—</b>'}</div>
-  <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dF)}">${arrow(dF)} ${signedIls(dF)}</b> <span class="n ${cls(dF)}">${vs[0]?pct(dF/vs[0],2):''}</span>`:'<b class="flat">—</b>'}</div></div>
+  <div class="chips"><div><small>מהעדכון הקודם</small>${n>1?`<b class="${cls(dP)}">${arrow(dP)} ${magIls(dP)}</b> <span class="n ${cls(dP)}">${vs[n-2]?pct(dP/vs[n-2],2):''}</span>`:'<b class="flat">—</b>'}</div>
+  <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dF)}">${arrow(dF)} ${magIls(dF)}</b> <span class="n ${cls(dF)}">${vs[0]?pct(dF/vs[0],2):''}</span>`:'<b class="flat">—</b>'}</div></div>
   <section><h2>שינוי בין העדכונים</h2><div class="panel pad" id="ch-acc">${lineChart(pts,acol(a.color),{label:a.name})}<p class="readout"></p></div></section>
 `;
   if(isUsd){h+=`<section><h2>שווי בדולרים</h2><div class="panel pad" id="ch-usd">${lineChart(U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),acol(a.color),{label:'שווי בדולרים'})}<p class="readout"></p></div></section>`}
@@ -725,12 +753,12 @@ function openAccount(id,from){
     const tapable=k===linked;
     const sub=!tapable?'':pLast?`<div class="sub"><span class="n">${pLast.hold?pLast.hold.length:'—'}</span> אחזקות · <span class="n">${dlong(pLast.date)}</span></div>`
       :'<div class="sub">העלאת קובץ אחזקות מהבנק</div>';
-    h+=`<${tapable?'button':'div'} class="row${tapable?' link':''}"${tapable?` data-port="${id}"`:''}><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm"${tapable?'':' style="font-weight:500"'}>${esc(nm)}</span>${sub}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,f)}</span>`:''}</span>${tapable?'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>':''}</${tapable?'button':'div'}>`}
+    h+=`<${tapable?'button':'div'} class="row${tapable?' link':''}"${tapable?` data-port="${id}"`:''}><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm"${tapable?'':' style="font-weight:500"'}>${esc(nm)}</span>${sub}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${magBy(d,f)}</span>`:''}</span>${tapable?'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>':''}</${tapable?'button':'div'}>`}
   h+=`</div></section>`;
   h+=`<section><div class="panel facts"><div><small>הגבוה ביותר</small><b>${ils(hi)}</b></div><div><small>הנמוך ביותר</small><b>${ils(lo)}</b></div></div></section>`;
   h+=`<section>${foldHead('hist','היסטוריה')}<div class="panel" id="hist" hidden>`;
   for(let i=n-1;i>=0;i--){const d=i?vs[i]-vs[i-1]:0;
-    h+=`<div class="row dotted"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
+    h+=`<div class="row dotted"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
   h+=`</div></section></div></div>`;
   openLayer(h,true,origin);
   wireFolds(stack[stack.length-1].el);
@@ -748,7 +776,7 @@ function viewUpdates(){
   const EL=PRIV()?'div':'button';
   for(let i=U.length-1;i>=0;i--){const d=i?C[i].total-C[i-1].total:0;
     h+=`<${EL} class="row${PRIV()?' dotted':''}"${PRIV()?'':` data-edit="${U[i].date}"`}><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span><span class="nm n">${dlong(U[i].date)}</span><div class="sub">שער דולר <span class="n">${U[i].rate?U[i].rate.toFixed(3):'—'}</span></div></span>
-    <span class="val"><b>${ils(C[i].total)}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}${C[i-1].total?' ('+pct(d/C[i-1].total,2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span>${PRIV()?'':'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>'}</${EL}>`}
+    <span class="val"><b>${ils(C[i].total)}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}${C[i-1].total?' ('+pct(d/C[i-1].total,2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span>${PRIV()?'':'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>'}</${EL}>`}
   const span=Math.round((new Date(U[U.length-1].date)-new Date(U[0].date))/864e5);
   h+=`</div></section><section><h2>נתוני מפתח</h2><div class="panel facts">
   <div><small>מספר עדכונים</small><b>${U.length}</b></div><div><small>תקופת המעקב</small><b>${span} ימים</b></div>
@@ -852,8 +880,8 @@ function viewCompare(){
   h+=`<section><div class="pick"><div><label for="ca">תאריך בסיס</label><select id="ca">${opts(st.a)}</select></div><div><label for="cb">תאריך להשוואה</label><select id="cb">${opts(st.b)}</select></div></div></section>`;
   const tbl=(title,rows)=>{let t=`<section><h2>${title}</h2><div class="panel"><table class="cmp"><thead><tr><th></th><th class="n">${dshort(A.date)}</th><th class="n">${dshort(B.date)}</th><th>שינוי</th></tr></thead><tbody>`;
     let sa=0,sb=0;for(const [nm,va,vb,col] of rows){sa+=va;sb+=vb;const d=vb-va;
-      t+=`<tr><td>${col?`<span style="color:${col}">●</span> `:''}${nm}</td><td class="n">${compact(va)}</td><td class="n">${compact(vb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span><small class="n ${cls(d)}">${va?pct(d/va):''}</small></td></tr>`}
-    const d=sb-sa;return t+`<tr class="tot"><td>סה״כ</td><td class="n">${compact(sa)}</td><td class="n">${compact(sb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${signedIls(d)}</span><small class="n ${cls(d)}">${sa?pct(d/sa,2):''}</small></td></tr></tbody></table></div></section>`};
+      t+=`<tr><td>${col?`<span style="color:${col}">●</span> `:''}${nm}</td><td class="n">${compact(va)}</td><td class="n">${compact(vb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}</span><small class="n ${cls(d)}">${va?pct(d/va):''}</small></td></tr>`}
+    const d=sb-sa;return t+`<tr class="tot"><td>סה״כ</td><td class="n">${compact(sa)}</td><td class="n">${compact(sb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}</span><small class="n ${cls(d)}">${sa?pct(d/sa,2):''}</small></td></tr></tbody></table></div></section>`};
   h+=tbl('לפי חשבון',visAcc().map(a=>[esc(a.short),ca.acc[a.id],cb.acc[a.id],acol(a.color)]));
   h+=`<section><div class="panel facts"><div><small>ימים בין התאריכים</small><b>${Math.round((new Date(B.date)-new Date(A.date))/864e5)}</b></div><div><small>שער דולר</small><b>${A.rate?A.rate.toFixed(3):'—'} → ${B.rate?B.rate.toFixed(3):'—'}</b></div></div></section>`;
   view.innerHTML=h;
@@ -895,7 +923,7 @@ function accBody(d,editing){
   ${d.rows.map((r,i)=>`<div class="row plain"><span>${r.std?`<span class="nm">${esc(r.label)}</span>`
     :`<input class="lblin" data-lbl="${i}" value="${esc(r.label)}" placeholder="שם הרכיב" maxlength="24" autocomplete="off" aria-label="שם הרכיב">`}</span>
   <span class="val"><button class="sw" data-row="${i}" role="switch" aria-checked="${r.on}" aria-label="${esc(r.label)||'רכיב'}"><i></i></button></span></div>`).join('')}
-  <button class="row plain" id="ac-other"><span><span class="nm" style="color:var(--tint)">אחר</span></span><span class="val" style="color:var(--tint);font-size:22px;line-height:1">+</span></button>
+  <button class="row plain" id="ac-other"><span><span class="nm" style="color:var(--tink)">אחר</span></span><span class="val" style="color:var(--tink);font-size:22px;line-height:1">+</span></button>
   </div><p class="hint">כל רכיב מסומן הופך לשדה בעדכון ולשורה בפירוט היתרות. ״אחר״ מוסיף רכיב בשם שתכתבו.</p></section>
   <section><h2>קובץ מהבנק</h2><div class="panel">
   <div class="row plain"><span><span class="nm">העלאת קובץ אחזקות</span><div class="sub">${d.link?'מופעל':'הזנה ידנית בלבד'}</div></span>
@@ -1076,7 +1104,7 @@ function priceBlock(x,accId){
     :`<span class="n">${pts.length}</span> צילומים, מ-${dlong(pts[0].d)} עד ${dlong(pts[pts.length-1].d)}. הגרף נבנה מהקבצים שהעלית, ולא ממקור חיצוני.`;
   return head+`
   <div class="panel pad chartbox" id="pxbox">
-    <div class="chart-top"><b class="n">${fmt(last)}</b><span class="n ${cls(d)}">${arrow(d)} ${signedBy(d,fmt)}${first?' · '+pct(d/first,1):''}</span></div>
+    <div class="chart-top"><b class="n">${fmt(last)}</b><span class="n ${cls(d)}">${arrow(d)} ${magBy(d,fmt)}${first?' · '+pct(d/first,1):''}</span></div>
     <div class="readout"></div>
     ${lineChart(pts,col,{h:150,label:'מחיר '+x.name,anim:src!=='market'})}
   </div>
@@ -1625,7 +1653,7 @@ function portfolioBody(accId){
   const filt=openPortfolio.filt,srt=openPortfolio.sort||(openPortfolio.sort='v');
   let h=inp+`<div class="acc-head"><h1>תיק ניירות ערך</h1><div class="big">${ils(s.total)}</div>
   <div class="meta"><span class="n">${hold.length}</span> אחזקות · נכון ל-<span class="n">${dlong(last.date)}</span></div></div>`;
-  if(ps)h+=`<div class="chips"><div><small>מהצילום הקודם</small><b class="${cls(d)}">${arrow(d)} ${signedIls(d)}</b> <span class="n ${cls(d)}">${ps.total?pct(d/ps.total,2):''}</span></div>
+  if(ps)h+=`<div class="chips"><div><small>מהצילום הקודם</small><b class="${cls(d)}">${arrow(d)} ${magIls(d)}</b> <span class="n ${cls(d)}">${ps.total?pct(d/ps.total,2):''}</span></div>
   <div><small>רווח על הנייר</small><b class="${cls(s.gain+s.loss)}">${signedIls(s.gain+s.loss)}</b></div></div>`;
   // allocation — tapping a row filters the list below
   const cats=CATS.filter(([k])=>s.cat[k]);
@@ -1659,8 +1687,8 @@ function portfolioBody(accId){
   if(!shown.length)h+=`<div class="row"><span class="nm flat">אין אחזקות בקטגוריה הזו</span></div>`;
   for(const x of shown.slice().sort(sorters[srt])){
     const c=catOf(x);
-    h+=`<button class="row dotted" data-hold="${esc(x.id)}">${dot(c)}<span><span class="nm">${esc(x.name)}</span><div class="sub">${esc(CATLBL[c])} · <span class="n">${(x.v/s.total*100).toFixed(1)}%</span>${x.cur!=='שקל'?' · '+esc(x.cur):''}</div>${recBadge(x)?`<div class="sub" style="margin-top:4px">${recBadge(x)}</div>`:''}</span>
-    <span class="val"><b>${ils(x.v)}</b><span class="n ${cls(x.tg)}">${x.tg?arrow(x.tg)+' '+signedIls(x.tg):''}</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
+    h+=`<button class="row dotted" data-hold="${esc(x.id)}">${dot(c)}<span><span class="nm" title="${esc(x.name)}">${esc(short(x.name))}</span><div class="sub">${esc(CATLBL[c])} · <span class="n">${(x.v/s.total*100).toFixed(1)}%</span>${x.cur!=='שקל'?' · '+esc(x.cur):''}</div>${recBadge(x)?`<div class="sub" style="margin-top:4px">${recBadge(x)}</div>`:''}</span>
+    <span class="val"><b>${ils(x.v)}</b><span class="n ${cls(x.tg)}">${x.tg?arrow(x.tg)+' '+magIls(x.tg):''}</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
   }
   h+=`</div></section>`;
   if(list.length>1){
@@ -1668,7 +1696,7 @@ function portfolioBody(accId){
     const tot=p=>p.hold?summarize(p.hold).total:(p.sum?p.sum.total:0);
     for(let i=list.length-1;i>=0;i--){
       const dd=i?tot(list[i])-tot(list[i-1]):0;
-      h+=`<div class="row dotted"><span class="spine" style="background:${i?(dd>0?'var(--up)':dd<0?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n">${dlong(list[i].date)}</span><span class="val"><b>${ils(tot(list[i]))}</b>${i?`<span class="n ${cls(dd)}">${arrow(dd)} ${signedIls(dd)}</span>`:'<span class="flat">ראשון</span>'}</span></div>`;
+      h+=`<div class="row dotted"><span class="spine" style="background:${i?(dd>0?'var(--up)':dd<0?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n">${dlong(list[i].date)}</span><span class="val"><b>${ils(tot(list[i]))}</b>${i?`<span class="n ${cls(dd)}">${arrow(dd)} ${magIls(dd)}</span>`:'<span class="flat">ראשון</span>'}</span></div>`;
     }
     h+=`</div></section>`;
   }
@@ -1774,7 +1802,7 @@ async function importPortfolio(accId,file){
     openLayer(`<div class="sheet modal" role="dialog" aria-label="קובץ חדש"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>קובץ נקרא</h2><span></span></header><div class="body">
     <div class="acc-head"><div class="big">${ils(s.total)}</div><div class="meta"><span class="n">${hold.length}</span> אחזקות ב${esc(a.short)}</div></div>
     <div class="grp"><div class="fld"><label for="pdate">תאריך הצילום</label><input id="pdate" type="date" value="${today()}"></div>
-    <div class="fld"><label for="pfld">ממלא את השדה</label><select id="pfld" style="height:40px;border:0;background:transparent;color:var(--tint);font-size:17px">${fields.map(([k,nm])=>`<option value="${k}" ${k===guess?'selected':''}>${esc(nm)}</option>`).join('')}</select></div></div>
+    <div class="fld"><label for="pfld">ממלא את השדה</label><select id="pfld" style="min-height:44px;border:0;background:transparent;color:var(--tink);font-size:17px">${fields.map(([k,nm])=>`<option value="${k}" ${k===guess?'selected':''}>${esc(nm)}</option>`).join('')}</select></div></div>
     <p class="hint">הצילום יישמר בתיק של ${esc(a.short)}, והסכום יוצע לעדכון היתרות של אותו תאריך.</p>
     <section><button class="btn" id="psave">שמירה</button></section></div></div>`);
     $('#psave').onclick=async()=>{
