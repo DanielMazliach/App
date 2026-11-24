@@ -458,11 +458,14 @@ const magIls=v=>ils(Math.abs(v));
 /* a plain CSS ellipsis cuts by pixel and lands inside a number — "ממשלתית צמודה 2% 0431"
    became "…31 2%". trimming at the last space keeps every token whole; the CSS ellipsis
    stays on as a backstop for a name of unusually wide glyphs. */
-function short(t,n=20){
+function short(t,n){
   const x=String(t||'').trim();
-  if(x.length<=n)return x;
-  const cut=x.slice(0,n), sp=cut.lastIndexOf(' ');
-  return (sp>n*0.5?cut.slice(0,sp):cut).replace(/[\s.,/-]+$/,'')+'…';
+  const latin=!/[א-ת]/.test(x);
+  const lim=n||(latin?17:20);
+  if(x.length<=lim)return latin?'\u2066'+x+'\u2069':x;
+  const cut=x.slice(0,lim), sp=cut.lastIndexOf(' ');
+  const out=(sp>lim*0.5?cut.slice(0,sp):cut).replace(/[\s.,/-]+$/,'')+'…';
+  return latin?'\u2066'+out+'\u2069':out;
 }
 const magBy=(v,f)=>f(Math.abs(v));
 const pct=(v,d=1)=>(v>0?'+':v<0?'−':'')+Math.abs(v*100).toFixed(d)+'%';
@@ -554,8 +557,12 @@ function loadPorts(d){
     const list=(d.ports[id]||[]).filter(p=>p&&/^\d{4}-\d{2}-\d{2}$/.test(p.date));
     if(list.length)S.ports[id]=list;
   }
-  for(const k in (d.ptype||{}))if(['stock','bond','fund'].includes(d.ptype[k]))S.ptype[String(k)]=d.ptype[k];
-  for(const id in (d.plink||{}))if(ok.has(id))S.plink[id]=String(d.plink[id]);
+  for(const k in (d.ptype||{}))if(['stock','bond','fund','cash'].includes(d.ptype[k]))S.ptype[String(k)]=d.ptype[k];
+  for(const id in (d.plink||{})){
+    if(!ok.has(id))continue;
+    const v=d.plink[id],keys=(Array.isArray(v)?v:[v]).map(String).filter(Boolean);
+    if(keys.length)S.plink[id]=keys.length>1?keys:keys[0];
+  }
 }
 function clean(list){
   const out=[];const seen=new Set();
@@ -784,7 +791,7 @@ function wireFolds(root,onToggle){
 /* the holdings sit behind one entry that carries most of the account's money, so it is a card
    of its own that shows what is inside before it is opened: the value, its change, and how it
    splits by kind of security — the same colours as the portfolio page */
-function portCard(id,nm,val,delta,snap){
+function portCard(id,nm,val,delta,snap,f){
   const chev='<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>';
   const hold=snap&&snap.hold;
   let mix='';
@@ -823,12 +830,13 @@ function openAccount(id,from){
   tr.forEach((f,i)=>{h+=`<section><h2>${esc(f[1])}</h2><div class="panel pad" id="ch-t${i}">${lineChart(U.map(u=>({d:u.date,v:u.vals[f[0]]*q})),acol(a.color),{label:f[1]})}<p class="readout"></p></div></section>`});
   h+=`<section><h2>פירוט היתרות <small>עדכון אחרון</small></h2><div class="panel">`;
   const last=U[n-1],prev=U[n-2];const f=isUsd?usd:ils;
-  const linked=S.plink[id];
+  const linked=plinkOf(id);
   const pLast=linked?portsOf(id).slice(-1)[0]:null;
-  let pcard='';
+  let pv=0,pd=0;const pnames=[];
   for(const [k,nm] of a.fields){const fv=last.vals[k]*q,d=prev?fv-prev.vals[k]*q:0;
-    if(k===linked){pcard=portCard(id,nm,f(fv),prev?`<span class="n ${cls(d)}">${arrow(d)} ${magBy(d,f)}</span>`:'',pLast);continue}
+    if(linked.includes(k)){pv+=fv;pd+=d;pnames.push(nm);continue}
     h+=`<div class="row"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm" style="font-weight:500">${esc(nm)}</span></span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${magBy(d,f)}</span>`:''}</span></div>`}
+  const pcard=pnames.length?portCard(id,pnames.join(' · '),f(pv),prev?`<span class="n ${cls(pd)}">${arrow(pd)} ${magBy(pd,f)}</span>`:'',pLast,f):'';
   h+=`</div>${pcard}</section>`;
   h+=`<section><div class="panel facts"><div><small>הגבוה ביותר</small><b>${ils(hi)}</b></div><div><small>הנמוך ביותר</small><b>${ils(lo)}</b></div></div></section>`;
   h+=`<section>${foldHead('hist','היסטוריה')}<div class="panel" id="hist" hidden>`;
@@ -876,7 +884,7 @@ function openForm(date,pre){
     h+=`<div class="grp" style="--c:${acol(a.color)}"><h3>${esc(a.name)}${a.cur==='USD'?'<small>בדולרים</small>':'<small>בש״ח</small>'}</h3>`;
     for(const [k,nm] of a.fields)h+=`<div class="fld"><label for="f-${k}">${esc(nm)}</label><input id="f-${k}" data-k="${k}" inputmode="decimal" autocomplete="off" value="${f.vals[k]===''?'':f.vals[k]}" placeholder="0"></div>`;
     if(a.id===rateAcc)h+=`<div class="fld"><label for="f-rate">שער דולר<small>USD/ILS ביום העדכון</small></label><div class="inl"><input id="f-rate" inputmode="decimal" autocomplete="off" value="${f.rate||''}" placeholder="3.160"><button type="button" id="getrate">רענון</button></div></div><p class="hint" id="ratehint">השער נמשך לבד לפי התאריך. שער נוכחי: <b id="liverate2" class="n">—</b></p>`;
-    if(S.plink[a.id])h+=`<input type="file" id="af-${a.id}" accept=".xlsx,.csv,.txt" hidden><div class="fld"><label for="af-${a.id}">קובץ אחזקות<small>לא חובה</small></label><div class="inl"><label class="atbtn" for="af-${a.id}" id="al-${a.id}">צירוף קובץ</label></div></div>`;
+    if(plinkOf(a.id).length)h+=`<input type="file" id="af-${a.id}" accept=".xlsx,.csv,.txt,.pdf" hidden><div class="fld"><label for="af-${a.id}">קובץ אחזקות<small>לא חובה</small></label><div class="inl"><label class="atbtn" for="af-${a.id}" id="al-${a.id}">צירוף קובץ</label></div></div>`;
     h+=`</div>`}
   if(editing)h+=`<section><button type="button" class="btn danger" id="del">מחיקת העדכון</button></section>`;
   h+=`</form></div><footer><div class="sum"><small>סה״כ הון בעדכון הזה</small><b id="fsum">—</b></div><button class="btn" id="fsave">שמירה</button></footer></div>`;
@@ -907,13 +915,22 @@ function openForm(date,pre){
     const inp=$('#af-'+a.id);if(!inp)continue;
     inp.onchange=async e=>{
       const file=e.target.files[0];inp.value='';if(!file)return;
-      const lab=$('#al-'+a.id);lab.textContent='קורא…';
+      const lab=$('#al-'+a.id);lab.textContent=isPdf(file)?'קורא דוח…':'קורא…';
+      const pf=a.cur==='USD'?usd:ils;
       try{
-        const hold=parsePortfolio(await readSheet(file));
+        const {hold,subs}=await readHoldings(file);
         attach[a.id]=hold;
-        const tot=summarize(hold).total,fld=S.plink[a.id];
-        if(fld&&$('#f-'+fld)){$('#f-'+fld).value=Math.round(tot);upd()}
-        lab.textContent=hold.length+' אחזקות · '+ils(tot);lab.classList.add('on');
+        const keys=plinkOf(a.id);
+        /* a statement fills one field per sub-account, in the order they were mapped last time */
+        if(subs&&keys.length>=subs.length){
+          const vals={};
+          subs.forEach((x,i)=>{vals[keys[i]]=(vals[keys[i]]||0)+x.total});
+          for(const k in vals)if($('#f-'+k))$('#f-'+k).value=Math.round(vals[k]);
+        }else if(keys[0]&&$('#f-'+keys[0])){
+          $('#f-'+keys[0]).value=Math.round(summarize(hold).total);
+        }
+        upd();
+        lab.textContent=hold.length+' אחזקות · '+pf(summarize(hold).total);lab.classList.add('on');
       }catch(err){lab.textContent='צירוף קובץ';toast(err.message||'לא הצלחתי לקרוא את הקובץ')}
     };
   }
@@ -984,7 +1001,7 @@ function accDraft(a){
   });
   for(const f of (a?a.fields:[]))if(!used.has(f[0]))rows.push({key:f[0],label:f[1],type:f[2],on:true,trend:!!f[3],std:false});
   return {id:a?a.id:fresh('a'),name:a?a.name:'',short:a?a.short:'',cur:a?a.cur:'ILS',
-    color:a?a.color:PALETTE[ACCOUNTS.length%PALETTE.length],rows,link:a?(S.plink[a.id]||''):'',focus:''};
+    color:a?a.color:PALETTE[ACCOUNTS.length%PALETTE.length],rows,link:a?(plinkOf(a.id)[0]||''):'',focus:''};
 }
 function accBody(d,editing){
   const on=d.rows.filter(r=>r.on);
@@ -1053,7 +1070,9 @@ function openAccEditor(id){
       const list=ACCOUNTS.slice();const i=list.findIndex(x=>x.id===d.id);
       if(i<0)list.push(rec);else list[i]=rec;
       setConfig(list);
-      if(d.link&&on.some(r=>r.key===d.link))S.plink[d.id]=d.link;
+      const keep=plinkOf(d.id).filter(k=>on.some(r=>r.key===k));
+      if(d.link&&on.some(r=>r.key===d.link)&&!keep.includes(d.link))keep.unshift(d.link);
+      if(keep.length)S.plink[d.id]=keep.length>1?keep:keep[0];
       else{delete S.plink[d.id];delete S.ports[d.id]}
       S.updates=clean(S.updates);
       closeLayer();setTimeout(render,340);save();toast(i<0?'החשבון נוסף':'נשמר');
@@ -1776,7 +1795,121 @@ function guessType(h){
   if(ETFWORDS.test(n))return 'fund';
   return 'stock';
 }
-const TYPECOL={stock:'#3B82F6',bond:'#2F9E6E',fund:'#E2571C'};
+const TYPECOL={stock:'#3B82F6',bond:'#2F9E6E',fund:'#E2571C',cash:'#8A8A8E'};
+/* ---------- a brokerage statement in PDF ----------
+   The Israeli banks hand out a spreadsheet of holdings; J.P. Morgan hands out a 30-page PDF.
+   PDF.js is 1.7MB, so it is fetched from a CDN only on the first statement and pinned by hash:
+   a tampered file is refused by the browser before any of it runs. The file itself is read in
+   the page and never leaves the phone. */
+const PDFJS={v:'4.10.38',
+  lib:'sha384-+0ti2moQlmLN7WZHE2RHIf5lV8hHxhxEalN0il3YZceG26fUPyOkR0hp9daxk1i7',
+  wrk:'sha384-ToeVvShCxKc6CEvhHeMt0Q8A06pSPDbAlngO9nokrDmh914gk/pYd0N7D0a4Lz2o'};
+let pdfLib=null;
+async function getPdfjs(){
+  if(pdfLib)return pdfLib;
+  const base='https://cdn.jsdelivr.net/npm/pdfjs-dist@'+PDFJS.v+'/build/';
+  let mod;
+  try{
+    const r=await fetch(base+'pdf.min.mjs',{integrity:PDFJS.lib});
+    if(!r.ok)throw 0;
+    const url=URL.createObjectURL(new Blob([await r.blob()],{type:'text/javascript'}));
+    mod=await import(url);URL.revokeObjectURL(url);
+    const w=await fetch(base+'pdf.worker.min.mjs',{integrity:PDFJS.wrk});
+    if(!w.ok)throw 0;
+    mod.GlobalWorkerOptions.workerSrc=URL.createObjectURL(await w.blob());
+  }catch(e){throw new Error('לא הצלחתי לטעון את קורא ה-PDF. צריך חיבור לאינטרנט בפעם הראשונה.')}
+  return pdfLib=mod;
+}
+/* the text of a PDF arrives as loose fragments with coordinates; this puts them back into lines */
+async function readPdfLines(file){
+  const pdfjs=await getPdfjs();
+  const doc=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+  const pages=[];
+  for(let i=1;i<=doc.numPages;i++){
+    const tc=await (await doc.getPage(i)).getTextContent();
+    const rows=[];
+    for(const it of tc.items){
+      if(!it.str.trim())continue;
+      const y=it.transform[5],x=it.transform[4];
+      let row=rows.find(r=>Math.abs(r.y-y)<=2);
+      if(!row){row={y,its:[]};rows.push(row)}
+      row.its.push({x,s:it.str,w:it.width});
+    }
+    rows.sort((a,b)=>b.y-a.y);
+    pages.push(rows.map(r=>{
+      r.its.sort((a,b)=>a.x-b.x);
+      let line='',end=null;
+      for(const t of r.its){
+        if(end!==null&&t.x-end>6)line+='   ';else if(end!==null&&t.x-end>1.5)line+=' ';
+        line+=t.s;end=t.x+t.w;
+      }
+      return line;
+    }));
+  }
+  return pages;
+}
+const pdfNum=t=>{const v=parseFloat(String(t).replace(/[^0-9.\-]/g,''));
+  return Number.isFinite(v)?(/^\(.*\)$/.test(String(t).trim())?-v:v):0};
+/* One statement holds several sub-accounts, each with its own holdings and its own total. */
+function parseStatement(pages){
+  const PNUM=/^\*?\(?-?[\d,]+(?:\.\d+)?\)?$/;
+  const accs=[];let cur=null,inHold=false,pos=null,period='';
+  const flush=()=>{if(pos&&pos.sym&&cur)cur.hold.push(pos);pos=null};
+  for(const lines of pages){
+    const head=lines.slice(0,6).join(' ');
+    if(!period){const m=head.match(/Statement Period[:\s]+\w+ \d+\s*-\s*(\w+ \d+, \d{4})/);if(m)period=m[1]}
+    for(const raw of lines){
+      const t=raw.trim();if(!t)continue;
+      const end=t.match(/^ENDING ACCOUNT VALUE\s+\$?([\d,]+\.\d\d)/);
+      if(end){
+        const roth=/ROTH|IRA/.test(lines.slice(0,14).join(' '));
+        cur={kind:roth?'ira':'ind',total:pdfNum(end[1]),hold:[]};accs.push(cur);inHold=false;flush();continue;
+      }
+      if(t==='Holdings'){inHold=true;continue}
+      if(!inHold||!cur)continue;
+      /* the running head and foot repeat on every page and would otherwise be read as part of
+         the name of whichever holding is still open across the break */
+      if(/Acct #|Statement Period|^Page \d+ of|J\.P\. Morgan|Please read|STATEMENT SUMMARY|IMPORTANT INFORMATION|Self-Directed|disclosure/i.test(t))continue;
+      if(/^(Activity|Total Account Value)/.test(t)){flush();inHold=false;continue}
+      if(/^(TOTAL|Description|Acquisition|Est\.|\.+|I WILL SHOW|CASH & MONEY|EQUITY|Unless|\*|See additional|A - Average|M - Margin|MT - Mixed|AI Pricing)/.test(t)){
+        if(t.startsWith('TOTAL'))flush();continue;
+      }
+      const cols=t.split(/\s{2,}/).filter(Boolean);
+      const nums=cols.filter(c=>PNUM.test(c));
+      const sym=t.match(/Symbol:\s*([A-Z.\-]{1,8})/);
+      const isDate=c=>/^\d\d [A-Z][a-z]{2} \d{4}$/.test(c);
+      /* a security's name is set in capitals; the page's footer prose is not, which is how the
+         second line of a name is told from the small print that follows it */
+      const NAMEY=/^[A-Z][A-Z0-9 &.,'()\/\-]*$/;
+      if(!pos&&nums.length>=3&&NAMEY.test(cols[0])&&!isDate(cols[0])){
+        pos={name:cols[0],n:nums.map(x=>pdfNum(x))};continue;
+      }
+      if(pos){
+        if(sym){pos.sym=sym[1];flush();continue}
+        if(NAMEY.test(cols[0])&&!isDate(cols[0])&&!/^YIELD/.test(cols[0])&&(pos.name2||'').length<60)
+          pos.name2=(pos.name2?pos.name2+' ':'')+cols[0];
+      }
+    }
+  }
+  if(!accs.length)throw new Error('לא זיהיתי דוח של Chase. ודאו שזה קובץ ה-PDF המקורי של הדוח החודשי.');
+  /* a position line is quantity, price, market value, then unit cost, cost basis, gain;
+     the cash sweep has only its balance */
+  for(const a of accs){
+    a.holdings=a.hold.map(h=>{
+      const n=h.n,cash=/SWEEP|DEPOSIT SWEEP/i.test(h.name+' '+(h.name2||''));
+      const v=cash?n[0]:n[2];
+      const full=(h.name+(h.name2?' '+h.name2:'')).replace(/\s+/g,' ').replace(/\s+EST$/,'').trim();
+      return {id:'chase:'+h.sym,name:full,sym:h.sym,
+        qty:cash?v:n[0],price:cash?1:n[1],v,vc:v,cur:'דולר',cash,
+        gain:cash?0:(n.length>5?n[5]:0),tg:cash?0:(n.length>5?n[5]:0),tx:0};
+    });
+    delete a.hold;
+    const sum=a.holdings.reduce((x,h)=>x+h.v,0);
+    if(Math.abs(sum-a.total)>1)
+      throw new Error('הסכום של האחזקות לא מסתדר עם הסך בדוח. ייתכן שזה פורמט חדש.');
+  }
+  return {period,accounts:accs};
+}
 function parsePortfolio(rows){
   const hit=mapHeader(rows);
   if(!hit)throw new Error('לא זיהיתי את הכותרות בקובץ. ודאו שזו שורת האחזקות המקורית מהבנק.');
@@ -1793,7 +1926,15 @@ function parsePortfolio(rows){
   if(!out.length)throw new Error('לא נמצאו אחזקות בקובץ.');
   return out;
 }
-const ptypeOf=h=>S.ptype[h.id]||guessType(h);
+const ptypeOf=h=>h.cash?'cash':(S.ptype[h.id]||guessType(h));
+/* a portfolio can hang off one field or several, and older data stored a single key */
+function plinkOf(id){
+  const v=S.plink[id];
+  if(v!=null)return Array.isArray(v)?v:[v];
+  const a=ACCOUNTS.find(x=>x.id===id),cap=a&&a.fields.find(f=>f[2]==='cap');
+  return cap?[cap[0]]:[];
+}
+const plinkHas=(id,k)=>plinkOf(id).includes(k);
 function summarize(hold){
   const s={total:0,cur:{},cat:{},count:{},gain:0,loss:0,tax:0,shield:0};
   for(const h of hold){
@@ -1832,7 +1973,7 @@ function addSnapshot(accId,date,hold){
    so the six buckets stay apart for anyone, including colour-blind readers */
 const marketOf=h=>/[א-ת]/.test(h.name)?'il':(h.cur==='שקל'?'il':'intl');
 const catOf=h=>{const t=ptypeOf(h);return t==='stock'?'stock-'+marketOf(h):t};
-const CATS=[['stock-il','מניות ישראל'],['stock-intl','מניות חו״ל'],['fund','קרנות סל ו-ETF'],['bond','אג״ח']];
+const CATS=[['stock-il','מניות ישראל'],['stock-intl','מניות חו״ל'],['fund','קרנות סל ו-ETF'],['bond','אג״ח'],['cash','מזומן']];
 const CATLBL=Object.fromEntries(CATS);
 const catCol=c=>acol(TYPECOL[c.split('-')[0]]||'#6C6C70');
 const catHollow=c=>c.endsWith('-intl');
@@ -1855,36 +1996,47 @@ function paintPortfolio(accId,keep){
 }
 function portfolioBody(accId){
   const a=ACCOUNTS.find(x=>x.id===accId);
+  const pf=a&&a.cur==='USD'?usd:ils;
+  const mag=v=>pf(Math.abs(v)),sgn=v=>signedBy(v,pf);        /* a brokerage abroad reports in its own currency */
   const list=portsOf(accId),last=list[list.length-1],prev=list[list.length-2];
-  const inp=PRIV()?'':`<input type="file" id="pfile" accept=".xlsx,.csv,.txt" hidden>`;
+  const inp=PRIV()?'':`<input type="file" id="pfile" accept=".xlsx,.csv,.txt,.pdf" hidden>`;
   if(!last||!last.hold)
     return inp+`<div class="empty"><h2>${last?'אין פירוט לצילום הזה':'עוד לא הועלה קובץ'}</h2><p>העלו את קובץ האחזקות שייצאתם מ${esc(a.short)} (‎.xlsx‎ או ‎.csv‎). הקובץ נקרא במכשיר ולא נשלח לשום מקום.</p><label class="btn" style="cursor:pointer" for="pfile">בחירת קובץ</label></div>`;
   const hold=last.hold,s=summarize(hold),ps=prev&&prev.hold?summarize(prev.hold):null;
   const d=ps?s.total-ps.total:0;
   const filt=openPortfolio.filt,srt=openPortfolio.sort||(openPortfolio.sort='v');
-  let h=inp+`<div class="acc-head"><h1>תיק ניירות ערך</h1><div class="big">${ils(s.total)}</div>
+  let h=inp+`<div class="acc-head"><h1>תיק ניירות ערך</h1><div class="big">${pf(s.total)}</div>
   <div class="meta"><span class="n">${hold.length}</span> אחזקות · נכון ל-<span class="n">${dlong(last.date)}</span></div></div>`;
-  if(ps)h+=`<div class="chips"><div><small>מהצילום הקודם</small><b class="${cls(d)}">${arrow(d)} ${magIls(d)}</b> <span class="n ${cls(d)}">${ps.total?pct(d/ps.total,2):''}</span></div>
-  <div><small>רווח על הנייר</small><b class="${cls(s.gain+s.loss)}">${signedIls(s.gain+s.loss)}</b></div></div>`;
+  if(ps)h+=`<div class="chips"><div><small>מהצילום הקודם</small><b class="${cls(d)}">${arrow(d)} ${mag(d)}</b> <span class="n ${cls(d)}">${ps.total?pct(d/ps.total,2):''}</span></div>
+  <div><small>רווח על הנייר</small><b class="${cls(s.gain+s.loss)}">${sgn(s.gain+s.loss)}</b></div></div>`;
   // allocation — tapping a row filters the list below
   const cats=CATS.filter(([k])=>s.cat[k]);
   h+=`<section><h2>לפי סוג נכס <small>לחיצה מסננת</small></h2><div class="panel">
   <div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי סוג נכס">${cats.map(([k])=>`<i style="flex:${s.cat[k]} 0 0;background:${catCol(k)};${catHollow(k)?'opacity:.55':''}"></i>`).join('')}</div></div>`;
   for(const [k,lbl] of cats)
-    h+=`<button class="row dotted" data-filt="${k}" aria-pressed="${filt===k}">${dot(k)}<span><span class="nm">${lbl}</span><div class="sub"><span class="n">${s.count[k]}</span> אחזקות</div></span><span class="val"><b>${ils(s.cat[k])}</b><span class="n flat">${(s.cat[k]/s.total*100).toFixed(1)}%</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
+    h+=`<button class="row dotted" data-filt="${k}" aria-pressed="${filt===k}">${dot(k)}<span><span class="nm">${lbl}</span><div class="sub"><span class="n">${s.count[k]}</span> אחזקות</div></span><span class="val"><b>${pf(s.cat[k])}</b><span class="n flat">${(s.cat[k]/s.total*100).toFixed(1)}%</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
   h+=`</div></section>`;
+  const subs=[...new Set(hold.map(x=>x.acct).filter(Boolean))];
+  if(subs.length>1){
+    const SUBLBL={ind:'חשבון רגיל',ira:'IRA'},SUBCOL={ind:acol('#3B82F6'),ira:acol('#8A2D0C')};
+    const tot=k=>hold.filter(x=>x.acct===k).reduce((n,x)=>n+x.v,0);
+    h+=`<section><h2>לפי חשבון</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי חשבון">${
+      subs.map(k=>`<i style="flex:${tot(k)} 0 0;background:${SUBCOL[k]||acol('#6C6C70')}"></i>`).join('')}</div></div>`;
+    for(const k of subs)h+=`<div class="row dotted"><span class="spine" style="background:${SUBCOL[k]||acol('#6C6C70')}"></span><span><span class="nm">${esc(SUBLBL[k]||k)}</span><div class="sub"><span class="n">${hold.filter(x=>x.acct===k).length}</span> אחזקות</div></span><span class="val"><b>${pf(tot(k))}</b><span class="n flat">${(tot(k)/s.total*100).toFixed(1)}%</span></span></div>`;
+    h+=`</div></section>`;
+  }
   const CURCOL={'שקל':acol('#2F9E6E'),'דולר':acol('#3B82F6')};
   const curs=Object.keys(s.cur).sort((x,y)=>s.cur[y]-s.cur[x]);
   h+=`<section><h2>לפי מטבע</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי מטבע">${curs.map(k=>`<i style="flex:${s.cur[k]} 0 0;background:${CURCOL[k]||acol('#8A2D0C')}"></i>`).join('')}</div></div>`;
-  for(const k of curs)h+=`<div class="row dotted"><span class="spine" style="background:${CURCOL[k]||acol('#8A2D0C')}"></span><span class="nm">${esc(k)}</span><span class="val"><b>${ils(s.cur[k])}</b><span class="n flat">${(s.cur[k]/s.total*100).toFixed(1)}%</span></span></div>`;
+  for(const k of curs)h+=`<div class="row dotted"><span class="spine" style="background:${CURCOL[k]||acol('#8A2D0C')}"></span><span class="nm">${esc(k)}</span><span class="val"><b>${pf(s.cur[k])}</b><span class="n flat">${(s.cur[k]/s.total*100).toFixed(1)}%</span></span></div>`;
   h+=`</div></section>`;
   const taxOpen=!!openPortfolio.taxOpen;
   h+=`<section>${foldHead('taxp','מס על הנייר',' <small>לפי חישוב הבנק</small>',taxOpen)}
   <div id="taxp"${taxOpen?'':' hidden'}><div class="panel facts">
-  <div><small>רווח שטרם מומש</small><b class="up">${signedIls(s.gain)}</b></div>
-  <div><small>הפסד שטרם מומש</small><b class="${s.loss?'down':''}">${signedIls(s.loss)}</b></div>
-  <div><small>מס תיאורטי על הרווח</small><b>${ils(s.tax)}</b></div>
-  <div><small>מגן מס מההפסד</small><b>${ils(Math.abs(s.shield))}</b></div></div>
+  <div><small>רווח שטרם מומש</small><b class="up">${sgn(s.gain)}</b></div>
+  <div><small>הפסד שטרם מומש</small><b class="${s.loss?'down':''}">${sgn(s.loss)}</b></div>
+  <div><small>מס תיאורטי על הרווח</small><b>${pf(s.tax)}</b></div>
+  <div><small>מגן מס מההפסד</small><b>${pf(Math.abs(s.shield))}</b></div></div>
   <p class="hint">הסכומים הם על הנייר. הפסד מקוזז לצורכי מס רק אחרי מכירה בפועל.</p></div></section>`;
   // holdings, filtered
   const shown=filt?hold.filter(x=>catOf(x)===filt):hold;
@@ -1893,13 +2045,13 @@ function portfolioBody(accId){
   h+=`<section id="holds"><h2>אחזקות</h2>
   <div class="chiprow">${[['','הכול']].concat(cats).map(([k,lbl])=>`<button data-filt="${k}" aria-pressed="${(filt||'')===k}">${k?dot(k):''}${esc(lbl||'הכול')}</button>`).join('')}</div>
   <div class="segbar" role="tablist">${[['v','לפי שווי'],['g','הרווחים'],['l','ההפסדים']].map(([k,t])=>`<button role="tab" data-sort="${k}" aria-selected="${k===srt}">${t}</button>`).join('')}</div>
-  <p class="hint" style="padding:0 4px 8px">${filt?`<span class="n">${shown.length}</span> מתוך <span class="n">${hold.length}</span> אחזקות · <b class="n">${ils(sub)}</b> · <span class="n">${(sub/s.total*100).toFixed(1)}%</span> מהתיק`:`<span class="n">${hold.length}</span> אחזקות`}</p>
+  <p class="hint" style="padding:0 4px 8px">${filt?`<span class="n">${shown.length}</span> מתוך <span class="n">${hold.length}</span> אחזקות · <b class="n">${pf(sub)}</b> · <span class="n">${(sub/s.total*100).toFixed(1)}%</span> מהתיק`:`<span class="n">${hold.length}</span> אחזקות`}</p>
   <div class="panel">`;
   if(!shown.length)h+=`<div class="row"><span class="nm flat">אין אחזקות בקטגוריה הזו</span></div>`;
   for(const x of shown.slice().sort(sorters[srt])){
     const c=catOf(x);
-    h+=`<button class="row dotted" data-hold="${esc(x.id)}">${dot(c)}<span><span class="nm" title="${esc(x.name)}">${esc(short(x.name))}</span><div class="sub">${esc(CATLBL[c])} · <span class="n">${(x.v/s.total*100).toFixed(1)}%</span>${x.cur!=='שקל'?' · '+esc(x.cur):''}</div>${recBadge(x)?`<div class="sub" style="margin-top:4px">${recBadge(x)}</div>`:''}</span>
-    <span class="val"><b>${ils(x.v)}</b><span class="n ${cls(x.tg)}">${x.tg?arrow(x.tg)+' '+magIls(x.tg):''}</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
+    h+=`<button class="row dotted" data-hold="${esc(x.id)}">${dot(c)}<span><span class="nm" title="${esc(x.name)}">${esc(short(x.name))}</span><div class="sub">${x.sym?'<span class="n">'+esc(x.sym)+'</span> · ':''}${esc(CATLBL[c])} · <span class="n">${(x.v/s.total*100).toFixed(1)}%</span>${x.cur!=='שקל'?' · '+esc(x.cur):''}</div>${recBadge(x)?`<div class="sub" style="margin-top:4px">${recBadge(x)}</div>`:''}</span>
+    <span class="val"><b>${pf(x.v)}</b><span class="n ${cls(x.tg)}">${x.tg?arrow(x.tg)+' '+mag(x.tg):''}</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
   }
   h+=`</div></section>`;
   if(list.length>1){
@@ -1907,7 +2059,7 @@ function portfolioBody(accId){
     const tot=p=>p.hold?summarize(p.hold).total:(p.sum?p.sum.total:0);
     for(let i=list.length-1;i>=0;i--){
       const dd=i?tot(list[i])-tot(list[i-1]):0;
-      h+=`<div class="row dotted"><span class="spine" style="background:${i?(dd>0?'var(--up)':dd<0?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n">${dlong(list[i].date)}</span><span class="val"><b>${ils(tot(list[i]))}</b>${i?`<span class="n ${cls(dd)}">${arrow(dd)} ${magIls(dd)}</span>`:'<span class="flat">ראשון</span>'}</span></div>`;
+      h+=`<div class="row dotted"><span class="spine" style="background:${i?(dd>0?'var(--up)':dd<0?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n">${dlong(list[i].date)}</span><span class="val"><b>${pf(tot(list[i]))}</b>${i?`<span class="n ${cls(dd)}">${arrow(dd)} ${mag(dd)}</span>`:'<span class="flat">ראשון</span>'}</span></div>`;
     }
     h+=`</div></section>`;
   }
@@ -2009,29 +2161,62 @@ function openHolding(accId,id){
   recPaintOpen.hold=paint;
   pull(false);                                                     /* opening the share is the request */
 }
+const isPdf=f=>/\.pdf$/i.test(f.name||'')||f.type==='application/pdf';
+/* a PDF statement carries several sub-accounts; a bank spreadsheet carries one list. both come
+   back as one flat holdings list, with each holding tagged by the sub-account it sits in. */
+async function readHoldings(file){
+  if(!isPdf(file))return {hold:parsePortfolio(await readSheet(file)),subs:null,date:''};
+  const st=parseStatement(await readPdfLines(file));
+  const hold=[];
+  for(const acc of st.accounts)
+    for(const h of acc.holdings)hold.push({...h,id:acc.kind+':'+h.sym,acct:acc.kind});
+  let date='';
+  const m=st.period&&st.period.match(/^(\w+) (\d+), (\d{4})$/);
+  if(m){const mi=['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(m[1]);
+    if(mi>=0)date=m[3]+'-'+String(mi+1).padStart(2,'0')+'-'+String(+m[2]).padStart(2,'0')}
+  return {hold,subs:st.accounts.map(x=>({kind:x.kind,total:x.total,n:x.holdings.length})),date};
+}
 async function importPortfolio(accId,file){
   const a=ACCOUNTS.find(x=>x.id===accId);
+  const pf=a&&a.cur==='USD'?usd:ils;
   try{
-    const hold=parsePortfolio(await readSheet(file));
+    const {hold,subs,date:sdate}=await readHoldings(file);
     const s=summarize(hold);
     const fields=a.fields.map(([k,nm])=>[k,nm]);
-    const guess=S.plink[accId]||(fields.find(([k,nm])=>/שוק ההון|קרנות|השקעות/.test(nm))||fields[fields.length-1])[0];
-    openLayer(`<div class="sheet modal" role="dialog" aria-label="קובץ חדש"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>קובץ נקרא</h2><span></span></header><div class="body">
-    <div class="acc-head"><div class="big">${ils(s.total)}</div><div class="meta"><span class="n">${hold.length}</span> אחזקות ב${esc(a.short)}</div></div>
-    <div class="grp"><div class="fld"><label for="pdate">תאריך הצילום</label><input id="pdate" type="date" value="${today()}"></div>
-    <div class="fld"><label for="pfld">ממלא את השדה</label><select id="pfld" style="min-height:44px;border:0;background:transparent;color:var(--tink);font-size:17px">${fields.map(([k,nm])=>`<option value="${k}" ${k===guess?'selected':''}>${esc(nm)}</option>`).join('')}</select></div></div>
-    <p class="hint">הצילום יישמר בתיק של ${esc(a.short)}, והסכום יוצע לעדכון היתרות של אותו תאריך.</p>
+    const guess=plinkOf(accId)[0]||(fields.find(([k,nm])=>/שוק ההון|קרנות|השקעות/.test(nm))||fields[fields.length-1])[0];
+    const SUBLBL={ind:'חשבון רגיל',ira:'IRA'};
+    const prev=plinkOf(accId);
+    const pick=(k,sel)=>`<select id="pfld-${k}" style="min-height:44px;border:0;background:transparent;color:var(--tink);font-size:17px">${fields.map(([fk,nm])=>`<option value="${fk}" ${fk===sel?'selected':''}>${esc(nm)}</option>`).join('')}</select>`;
+    const subRows=subs?subs.map((x,i)=>{
+      const want=prev[i]||(x.kind==='ira'&&(fields.find(([,nm])=>/IRA|גמל|פנסי|השתלמות/i.test(nm))||[])[0])||guess;
+      return `<div class="fld"><label for="pfld-${x.kind}">${esc(SUBLBL[x.kind]||x.kind)}<small>${pf(x.total)} · <span class="n">${x.n}</span> אחזקות</small></label>${pick(x.kind,want)}</div>`;
+    }).join(''):'';
+    openLayer(`<div class="sheet modal" role="dialog" aria-label="קובץ חדש"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>${subs?'דוח נקרא':'קובץ נקרא'}</h2><span></span></header><div class="body">
+    <div class="acc-head"><div class="big">${pf(s.total)}</div><div class="meta"><span class="n">${hold.length}</span> אחזקות ב${esc(a.short)}</div></div>
+    <div class="grp"><div class="fld"><label for="pdate">תאריך הצילום</label><input id="pdate" type="date" value="${sdate||today()}"></div>
+    ${subs?subRows:`<div class="fld"><label for="pfld-one">ממלא את השדה</label>${pick('one',guess)}</div>`}</div>
+    <p class="hint">${subs?'כל חשבון בדוח ממלא שדה אחד. הבחירה תיזכר לפעם הבאה.':'הצילום יישמר בתיק של '+esc(a.short)+', והסכום יוצע לעדכון היתרות של אותו תאריך.'}</p>
     <section><button class="btn" id="psave">שמירה</button></section></div></div>`);
     $('#psave').onclick=async()=>{
-      const date=$('#pdate').value,fld=$('#pfld').value;
+      const date=$('#pdate').value;
       if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast('בחרו תאריך');return}
-      addSnapshot(accId,date,hold);S.plink[accId]=fld;await save();
+      /* one figure per field: a field chosen twice gets the sum of both sub-accounts */
+      const vals={},keys=[];
+      if(subs){for(const x of subs){const k=$('#pfld-'+x.kind).value;
+        vals[k]=(vals[k]||0)+x.total;if(!keys.includes(k))keys.push(k)}}
+      else{const k=$('#pfld-one').value;vals[k]=s.total;keys.push(k)}
+      addSnapshot(accId,date,hold);
+      S.plink[accId]=keys.length>1?keys:keys[0];
+      await save();
       refreshRecs(false);                       /* new holdings get their consensus without being asked */
       closeLayer();
       const u=S.updates.find(x=>x.date===date);
+      const sum=Object.values(vals).reduce((n,v)=>n+v,0);
       setTimeout(async()=>{
-        if(u){ if(confirm('לעדכן את היתרה בעדכון מ-'+dlong(date)+' ל-'+ils(s.total)+'?')){u.vals[fld]=Math.round(s.total);await save();toast('היתרה עודכנה')} }
-        else if(confirm('אין עדכון יתרות בתאריך הזה. ליצור אחד עם הסכום?')){closeLayer();setTimeout(()=>openForm(null,{date,vals:{[fld]:Math.round(s.total)}}),330);return}
+        if(u){ if(confirm('לעדכן את היתרות בעדכון מ-'+dlong(date)+' ל-'+pf(sum)+'?')){for(const k in vals)u.vals[k]=Math.round(vals[k]);await save();toast('היתרות עודכנו')} }
+        else if(confirm('אין עדכון יתרות בתאריך הזה. ליצור אחד עם הסכומים?')){closeLayer();
+          const pre={};for(const k in vals)pre[k]=Math.round(vals[k]);
+          setTimeout(()=>openForm(null,{date,vals:pre}),330);return}
         openPortfolio.filt=null;paintPortfolio(accId);
       },260);
     };
