@@ -278,6 +278,7 @@ table.cmp .d small{display:block;font-size:12px}
 .lock .pad button:active{background:#FFFFFF3D}
 .lock .pad button.bare{background:transparent;font-size:26px}
 .lock .pad button[disabled]{opacity:.4}
+.lock .pad button.ok{font-family:inherit;font-size:28px;font-weight:600}
 .lock form{display:flex;flex-direction:column;gap:12px;width:100%;margin-top:34px}
 .lock input{width:100%;min-height:54px;box-sizing:border-box;border:0;border-radius:14px;background:#FFFFFF1F;
   color:#fff;font-family:var(--num);font-size:22px;letter-spacing:.18em;text-align:center;direction:ltr}
@@ -481,7 +482,7 @@ function save(){
   saveChain=saveChain.then(async()=>{
     const plain=JSON.stringify({v:3,accounts:ACCOUNTS,updates:S.updates,ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,td:S.td,tick:S.tick,rec:S.rec});
     let out;
-    if(cryptoKey){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},cryptoKey,new TextEncoder().encode(plain));out={enc:1,salt:encMeta.salt,iv:b64(iv),ct:b64(ct)};if(encMeta.pin)out.pin=1}
+    if(cryptoKey){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},cryptoKey,new TextEncoder().encode(plain));out={enc:1,salt:encMeta.salt,iv:b64(iv),ct:b64(ct)};if(encMeta.pinLen)out.pinLen=encMeta.pinLen}
     else out={enc:0,data:JSON.parse(plain)};
     localStorage.setItem(KEY,JSON.stringify(out));
   }).catch(e=>toast('השמירה נכשלה: '+e.message));
@@ -524,14 +525,14 @@ async function unlock(pass){
     const dk=await crypto.subtle.importKey('raw',dkRaw,{name:'AES-GCM'},false,['decrypt']);
     applyPlain(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},dk,unb64(raw.ct)));
     const salt=crypto.getRandomValues(new Uint8Array(16));
-    cryptoKey=await deriveKey(pass,salt);encMeta={salt:b64(salt),pin:/^\d{4}$/.test(pass)};
+    cryptoKey=await deriveKey(pass,salt);encMeta={salt:b64(salt),pinLen:pinLenOf(pass)};
     await save();
     return;
   }
   const k=await deriveKey(pass,unb64(raw.salt));
   applyPlain(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},k,unb64(raw.ct)));
-  cryptoKey=k;encMeta={salt:raw.salt,pin:/^\d{4}$/.test(pass)};
-  if(!!raw.pin!==encMeta.pin)save();
+  cryptoKey=k;encMeta={salt:raw.salt,pinLen:pinLenOf(pass)};
+  if(storedPinLen(raw)!==encMeta.pinLen)save();
 }
 function loadPorts(d){
   S.ports={};S.ptype={};S.plink={};S.priv=!!d.priv;S.pmask={};
@@ -1574,33 +1575,43 @@ function grab(L){
 }
 
 /* ---------- passcode ---------- */
+/* a code of 4-8 digits is typed on the keypad; its length is stored beside the salt so the
+   keypad knows when the last digit has arrived */
+const pinLenOf=p=>/^\d{4,8}$/.test(p)?p.length:0;
+const storedPinLen=r=>(r&&(r.pinLen||(r.pin?4:0)))||0;
 function lockScreen(){
   const raw=readRaw()||{};
-  /* a four-digit code can be typed on the keypad. an older code may be longer or hold letters,
-     and nothing but the code itself can tell us which — so the stored header carries the shape,
-     and anything without that mark gets the text field. */
-  let mode=raw.pin?'pin':'text';
+  /* the keypad comes up for everyone. when the code's length is known (every code set or opened
+     since this build) the last digit opens it; when it isn't, a check key does. letters are one
+     tap away, for a code from before codes were digits only. */
+  const len=storedPinLen(raw);
+  let mode='pin';
   const el=document.createElement('div');el.className='lock';
   const bar=[...document.querySelectorAll('meta[name="theme-color"]')].map(m=>[m,m.content]);
   bar.forEach(([m])=>m.content='#062A52');
   document.body.appendChild(el);
 
   let code='',busy=false;
-  const KEYS=['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  const MAX=len||8;
+  const slots=()=>len||Math.max(4,code.length);
+  const okKey=len?'':'✓';
+  const KEYS=['1','2','3','4','5','6','7','8','9',okKey,'0','⌫'];
 
   const body=()=>mode==='pin'
-    ? `<div class="dots" role="img" aria-label="${code.length} מתוך 4 ספרות">${
-        [0,1,2,3].map(i=>`<i class="${i<code.length?'on':''}"></i>`).join('')}</div>
+    ? `<div class="dots" role="img" aria-label="הוקלדו ${code.length} ספרות">${
+        Array.from({length:slots()},(_,i)=>`<i class="${i<code.length?'on':''}"></i>`).join('')}</div>
        <div class="msg" role="alert"></div>
        <div class="pad">${KEYS.map(k=>k===''
           ? `<button type="button" class="bare" tabindex="-1" aria-hidden="true"></button>`
+          : k==='✓'
+          ? `<button type="button" class="bare ok" data-k="ok" aria-label="פתיחה"${code.length<4?' disabled':''}>✓</button>`
           : `<button type="button" class="${k==='⌫'?'bare':''}" data-k="${esc(k)}" aria-label="${k==='⌫'?'מחיקת ספרה':k}">${k}</button>`).join('')}</div>
        <button type="button" class="swap">קוד עם אותיות</button>`
     : `<div class="msg" role="alert"></div>
        <form><label for="lp" class="sr">קוד נעילה</label>
-       <input id="lp" type="password" inputmode="text" autocomplete="current-password" placeholder="קוד הנעילה" autofocus>
+       <input id="lp" type="password" inputmode="text" autocomplete="current-password" placeholder="קוד הנעילה">
        <button class="btn">פתיחה</button></form>
-       ${raw.pin?`<button type="button" class="swap">מקלדת ספרות</button>`:`<span class="swap" style="opacity:0" aria-hidden="true"></span>`}`;
+       <button type="button" class="swap">מקלדת ספרות</button>`;
 
   const paint=()=>{
     el.innerHTML=`<span class="blob b1" aria-hidden="true"></span><span class="blob b2" aria-hidden="true"></span>
@@ -1627,9 +1638,10 @@ function lockScreen(){
       if(busy)return;
       const k=b.dataset.k;
       if(k==='⌫'){code=code.slice(0,-1);paint();return}
-      if(code.length>=4)return;
+      if(k==='ok'){if(code.length>=4)go(code);return}
+      if(code.length>=MAX)return;
       code+=k;paint();
-      if(code.length===4)go(code);
+      if(len&&code.length===len)go(code);
     });
     const sw=el.querySelector('button.swap');
     if(sw)sw.onclick=()=>{mode=mode==='pin'?'text':'pin';code='';paint();
@@ -1638,20 +1650,19 @@ function lockScreen(){
     if(f)f.onsubmit=e=>{e.preventDefault();go(el.querySelector('#lp').value)};
   };
   paint();
-  const i=el.querySelector('input');if(i)i.focus();
 }
 function setPass(){
   if(!(window.crypto&&crypto.subtle)){toast('נעילה בקוד זמינה רק כשהאפליקציה נטענת ב-https');return}
   openLayer(`<div class="sheet modal" role="dialog" aria-label="קוד נעילה"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>קוד נעילה</h2><span></span></header><div class="body"><form id="pfrm">
   <div class="err" id="perr" hidden role="alert"></div>
-  <div class="grp"><div class="fld"><label for="p1">קוד חדש<small>ארבע ספרות</small></label><input id="p1" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password"></div>
-  <div class="fld"><label for="p2">הקוד שוב</label><input id="p2" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password"></div></div>
+  <div class="grp"><div class="fld"><label for="p1">קוד חדש<small>4 עד 8 ספרות</small></label><input id="p1" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div>
+  <div class="fld"><label for="p2">הקוד שוב</label><input id="p2" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div></div>
   <p class="hint" style="padding-top:10px">בלי הקוד אי אפשר לפתוח את האפליקציה או לשחזר את הנתונים. שמרו גיבוי לפני שמפעילים נעילה.</p>
   <section><button class="btn">הפעלת נעילה</button></section></form></div></div>`);
   $('#pfrm').onsubmit=async e=>{e.preventDefault();const a=$('#p1').value,b=$('#p2').value,err=$('#perr');
-    const msg=!/^\d{4}$/.test(a)?'הקוד הוא ארבע ספרות.':a!==b?'שני הקודים לא זהים.':'';
+    const msg=!pinLenOf(a)?'הקוד צריך להיות 4 עד 8 ספרות.':a!==b?'שני הקודים לא זהים.':'';
     if(msg){err.textContent=msg;err.hidden=false;return}
-    const salt=crypto.getRandomValues(new Uint8Array(16));cryptoKey=await deriveKey(a,salt);encMeta={salt:b64(salt),pin:true};await save();closeLayer();render();toast('הנעילה הופעלה')};
+    const salt=crypto.getRandomValues(new Uint8Array(16));cryptoKey=await deriveKey(a,salt);encMeta={salt:b64(salt),pinLen:a.length};await save();closeLayer();render();toast('הנעילה הופעלה')};
 }
 async function rmPass(){if(!confirm('לבטל את הנעילה? הנתונים יישמרו במכשיר בלי הצפנה.'))return;cryptoKey=null;encMeta=null;await save();render();toast('הנעילה בוטלה')}
 
