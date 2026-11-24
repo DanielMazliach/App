@@ -253,24 +253,70 @@ table.cmp .d small{display:block;font-size:12px}
 .empty h2{font-size:22px;font-weight:700;letter-spacing:-.016em;margin:0 0 6px;color:var(--ink)}
 .empty p{margin:0 0 22px;font-size:15px}
 .cover{position:fixed;inset:0;background:var(--bg);z-index:38}
-.lock{position:fixed;inset:0;background:var(--bg);color:var(--ink);z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:12px}
-.lock form{display:contents}
-.lock h1{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:0}
-.lock p{margin:0 0 6px;color:var(--muted);font-size:15px;text-align:center}
-.lock input{width:240px;height:52px;border-radius:12px;border:0;background:var(--surface);font-size:22px;text-align:center;direction:ltr}
-.lock .btn{width:240px}
-.lock .msg{color:var(--down);min-height:20px;font-size:15px}
+/* the lock screen keeps its own ground in both colour schemes: two slow lights drifting behind
+   a deep blue, so the locked state is recognised before a word is read */
+.lock{position:fixed;inset:0;z-index:40;overflow:hidden;background:#062A52;color:#fff;
+  display:flex;flex-direction:column;align-items:center;
+  padding:calc(78px + var(--sat)) 24px calc(34px + var(--sab))}
+.lock .blob{position:absolute;border-radius:50%;filter:blur(58px);will-change:transform;pointer-events:none}
+.lock .b1{width:320px;height:320px;top:-40px;inset-inline-start:-70px;background:#1E7FE0;opacity:.72;animation:ldrift1 26s ease-in-out infinite}
+.lock .b2{width:300px;height:300px;top:42%;inset-inline-end:-90px;background:#1FAE9C;opacity:.5;animation:ldrift2 32s ease-in-out infinite}
+@keyframes ldrift1{0%{transform:translate(-6%,-4%) scale(1)}50%{transform:translate(14%,10%) scale(1.22)}100%{transform:translate(-6%,-4%) scale(1)}}
+@keyframes ldrift2{0%{transform:translate(10%,6%) scale(1.1)}50%{transform:translate(-12%,-8%) scale(.9)}100%{transform:translate(10%,6%) scale(1.1)}}
+.lock .in{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
+  width:100%;max-width:330px;height:100%}
+.lock h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:16px 0 0}
+.lock p{margin:5px 0 0;color:#CFE2F7;font-size:15px;text-align:center}
+.lock .dots{display:flex;gap:22px;margin-top:34px;height:13px;direction:ltr}
+.lock .dots i{width:13px;height:13px;border-radius:50%;box-sizing:border-box;border:1.5px solid #FFFFFF66;
+  transition:background .18s ease,transform .18s cubic-bezier(.32,.72,0,1)}
+.lock .dots i.on{background:#fff;border-color:#fff;transform:scale(1.12)}
+.lock .msg{min-height:22px;margin-top:16px;font-size:15px;font-weight:600;color:#FFD3CE;text-align:center}
+.lock .pad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 24px;justify-items:center;margin-top:auto;direction:ltr}
+.lock .pad button{display:flex;align-items:center;justify-content:center;width:76px;height:76px;border-radius:50%;
+  border:0;background:#FFFFFF1F;color:#fff;font-family:var(--num);font-size:31px;font-weight:400}
+.lock .pad button:active{background:#FFFFFF3D}
+.lock .pad button.bare{background:transparent;font-size:26px}
+.lock .pad button[disabled]{opacity:.4}
+.lock form{display:flex;flex-direction:column;gap:12px;width:100%;margin-top:34px}
+.lock input{width:100%;min-height:54px;box-sizing:border-box;border:0;border-radius:14px;background:#FFFFFF1F;
+  color:#fff;font-family:var(--num);font-size:22px;letter-spacing:.18em;text-align:center;direction:ltr}
+.lock input::placeholder{letter-spacing:normal;font-size:16px;color:#FFFFFF8C}
+.lock input:focus{outline:0;box-shadow:inset 0 0 0 2px #FFFFFF99}
+.lock form .btn{background:#FFFFFF;color:#0A4FA0}
+.lock .swap{margin-top:auto;padding-top:22px;border:0;background:transparent;color:#CFE2F7;
+  font:inherit;font-size:15px;font-weight:600;min-height:44px}
+.lock .shake{animation:lshake .42s ease-in-out}
+@keyframes lshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+@media (prefers-reduced-motion:reduce){.lock .blob{animation:none}.lock .shake{animation:none}.lock .dots i{transition:none}}
 textarea{width:100%;min-height:120px;border:0;border-radius:10px;background:var(--bg);padding:10px;font-size:13px;direction:ltr;font-family:ui-monospace,Menlo,monospace}
 svg.chart{display:block;width:100%;height:auto;touch-action:pan-y;direction:ltr}
 svg.chart text{font-family:var(--num);font-size:11px;fill:#8E8E93}
 svg.chart .g{stroke:var(--cgrid)}
 svg.chart .cross{stroke:var(--ccross)}
 svg.chart circle{stroke:var(--cring)}
+/* the trading chart runs to both edges of the sheet; only its head and its tabs are inset */
+.pxwrap{margin:0 -16px}
+.pxhead{padding:0 20px 10px;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px}
+.pxhead .pxval{font-size:30px;font-weight:700;font-family:var(--num);letter-spacing:-.02em;line-height:1.1;flex:0 0 auto}
+.pxhead .pxdelta{font-size:15px;font-weight:600;flex:0 0 auto}
+.pxhead .pxwhen{flex:1 0 100%;font-size:12.5px;color:var(--muted);min-height:16px}
+svg.pxchart{display:block;width:100%;height:170px;touch-action:pan-y;direction:ltr;overflow:visible}
+svg.pxchart .pxbase{stroke:var(--muted);stroke-opacity:.45;stroke-width:1;stroke-dasharray:3 4;vector-effect:non-scaling-stroke}
+svg.pxchart .pxcross{stroke:var(--ccross);stroke-width:1}
+svg.pxchart .pxknob{stroke:var(--surface);stroke-width:2;vector-effect:non-scaling-stroke}
+.pxtabs{display:flex;gap:2px;background:var(--segbg);border-radius:9px;padding:2px;margin:14px 20px 0}
+.pxtabs button{position:relative;flex:1;min-height:36px;border:0;border-radius:7px;background:transparent;color:var(--ink);font:inherit;font-size:13px;font-weight:500}
+.pxtabs button::before{content:"";position:absolute;inset:-4px 0;pointer-events:auto}
+.pxtabs button[aria-selected="true"]{background:var(--segon);font-weight:600;box-shadow:var(--segsh)}
+.hint.pxnote{display:flex;align-items:center;justify-content:space-between;gap:12px;white-space:nowrap}
+.hint.pxnote>span{overflow:hidden;text-overflow:ellipsis}
+.hint.pxnote button{flex:0 0 auto;border:0;background:transparent;color:var(--tink);font:inherit;font-size:13px;font-weight:600;min-height:44px;padding-inline:4px}
 .chart-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
 .chart-top b{font-size:22px;font-family:var(--num);letter-spacing:-.2px}
 .chart-top .n{font-size:14px;font-weight:600}
 .chartbox .readout{min-height:17px;font-size:12.5px;color:var(--muted);margin:0 0 4px;direction:rtl}
-.roll .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.roll .sr,.lock .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .roll{display:inline-flex;direction:ltr;font-variant-numeric:tabular-nums;white-space:nowrap}
 .roll .dig,.roll .sep{display:inline-block;height:1em;line-height:1;vertical-align:bottom}
 .roll .dig{overflow:hidden}
@@ -435,7 +481,7 @@ function save(){
   saveChain=saveChain.then(async()=>{
     const plain=JSON.stringify({v:3,accounts:ACCOUNTS,updates:S.updates,ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,td:S.td,tick:S.tick,rec:S.rec});
     let out;
-    if(cryptoKey){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},cryptoKey,new TextEncoder().encode(plain));out={enc:1,salt:encMeta.salt,iv:b64(iv),ct:b64(ct)}}
+    if(cryptoKey){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},cryptoKey,new TextEncoder().encode(plain));out={enc:1,salt:encMeta.salt,iv:b64(iv),ct:b64(ct)};if(encMeta.pin)out.pin=1}
     else out={enc:0,data:JSON.parse(plain)};
     localStorage.setItem(KEY,JSON.stringify(out));
   }).catch(e=>toast('השמירה נכשלה: '+e.message));
@@ -478,13 +524,14 @@ async function unlock(pass){
     const dk=await crypto.subtle.importKey('raw',dkRaw,{name:'AES-GCM'},false,['decrypt']);
     applyPlain(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},dk,unb64(raw.ct)));
     const salt=crypto.getRandomValues(new Uint8Array(16));
-    cryptoKey=await deriveKey(pass,salt);encMeta={salt:b64(salt)};
+    cryptoKey=await deriveKey(pass,salt);encMeta={salt:b64(salt),pin:/^\d{4}$/.test(pass)};
     await save();
     return;
   }
   const k=await deriveKey(pass,unb64(raw.salt));
   applyPlain(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},k,unb64(raw.ct)));
-  cryptoKey=k;encMeta={salt:raw.salt};
+  cryptoKey=k;encMeta={salt:raw.salt,pin:/^\d{4}$/.test(pass)};
+  if(!!raw.pin!==encMeta.pin)save();
 }
 function loadPorts(d){
   S.ports={};S.ptype={};S.plink={};S.priv=!!d.priv;S.pmask={};
@@ -1062,7 +1109,7 @@ async function fetchPx(sym){
   if(!S.td)throw new Error('no-key');
   const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),12000);
   try{
-    const r=await fetch('https://api.twelvedata.com/time_series?interval=1day&outputsize=260&symbol='+
+    const r=await fetch('https://api.twelvedata.com/time_series?interval=1day&outputsize=1300&symbol='+
       encodeURIComponent(sym)+'&apikey='+encodeURIComponent(S.td),{signal:ctl.signal});
     const j=await r.json();
     if(j.code===401||j.code===403)throw new Error('key');
@@ -1081,6 +1128,76 @@ function priceData(x,accId){
   return {src:'own',t,pts:priceSeries(accId,x.id,365)};
 }
 const pxFmt=()=>v=>nf0.format(Math.round(v*100)/100);
+/* a trading chart reads by shape, not by numbers on an axis: no grid, no tick labels, a dashed
+   line at the price the range opened on, and the headline above it changes as a finger drags. */
+const PXR=[['w','שבוע',7],['m','חודש',31],['q','3 חודשים',92],['y','שנה',366],['a','5 שנים',0]];
+let pxRange='y';
+function pxSlice(pts,key){
+  const r=PXR.find(x=>x[0]===key)||PXR[3];
+  if(!r[2])return pts;
+  const from=new Date(Date.now()-r[2]*864e5).toISOString().slice(0,10);
+  const out=pts.filter(p=>p.d>=from);
+  return out.length>=2?out:pts.slice(-2);
+}
+/* dragging across the chart moves the headline to the day under the finger and back on release */
+function wireScrub(box,pts){
+  const svg=box.querySelector('svg.pxchart'),hit=box.querySelector('.pxhit');
+  if(!svg||!hit)return;
+  const cross=svg.querySelector('.pxcross'),knob=svg.querySelector('.pxknob');
+  const val=box.querySelector('.pxval'),dl=box.querySelector('.pxdelta'),when=box.querySelector('.pxwhen');
+  const xs=hit.dataset.xs.split(',').map(Number);
+  const fmt=pxFmt(),first=pts[0].v,base=dl.textContent,baseWhen=when.textContent;
+  const show=i=>{
+    const p=pts[i],d=p.v-first;
+    val.textContent=fmt(p.v);
+    dl.textContent=arrow(d)+' '+magBy(d,fmt)+(first?' · '+pct(d/first,1):'');
+    dl.className='n pxdelta '+cls(d);
+    when.textContent=dlong(p.d);
+    const vb=svg.viewBox.baseVal,y=parseFloat(svg.querySelector('polyline').getAttribute('points').split(' ')[i].split(',')[1]);
+    cross.setAttribute('x1',xs[i]);cross.setAttribute('x2',xs[i]);cross.setAttribute('opacity','1');
+    knob.setAttribute('cx',xs[i]);knob.setAttribute('cy',y);knob.setAttribute('opacity','1');
+  };
+  const rest=()=>{
+    const p=pts[pts.length-1],d=p.v-first;
+    val.textContent=fmt(p.v);dl.textContent=base;dl.className='n pxdelta '+cls(d);
+    when.textContent=baseWhen;cross.setAttribute('opacity','0');knob.setAttribute('opacity','0');
+  };
+  const at=cx=>{
+    const r=svg.getBoundingClientRect();
+    const vx=(cx-r.left)/r.width*svg.viewBox.baseVal.width;
+    let best=0,bd=Infinity;
+    for(let i=0;i<xs.length;i++){const dd=Math.abs(xs[i]-vx);if(dd<bd){bd=dd;best=i}}
+    show(best);
+  };
+  let on=false;
+  hit.addEventListener('pointerdown',e=>{on=true;hit.setPointerCapture(e.pointerId);at(e.clientX)});
+  hit.addEventListener('pointermove',e=>{if(on)at(e.clientX)});
+  for(const ev of ['pointerup','pointercancel','pointerleave'])hit.addEventListener(ev,()=>{if(on){on=false;rest()}});
+}
+/* no axes, no grid, no markers — just the line, its baseline and a fill under it */
+function pxChart(pts,col,label){
+  const W=358,H=170,PADY=10;
+  const vs=pts.map(p=>p.v);
+  let lo=Math.min(...vs),hi=Math.max(...vs);
+  if(hi===lo){hi+=Math.abs(hi)*0.01||1;lo-=Math.abs(lo)*0.01||1}
+  const x=i=>pts.length<2?W/2:i*W/(pts.length-1);
+  const y=v=>PADY+(hi-v)*(H-PADY*2)/(hi-lo);
+  const pt=pts.map((p,i)=>x(i).toFixed(2)+','+y(p.v).toFixed(2)).join(' ');
+  const base=y(pts[0].v).toFixed(2);
+  const id='g'+Math.random().toString(36).slice(2,8);
+  return `<svg class="pxchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(label)}">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${col}" stop-opacity=".18"></stop>
+      <stop offset="1" stop-color="${col}" stop-opacity="0"></stop></linearGradient></defs>
+    <polygon fill="url(#${id})" points="0,${H} ${pt} ${W},${H}"></polygon>
+    <line class="pxbase" x1="0" x2="${W}" y1="${base}" y2="${base}"></line>
+    <polyline fill="none" stroke="${col}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+      vector-effect="non-scaling-stroke" points="${pt}"></polyline>
+    <line class="pxcross" x1="0" x2="0" y1="0" y2="${H}" opacity="0"></line>
+    <circle class="pxknob" r="4.5" cx="0" cy="0" fill="${col}" opacity="0"></circle>
+    <rect class="pxhit" x="0" y="0" width="${W}" height="${H}" fill="transparent"
+      data-xs="${pts.map((p,i)=>x(i).toFixed(1)).join(',')}"></rect></svg>`;
+}
 function priceBlock(x,accId){
   const {src,t,pts}=priceData(x,accId);
   const unit=x.cur==='שקל'?'אגורות':esc(x.cur);
@@ -1095,21 +1212,34 @@ function priceBlock(x,accId){
     const retry=t&&pxErr[t]&&S.td?`<div class="stackbtns"><button class="btn ghost" data-pxload="1">נסה שוב</button></div>`:'';
     return why?head+`<p class="hint">${why}</p>${retry}</section>`:'';
   }
-  const first=pts[0].v,last=pts[pts.length-1].v,d=last-first;
   const fmt=pxFmt();
+  if(src==='market'){
+    const win=pxSlice(pts,pxRange);
+    const first=win[0].v,last=win[win.length-1].v,d=last-first;
+    const col=d>0?'var(--up)':d<0?'var(--down)':'var(--muted)';
+    const at=PX[t]?new Date(PX[t].ts).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}):'';
+    const tabs=PXR.map(r=>`<button type="button" data-pxr="${r[0]}" aria-selected="${r[0]===pxRange}">${r[1]}</button>`).join('');
+    return head+`
+    <div class="pxwrap" id="pxbox" data-col="${col}">
+      <div class="pxhead">
+        <b class="n pxval">${fmt(last)}</b>
+        <span class="n pxdelta ${cls(d)}">${arrow(d)} ${magBy(d,fmt)}${first?' · '+pct(d/first,1):''}</span>
+        <span class="pxwhen">${esc(dlong(win[0].d))} — היום</span>
+      </div>
+      ${pxChart(win,col,'מחיר '+x.name)}
+      <div class="pxtabs" role="tablist">${tabs}</div>
+    </div>
+    <p class="hint pxnote"><span>סגירה יומית · <span class="n">Twelve&nbsp;Data</span> · <span class="n">${at}</span></span><button type="button" data-pxload="1">${pxBusy.has(t)?'מושך…':'רענון'}</button></p></section>`;
+  }
+  const first=pts[0].v,last=pts[pts.length-1].v,d=last-first;
   const col=d>0?'var(--up)':d<0?'var(--down)':'var(--muted)';
-  const at=src==='market'&&PX[t]?new Date(PX[t].ts).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}):'';
-  const note=src==='market'
-    ?`מחירי סגירה יומיים, <span class="n">${pts.length}</span> ימי מסחר מ-${dlong(pts[0].d)}. מקור: Twelve Data, נמשך ב-<span class="n">${at}</span>.`
-    :`<span class="n">${pts.length}</span> צילומים, מ-${dlong(pts[0].d)} עד ${dlong(pts[pts.length-1].d)}. הגרף נבנה מהקבצים שהעלית, ולא ממקור חיצוני.`;
   return head+`
   <div class="panel pad chartbox" id="pxbox">
     <div class="chart-top"><b class="n">${fmt(last)}</b><span class="n ${cls(d)}">${arrow(d)} ${magBy(d,fmt)}${first?' · '+pct(d/first,1):''}</span></div>
     <div class="readout"></div>
-    ${lineChart(pts,col,{h:150,label:'מחיר '+x.name,anim:src!=='market'})}
+    ${lineChart(pts,col,{h:150,label:'מחיר '+x.name,anim:true})}
   </div>
-  <p class="hint">${note}</p>
-  ${src==='market'?`<div class="stackbtns"><button class="btn ghost" data-pxload="1">${pxBusy.has(t)?'מושך…':'רענון'}</button></div>`:''}</section>`;
+  <p class="hint"><span class="n">${pts.length}</span> צילומים, מ-${dlong(pts[0].d)} עד ${dlong(pts[pts.length-1].d)}. הגרף נבנה מהקבצים שהעלית, ולא ממקור חיצוני.</p></section>`;
 }
 
 /* ---------- analyst consensus ----------
@@ -1445,23 +1575,83 @@ function grab(L){
 
 /* ---------- passcode ---------- */
 function lockScreen(){
-  const el=document.createElement('div');el.className='lock';el.innerHTML=`<h1>מעקב כספים</h1><p>הקלידו את קוד הנעילה</p><form><input id="lp" type="password" inputmode="numeric" autocomplete="current-password" aria-label="קוד נעילה" autofocus><div class="msg" role="alert"></div><button class="btn">פתיחה</button></form>`;
+  const raw=readRaw()||{};
+  /* a four-digit code can be typed on the keypad. an older code may be longer or hold letters,
+     and nothing but the code itself can tell us which — so the stored header carries the shape,
+     and anything without that mark gets the text field. */
+  let mode=raw.pin?'pin':'text';
+  const el=document.createElement('div');el.className='lock';
+  const bar=[...document.querySelectorAll('meta[name="theme-color"]')].map(m=>[m,m.content]);
+  bar.forEach(([m])=>m.content='#062A52');
   document.body.appendChild(el);
-  el.querySelector('form').onsubmit=async e=>{e.preventDefault();const b=el.querySelector('button');b.disabled=true;
-    try{await unlock(el.querySelector('#lp').value);el.remove();start()}catch(err){el.querySelector('.msg').textContent='הקוד שגוי. נסו שוב.';el.querySelector('#lp').value='';b.disabled=false}};
+
+  let code='',busy=false;
+  const KEYS=['1','2','3','4','5','6','7','8','9','','0','⌫'];
+
+  const body=()=>mode==='pin'
+    ? `<div class="dots" role="img" aria-label="${code.length} מתוך 4 ספרות">${
+        [0,1,2,3].map(i=>`<i class="${i<code.length?'on':''}"></i>`).join('')}</div>
+       <div class="msg" role="alert"></div>
+       <div class="pad">${KEYS.map(k=>k===''
+          ? `<button type="button" class="bare" tabindex="-1" aria-hidden="true"></button>`
+          : `<button type="button" class="${k==='⌫'?'bare':''}" data-k="${esc(k)}" aria-label="${k==='⌫'?'מחיקת ספרה':k}">${k}</button>`).join('')}</div>
+       <button type="button" class="swap">קוד עם אותיות</button>`
+    : `<div class="msg" role="alert"></div>
+       <form><label for="lp" class="sr">קוד נעילה</label>
+       <input id="lp" type="password" inputmode="text" autocomplete="current-password" placeholder="קוד הנעילה" autofocus>
+       <button class="btn">פתיחה</button></form>
+       ${raw.pin?`<button type="button" class="swap">מקלדת ספרות</button>`:`<span class="swap" style="opacity:0" aria-hidden="true"></span>`}`;
+
+  const paint=()=>{
+    el.innerHTML=`<span class="blob b1" aria-hidden="true"></span><span class="blob b2" aria-hidden="true"></span>
+      <div class="in">
+        <svg viewBox="0 0 24 24" style="width:40px;height:40px" aria-hidden="true"><path d="M4 20V11M9.3 20V5M14.7 20v-7M20 20v-11" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+        <h1>מעקב כספים</h1><p>הקלידו את קוד הנעילה</p>${body()}</div>`;
+    wire();
+  };
+  const fail=msg=>{
+    code='';busy=false;paint();
+    const m=el.querySelector('.msg');if(m)m.textContent=msg;
+    const d=el.querySelector(mode==='pin'?'.dots':'input');
+    if(d){d.classList.add('shake');setTimeout(()=>d.classList.remove('shake'),460)}
+  };
+  const done=()=>{bar.forEach(([m,v])=>m.content=v);el.remove();start()};
+  const go=async pass=>{
+    if(busy)return;busy=true;
+    el.querySelectorAll('.pad button,.btn').forEach(b=>b.disabled=true);
+    try{await unlock(pass);done()}
+    catch(err){fail('הקוד שגוי. נסו שוב.')}
+  };
+  const wire=()=>{
+    el.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
+      if(busy)return;
+      const k=b.dataset.k;
+      if(k==='⌫'){code=code.slice(0,-1);paint();return}
+      if(code.length>=4)return;
+      code+=k;paint();
+      if(code.length===4)go(code);
+    });
+    const sw=el.querySelector('button.swap');
+    if(sw)sw.onclick=()=>{mode=mode==='pin'?'text':'pin';code='';paint();
+      const i=el.querySelector('input');if(i)i.focus()};
+    const f=el.querySelector('form');
+    if(f)f.onsubmit=e=>{e.preventDefault();go(el.querySelector('#lp').value)};
+  };
+  paint();
+  const i=el.querySelector('input');if(i)i.focus();
 }
 function setPass(){
   if(!(window.crypto&&crypto.subtle)){toast('נעילה בקוד זמינה רק כשהאפליקציה נטענת ב-https');return}
   openLayer(`<div class="sheet modal" role="dialog" aria-label="קוד נעילה"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>קוד נעילה</h2><span></span></header><div class="body"><form id="pfrm">
   <div class="err" id="perr" hidden role="alert"></div>
-  <div class="grp"><div class="fld"><label for="p1">קוד חדש<small>לפחות 4 תווים</small></label><input id="p1" type="password" inputmode="numeric" autocomplete="new-password"></div>
-  <div class="fld"><label for="p2">הקוד שוב</label><input id="p2" type="password" inputmode="numeric" autocomplete="new-password"></div></div>
+  <div class="grp"><div class="fld"><label for="p1">קוד חדש<small>ארבע ספרות</small></label><input id="p1" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password"></div>
+  <div class="fld"><label for="p2">הקוד שוב</label><input id="p2" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password"></div></div>
   <p class="hint" style="padding-top:10px">בלי הקוד אי אפשר לפתוח את האפליקציה או לשחזר את הנתונים. שמרו גיבוי לפני שמפעילים נעילה.</p>
   <section><button class="btn">הפעלת נעילה</button></section></form></div></div>`);
   $('#pfrm').onsubmit=async e=>{e.preventDefault();const a=$('#p1').value,b=$('#p2').value,err=$('#perr');
-    const msg=a.length<4?'הקוד קצר מדי. צריך לפחות 4 תווים.':a!==b?'שני הקודים לא זהים.':'';
+    const msg=!/^\d{4}$/.test(a)?'הקוד הוא ארבע ספרות.':a!==b?'שני הקודים לא זהים.':'';
     if(msg){err.textContent=msg;err.hidden=false;return}
-    const salt=crypto.getRandomValues(new Uint8Array(16));cryptoKey=await deriveKey(a,salt);encMeta={salt:b64(salt)};await save();closeLayer();render();toast('הנעילה הופעלה')};
+    const salt=crypto.getRandomValues(new Uint8Array(16));cryptoKey=await deriveKey(a,salt);encMeta={salt:b64(salt),pin:true};await save();closeLayer();render();toast('הנעילה הופעלה')};
 }
 async function rmPass(){if(!confirm('לבטל את הנעילה? הנתונים יישמרו במכשיר בלי הצפנה.'))return;cryptoKey=null;encMeta=null;await save();render();toast('הנעילה בוטלה')}
 
@@ -1763,10 +1953,16 @@ function openHolding(accId,id){
   wire();
   const wirePx=()=>{
     const px=L.el.querySelector('#pxbox');if(!px)return;
-    wireChart(px,priceData(x,accId).pts,pxFmt());
-    /* wireChart opens on the last point, which the headline already states; leave the line for
-       the reader's own finger instead of saying the same number twice */
-    const ro=px.querySelector('.readout');if(ro)ro.innerHTML='<span class="flat">גע בגרף כדי לראות נקודה</span>';
+    const dat=priceData(x,accId);
+    if(dat.src!=='market'){
+      wireChart(px,dat.pts,pxFmt());
+      /* wireChart opens on the last point, which the headline already states; leave the line for
+         the reader's own finger instead of saying the same number twice */
+      const ro=px.querySelector('.readout');if(ro)ro.innerHTML='<span class="flat">גע בגרף כדי לראות נקודה</span>';
+      return;
+    }
+    px.querySelectorAll('[data-pxr]').forEach(b=>b.onclick=()=>{pxRange=b.dataset.pxr;paintPx()});
+    wireScrub(px,pxSlice(dat.pts,pxRange));
   };
   const wirePxBtn=()=>{const pl=L.el.querySelector('[data-pxload]');if(pl)pl.onclick=()=>pullPx(true)};
   const paintPx=()=>{
