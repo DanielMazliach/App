@@ -461,7 +461,7 @@ const magIls=v=>ils(Math.abs(v));
 function short(t,n){
   const x=String(t||'').trim();
   const latin=!/[א-ת]/.test(x);
-  const lim=n||(latin?17:20);
+  const lim=n||(latin?19:20);
   if(x.length<=lim)return latin?'\u2066'+x+'\u2069':x;
   const cut=x.slice(0,lim), sp=cut.lastIndexOf(' ');
   const out=(sp>lim*0.5?cut.slice(0,sp):cut).replace(/[\s.,/-]+$/,'')+'…';
@@ -1930,8 +1930,32 @@ const ptypeOf=h=>h.cash?'cash':(S.ptype[h.id]||guessType(h));
 /* cash is money sitting in the account, not a security: it is shown on its own line per
    sub-account and kept out of the holdings list */
 const isCash=h=>!!h.cash||ptypeOf(h)==='cash';
+/* brokerages write a security's full legal name — "TESLA INC COMMON STOCK". The row shows the
+   company, and the full name stays in the title attribute and on the holding's own page.
+   Trailing legal and instrument words are peeled off from the end, which also clears the ones
+   buried in the middle ("ALPHABET INC CLASS A COMMON STOCK" -> ALPHABET). */
+const NAMENOISE=/^(COMMON|ORDINARY|ORD|STOCK|STK|SHARE|SHARES|SHS|SH|UNIT|UNITS|CLASS|CL|SER|SERIES|ADR|ADS|ADRS|NPV|NEW|THE|INC|INCORPORATED|CORP|CORPORATION|CO|COMPANY|COS|LTD|LIMITED|LLC|LP|PLC|SA|SAB|NV|AG|AB|ASA|OYJ|SE|DEL|HLDG|HLDGS|HOLDING|HOLDINGS|GROUP|TR|TRUST|REIT|USD|[A-Z])$/;
+function coName(raw){
+  let w=String(raw||'').replace(/[-/]/g,' ').replace(/[.,]/g,'').split(/\s+/).filter(Boolean);
+  while(w.length>1&&NAMENOISE.test(w[w.length-1].toUpperCase()))w.pop();
+  while(w.length>1&&/^THE$/i.test(w[0]))w.shift();
+  const t=w.join(' ');
+  /* an all-caps name reads as shouting in a list; initials, tickers and ampersands stay as they are */
+  return /[a-z]/.test(t)?t:t.replace(/[^\s]+/g,x=>/[&\d]/.test(x)||x.length<=3?x:x[0]+x.slice(1).toLowerCase());
+}
+/* an ETF's own name is its ticker to anyone who holds it: QQQ, not INVESCO QQQ TR */
+function dispName(h){
+  const n=String(h.name||'');
+  if(/[\u0590-\u05FF]/.test(n))return n;                    /* Hebrew names are already short */
+  const sym=h.sym?String(h.sym).toUpperCase():'';
+  const t=ptypeOf(h);
+  if(t==='fund'&&/^[A-Z]{2,6}$/.test(sym))return sym;
+  if(t==='bond')return n;                                   /* a bond's name carries its coupon and maturity */
+  return coName(n)||n;
+}
 const SUBLBL={ind:'חשבון רגיל',ira:'IRA'},SUBCOL={ind:'#3B82F6',ira:'#8A2D0C'};
-const subLbl=k=>SUBLBL[k]||k;
+const SUBSHORT={ind:'רגיל',ira:'IRA'};
+const subLbl=k=>SUBLBL[k]||k,subShort=k=>SUBSHORT[k]||SUBLBL[k]||k;
 const subCol=k=>acol(SUBCOL[k]||'#6C6C70');
 /* a portfolio can hang off one field or several, and older data stored a single key */
 function plinkOf(id){
@@ -2076,7 +2100,8 @@ function portfolioBody(accId){
   if(!shown.length)h+=`<div class="row"><span class="nm flat">אין אחזקות בקטגוריה הזו</span></div>`;
   for(const x of shown.slice().sort(sorters[srt])){
     const c=catOf(x);
-    h+=`<button class="row dotted" data-hold="${esc(x.id)}">${dot(c)}<span><span class="nm" title="${esc(x.name)}">${esc(short(x.name))}</span><div class="sub">${x.sym?'<span class="n">'+esc(x.sym)+'</span> · ':''}${esc(CATLBL[c])} · <span class="n">${(x.v/s.total*100).toFixed(1)}%</span>${x.cur!=='שקל'?' · '+esc(x.cur):''}</div>${recBadge(x)?`<div class="sub" style="margin-top:4px">${recBadge(x)}</div>`:''}</span>
+    const dn=dispName(x);
+    h+=`<button class="row dotted" data-hold="${esc(x.id)}">${dot(c)}<span><span class="nm" title="${esc(x.name)}">${esc(short(dn))}</span><div class="sub">${x.sym&&x.sym.toUpperCase()!==dn.toUpperCase()?'<span class="n">'+esc(x.sym)+'</span> · ':''}${esc(CATLBL[c])} · <span class="n">${(x.v/s.total*100).toFixed(1)}%</span>${x.cur!==(a.cur==='USD'?'דולר':'שקל')?' · '+esc(x.cur):''}${!av&&x.acct&&subs.length>1?' · '+esc(subShort(x.acct)):''}</div>${recBadge(x)?`<div class="sub" style="margin-top:4px">${recBadge(x)}</div>`:''}</span>
     <span class="val"><b>${pf(x.v)}</b><span class="n ${cls(x.tg)}">${x.tg?arrow(x.tg)+' '+mag(x.tg):''}</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
   }
   h+=`</div></section>`;
@@ -2120,7 +2145,8 @@ function openHolding(accId,id){
   const prev=list[list.length-2],old=prev&&prev.hold?prev.hold.find(y=>y.id===id):null;
   const t=ptypeOf(x),c=catOf(x),f=x.cur==='שקל'?ils:v=>nf0.format(Math.round(v))+' '+x.cur;
   const ac=ACCOUNTS.find(y=>y.id===accId),af=ac&&ac.cur==='USD'?usd:ils,asg=v=>signedBy(v,af);
-  openLayer(`<div class="sheet modal" role="dialog" aria-label="${esc(x.name)}"><header><span class="grab" aria-hidden="true"></span><button data-close>סגירה</button><h2>${esc(x.name)}</h2><span></span></header><div class="body">
+  const dn=dispName(x);
+  openLayer(`<div class="sheet modal" role="dialog" aria-label="${esc(x.name)}"><header><span class="grab" aria-hidden="true"></span><button data-close>סגירה</button><h2>${esc(dn)}</h2><span></span></header><div class="body">
   <div class="acc-head"><div class="big">${af(x.v)}</div><div class="meta">${esc(CATLBL[c])} · <span class="n">${(x.v/summarize(last.hold).total*100).toFixed(1)}%</span> מהתיק${x.sym?' · '+esc(x.sym):''}</div></div>
   ${priceBlock(x,accId)}
   <section><div class="panel facts">
@@ -2132,7 +2158,7 @@ function openHolding(accId,id){
   <div><small>מס תיאורטי</small><b class="${cls(x.tx)}">${asg(x.tx)}</b></div>
   ${old?`<div><small>שינוי מהצילום הקודם</small><b class="${cls(x.v-old.v)}">${asg(x.v-old.v)}</b></div>`:''}
   </div></section>
-  <p class="hint">${esc(CATLBL[c])}. הסיווג נקבע לפי שם הנייר, והשיוך לישראל או לחו״ל לפי שפת השם והמטבע.</p>
+  <p class="hint">${dn!==x.name?'<b>'+esc(x.name)+'</b>. ':''}${esc(CATLBL[c])}. הסיווג נקבע לפי שם הנייר, והשיוך לישראל או לחו״ל לפי שפת השם והמטבע.</p>
   ${recBlock(x)}</div></div>`);
   const L=stack[stack.length-1];
   const mine=()=>stack[stack.length-1]===L&&L.el.isConnected;      /* the sheet may be gone by the time a fetch lands */
