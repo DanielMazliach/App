@@ -817,15 +817,19 @@ function openAccount(id,from){
   const q=facOf(id),U=sorted(),C=U.map(calc),n=U.length;
   const pts=U.map((u,i)=>({d:u.date,v:C[i].acc[id]}));const vs=pts.map(p=>p.v);
   const v=vs[n-1],dP=n>1?v-vs[n-2]:0,dF=v-vs[0];const isUsd=a.cur==='USD';
-  const hi=Math.max(...vs),lo=Math.min(...vs);
+  /* a dollar account's shekel line moves with the exchange rate as much as with the money in it,
+     so for such an account the charts are drawn in dollars */
+  const mpts=isUsd?U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})):pts,mfmt=isUsd?usd:ils;
+  const mvs=mpts.map(p=>p.v),mmag=x=>magBy(x,mfmt);
+  const mP=n>1?mvs[n-1]-mvs[n-2]:0,mF=mvs[n-1]-mvs[0];
+  const hi=Math.max(...mvs),lo=Math.min(...mvs);
   let h=`<div class="sheet push" role="dialog" aria-label="${esc(a.name)}"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>סקירה</span></button><h2>${esc(a.short)}</h2><span></span></header><div class="body">
   <div class="acc-head"><h1><span style="color:${acol(a.color)}">●</span> ${esc(a.name)}</h1><div class="big">${ils(v)}</div>
   <div class="meta"><span class="n">${share(v,C[n-1].total)}%</span> מההון · נכון ל-<span class="n">${dlong(U[n-1].date)}</span>${isUsd?` · <span class="n">${usd(C[n-1].usdAcc[id]||0)}</span>`:''}</div></div>
-  <div class="chips"><div><small>מהעדכון הקודם</small>${n>1?`<b class="${cls(dP)}">${arrow(dP)} ${magIls(dP)}</b> <span class="n ${cls(dP)}">${vs[n-2]?pct(dP/vs[n-2],2):''}</span>`:'<b class="flat">—</b>'}</div>
-  <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dF)}">${arrow(dF)} ${magIls(dF)}</b> <span class="n ${cls(dF)}">${vs[0]?pct(dF/vs[0],2):''}</span>`:'<b class="flat">—</b>'}</div></div>
-  <section><h2>שינוי בין העדכונים</h2><div class="panel pad" id="ch-acc">${lineChart(pts,acol(a.color),{label:a.name})}<p class="readout"></p></div></section>
+  <div class="chips"><div><small>מהעדכון הקודם</small>${n>1?`<b class="${cls(mP)}">${arrow(mP)} ${mmag(mP)}</b> <span class="n ${cls(mP)}">${mvs[n-2]?pct(mP/mvs[n-2],2):''}</span>`:'<b class="flat">—</b>'}</div>
+  <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(mF)}">${arrow(mF)} ${mmag(mF)}</b> <span class="n ${cls(mF)}">${mvs[0]?pct(mF/mvs[0],2):''}</span>`:'<b class="flat">—</b>'}</div></div>
+  <section><h2>שינוי בין העדכונים${isUsd?' <small>בדולרים</small>':''}</h2><div class="panel pad" id="ch-acc">${lineChart(mpts,acol(a.color),{label:a.name})}<p class="readout"></p></div></section>
 `;
-  if(isUsd){h+=`<section><h2>שווי בדולרים</h2><div class="panel pad" id="ch-usd">${lineChart(U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),acol(a.color),{label:'שווי בדולרים'})}<p class="readout"></p></div></section>`}
   const tr=a.fields.filter(f=>f[3]);
   tr.forEach((f,i)=>{h+=`<section><h2>${esc(f[1])}</h2><div class="panel pad" id="ch-t${i}">${lineChart(U.map(u=>({d:u.date,v:u.vals[f[0]]*q})),acol(a.color),{label:f[1]})}<p class="readout"></p></div></section>`});
   h+=`<section><h2>פירוט היתרות <small>עדכון אחרון</small></h2><div class="panel">`;
@@ -838,15 +842,14 @@ function openAccount(id,from){
     h+=`<div class="row"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm" style="font-weight:500">${esc(nm)}</span></span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${magBy(d,f)}</span>`:''}</span></div>`}
   const pcard=pnames.length?portCard(id,pnames.join(' · '),f(pv),prev?`<span class="n ${cls(pd)}">${arrow(pd)} ${magBy(pd,f)}</span>`:'',pLast,f):'';
   h+=`</div>${pcard}</section>`;
-  h+=`<section><div class="panel facts"><div><small>הגבוה ביותר</small><b>${ils(hi)}</b></div><div><small>הנמוך ביותר</small><b>${ils(lo)}</b></div></div></section>`;
+  h+=`<section><div class="panel facts"><div><small>הגבוה ביותר</small><b>${mfmt(hi)}</b></div><div><small>הנמוך ביותר</small><b>${mfmt(lo)}</b></div></div></section>`;
   h+=`<section>${foldHead('hist','היסטוריה')}<div class="panel" id="hist" hidden>`;
-  for(let i=n-1;i>=0;i--){const d=i?vs[i]-vs[i-1]:0;
-    h+=`<div class="row dotted"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${ils(vs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}${vs[i-1]?' ('+pct(d/vs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
+  for(let i=n-1;i>=0;i--){const d=i?mvs[i]-mvs[i-1]:0;
+    h+=`<div class="row dotted"><span class="spine" style="background:${i?(d>0.5?'var(--up)':d<-0.5?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n" style="font-weight:500">${dlong(U[i].date)}</span><span class="val"><b>${mfmt(mvs[i])}</b>${i?`<span class="n ${cls(d)}">${arrow(d)} ${mmag(d)}${mvs[i-1]?' ('+pct(d/mvs[i-1],2)+')':''}</span>`:'<span class="flat">עדכון ראשון</span>'}</span></div>`}
   h+=`</div></section></div></div>`;
   openLayer(h,true,origin);
   wireFolds(stack[stack.length-1].el);
-  wireChart($('#ch-acc'),pts,ils);
-  if($('#ch-usd'))wireChart($('#ch-usd'),U.map((u,i)=>({d:u.date,v:C[i].usdAcc[id]||0})),usd);
+  wireChart($('#ch-acc'),mpts,mfmt);
   tr.forEach((f,i)=>wireChart($('#ch-t'+i),U.map(u=>({d:u.date,v:u.vals[f[0]]*q})),isUsd?usd:ils));
 }
 
