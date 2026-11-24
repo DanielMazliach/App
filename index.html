@@ -251,7 +251,9 @@ button.row[aria-pressed="true"] .nm{font-weight:600}
 .fld .inl button{white-space:nowrap;font-size:15px;color:var(--tink);padding:0 4px;min-height:44px}
 .fld .inl button:active{opacity:.4}
 .fld .inl .atbtn{color:var(--tink);font-size:15px;min-height:44px;display:flex;align-items:center;cursor:pointer;white-space:nowrap}
-.fld .inl .atbtn.on{color:var(--up);font-weight:600;font-size:13.5px}
+.fld label small.on{color:var(--up);font-weight:600}
+.fld label small.gone{color:var(--down);font-weight:600;text-decoration:line-through}
+.fld .inl .atrm{background:none;border:0;padding:0 8px;min-height:44px;flex:0 0 auto;white-space:nowrap;color:var(--down);font-size:15px;font-family:inherit;cursor:pointer}
 .hint{font-size:13px;color:var(--muted);padding:6px 16px 12px;margin:0}
 .err{margin:16px 16px 0;background:var(--errbg);color:var(--errink);border-radius:12px;padding:11px 14px;font-size:15px}
 
@@ -887,7 +889,14 @@ function openForm(date,pre){
     h+=`<div class="grp" style="--c:${acol(a.color)}"><h3>${esc(a.name)}${a.cur==='USD'?'<small>בדולרים</small>':'<small>בש״ח</small>'}</h3>`;
     for(const [k,nm] of a.fields)h+=`<div class="fld"><label for="f-${k}">${esc(nm)}</label><input id="f-${k}" data-k="${k}" inputmode="decimal" autocomplete="off" value="${f.vals[k]===''?'':f.vals[k]}" placeholder="0"></div>`;
     if(a.id===rateAcc)h+=`<div class="fld"><label for="f-rate">שער דולר<small>USD/ILS ביום העדכון</small></label><div class="inl"><input id="f-rate" inputmode="decimal" autocomplete="off" value="${f.rate||''}" placeholder="3.160"><button type="button" id="getrate">רענון</button></div></div><p class="hint" id="ratehint">השער נמשך לבד לפי התאריך. שער נוכחי: <b id="liverate2" class="n">—</b></p>`;
-    if(plinkOf(a.id).length)h+=`<input type="file" id="af-${a.id}" accept=".xlsx,.csv,.txt,.pdf" hidden><div class="fld"><label for="af-${a.id}">קובץ אחזקות<small>לא חובה</small></label><div class="inl"><label class="atbtn" for="af-${a.id}" id="al-${a.id}">צירוף קובץ</label></div></div>`;
+    if(plinkOf(a.id).length){
+      /* an update being edited may already carry a holdings snapshot of that date; it is named here,
+         and can be dropped without touching the balances */
+      const sv=editing?(S.ports[a.id]||[]).find(x=>x.date===editing.date):null;
+      const svh=sv&&sv.hold,svf=a.cur==='USD'?usd:ils;
+      const svtxt=sv?(svh?svh.filter(x=>!isCash(x)).length+' אחזקות · '+svf(summarize(svh).total):'צילום שמור'):'';
+      h+=`<input type="file" id="af-${a.id}" accept=".xlsx,.csv,.txt,.pdf" hidden><div class="fld"><label for="af-${a.id}">קובץ אחזקות<small id="as-${a.id}"${sv?' class="on"':''}>${sv?esc(svtxt):'לא חובה'}</small></label><div class="inl"><label class="atbtn" for="af-${a.id}" id="al-${a.id}">${sv?'החלפה':'צירוף קובץ'}</label><button type="button" class="atrm" id="ar-${a.id}"${sv?'':' hidden'}>מחיקה</button></div></div>`;
+    }
     h+=`</div>`}
   if(editing)h+=`<section><button type="button" class="btn danger" id="del">מחיקת העדכון</button></section>`;
   h+=`</form></div><footer><div class="sum"><small>סה״כ הון בעדכון הזה</small><b id="fsum">—</b></div><button class="btn" id="fsave">שמירה</button></footer></div>`;
@@ -913,17 +922,34 @@ function openForm(date,pre){
   const dateEl=$('#f-date');
   if(dateEl)dateEl.addEventListener('change',()=>pullRate(false));
   if(rateInput&&!f.rate)pullRate(false);
-  const attach={};                                  // optional holdings file, per account that has a portfolio
+  const attach={},drop={};                          // optional holdings file, per account that has a portfolio
   for(const a of ACCOUNTS){
     const inp=$('#af-'+a.id);if(!inp)continue;
+    const rm=$('#ar-'+a.id),sm=$('#as-'+a.id),lab=$('#al-'+a.id);
+    const had=sm&&sm.classList.contains('on'),txt0=sm?sm.textContent:'';
+    /* three states for the row: nothing attached, a file in hand, and one marked for deletion */
+    const row=(txt,cls,btn)=>{sm.textContent=txt;sm.className=cls;lab.textContent=cls?'החלפה':'צירוף קובץ';
+      if(rm){rm.hidden=!btn;rm.textContent=btn||''}};
+    let kept=null,keptTxt='';                       /* what "ביטול" puts back */
+    if(rm)rm.onclick=()=>{
+      if(drop[a.id]){
+        delete drop[a.id];
+        if(kept){attach[a.id]=kept;row(keptTxt,'on','מחיקה')}
+        else row(txt0||'לא חובה',had?'on':'',had?'מחיקה':'');
+        return;
+      }
+      delete attach[a.id];drop[a.id]=true;
+      row(kept?keptTxt:(txt0&&had?txt0:'הקובץ שצורף'),'gone','ביטול');
+      toast('האחזקות יימחקו בשמירה');
+    };
     inp.onchange=async e=>{
       const file=e.target.files[0];inp.value='';if(!file)return;
-      const lab=$('#al-'+a.id);lab.textContent=isPdf(file)?'קורא דוח…':'קורא…';
+      row(isPdf(file)?'קורא דוח…':'קורא…','','');
       const pf=a.cur==='USD'?usd:ils;
       try{
         const {hold,subs}=await readHoldings(file);
-        attach[a.id]=hold;
-        const keys=plinkOf(a.id);
+        attach[a.id]=hold;delete drop[a.id];kept=hold;
+        const keys=subs&&subs.length?guessKeys(a,subs):plinkOf(a.id);
         /* a statement fills one field per sub-account, in the order they were mapped last time */
         if(subs&&keys.length>=subs.length){
           const vals={};
@@ -933,8 +959,9 @@ function openForm(date,pre){
           $('#f-'+keys[0]).value=Math.round(summarize(hold).total);
         }
         upd();
-        lab.textContent=hold.filter(x=>!isCash(x)).length+' אחזקות · '+pf(summarize(hold).total);lab.classList.add('on');
-      }catch(err){lab.textContent='צירוף קובץ';toast(err.message||'לא הצלחתי לקרוא את הקובץ')}
+        keptTxt=hold.filter(x=>!isCash(x)).length+' אחזקות · '+pf(summarize(hold).total);
+        row(keptTxt,'on','מחיקה');
+      }catch(err){row(txt0||'לא חובה',had?'on':'',had?'מחיקה':'');toast(err.message||'לא הצלחתי לקרוא את הקובץ')}
     };
   }
   $('#fsave').onclick=async()=>{const u=read(),err=$('#ferr');let msg='';
@@ -945,7 +972,14 @@ function openForm(date,pre){
     else if(layer.querySelector('input[data-k]')&&[...layer.querySelectorAll('input[data-k]')].some(i=>i.value.trim()!==''&&!/^-?[\d,]*\.?\d*$/.test(i.value.trim())))msg='באחד השדות יש ערך שאינו מספר.';
     if(msg){err.textContent=msg;err.hidden=false;layer.querySelector('.body').scrollTo({top:0,behavior:'smooth'});return}
     if(editing)S.updates=S.updates.filter(x=>x.date!==editing.date);
-    S.updates.push(u);for(const id in attach)addSnapshot(id,u.date,attach[id]);closeLayer();tab='home';render();save();toast(Object.keys(attach).length?'העדכון והאחזקות נשמרו':'העדכון נשמר')};
+    S.updates.push(u);
+    for(const id in drop){                          /* a snapshot dropped here goes with the date it was filed under */
+      if(attach[id])continue;
+      const ds=[u.date].concat(editing?[editing.date]:[]);
+      S.ports[id]=(S.ports[id]||[]).filter(p=>!ds.includes(p.date));
+      if(!S.ports[id].length)delete S.ports[id];
+    }
+    for(const id in attach)addSnapshot(id,u.date,attach[id]);closeLayer();tab='home';render();save();toast(Object.keys(attach).length?'העדכון והאחזקות נשמרו':Object.keys(drop).length?'העדכון נשמר והאחזקות נמחקו':'העדכון נשמר')};
   if(editing)$('#del').onclick=async()=>{if(!confirm('למחוק את העדכון מ-'+dlong(editing.date)+'?'))return;S.updates=S.updates.filter(x=>x.date!==editing.date);closeLayer();render();save();toast('העדכון נמחק')};
 }
 let liveRate=null,liveAt=0;
@@ -1968,6 +2002,13 @@ function plinkOf(id){
   return cap?[cap[0]]:[];
 }
 const plinkHas=(id,k)=>plinkOf(id).includes(k);
+/* which balance field each sub-account of a statement fills: what was chosen last time, else a
+   guess by the field's name, else the account's main investments field */
+function guessKeys(acc,subs){
+  const prev=plinkOf(acc.id),fields=acc.fields;
+  const base=prev[0]||((fields.find(([,nm])=>/שוק ההון|קרנות|השקעות|invest/i.test(nm))||fields[fields.length-1])||[])[0];
+  return (subs||[]).map((x,i)=>prev[i]||(x.kind==='ira'&&(fields.find(([,nm])=>/IRA|גמל|פנסי|השתלמות/i.test(nm))||[])[0])||base);
+}
 function summarize(hold){
   const s={total:0,cur:{},cat:{},count:{},gain:0,loss:0,tax:0,shield:0};
   for(const h of hold){
@@ -2252,7 +2293,7 @@ async function importPortfolio(accId,file){
     const prev=plinkOf(accId);
     const pick=(k,sel)=>`<select id="pfld-${k}" style="min-height:44px;border:0;background:transparent;color:var(--tink);font-size:17px">${fields.map(([fk,nm])=>`<option value="${fk}" ${fk===sel?'selected':''}>${esc(nm)}</option>`).join('')}</select>`;
     const subRows=subs?subs.map((x,i)=>{
-      const want=prev[i]||(x.kind==='ira'&&(fields.find(([,nm])=>/IRA|גמל|פנסי|השתלמות/i.test(nm))||[])[0])||guess;
+      const want=guessKeys(a,subs)[i]||guess;
       return `<div class="fld"><label for="pfld-${x.kind}">${esc(subLbl(x.kind))}<small>${pf(x.total)} · <span class="n">${x.n}</span> אחזקות${x.cash?' · מזומן <span class="n">'+pf(x.cash)+'</span>':''}</small></label>${pick(x.kind,want)}</div>`;
     }).join(''):'';
     openLayer(`<div class="sheet modal" role="dialog" aria-label="קובץ חדש"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>${subs?'דוח נקרא':'קובץ נקרא'}</h2><span></span></header><div class="body">
