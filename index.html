@@ -86,7 +86,23 @@ section>h2 small,.foldh h2 small{font-weight:400;font-size:15px;letter-spacing:0
 @media(prefers-reduced-motion:reduce){.foldh .chev{transition:none}}
 .pad{padding:14px 16px}
 
-.stack{display:flex;gap:2px;height:10px;direction:ltr;margin:2px 0}
+.stack{display:flex;gap:2px;height:10px;direction:rtl;margin:2px 0}
+.pcard{display:block;width:100%;margin-top:12px;border:0;border-radius:14px;background:var(--surface);padding:16px;box-sizing:border-box;text-align:start;color:var(--ink);font:inherit}
+.pcard:active{background:var(--line)}
+.pcard>span{display:block}
+.pc-top{display:flex!important;align-items:center;justify-content:space-between;gap:10px}
+.pc-nm{font-weight:600}
+.pc-cnt{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.pcard .chev{width:8px;height:14px;fill:none;stroke:var(--chev);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pc-val{display:flex!important;align-items:baseline;gap:10px;margin-top:6px}
+.pc-val b{font-size:28px;font-weight:700;letter-spacing:-.02em}
+.pc-val>span{font-size:14px;font-weight:600}
+.pcard .stack{display:flex;height:8px;margin-top:14px;border-radius:4px;overflow:hidden}
+.pc-leg{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin-top:12px}
+.pc-leg>span{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);min-width:0}
+.pc-leg i{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.pc-leg b{margin-inline-start:auto;color:var(--ink);font-weight:600}
+.pc-hint{margin-top:8px;font-size:13px;color:var(--tink);font-weight:600}
 .stack i{display:block;height:100%;min-width:3px;border-radius:2px}
 .stack i:first-child{border-radius:5px 2px 2px 5px}.stack i:last-child{border-radius:2px 5px 5px 2px}
 
@@ -765,6 +781,27 @@ function wireFolds(root,onToggle){
   });
 }
 
+/* the holdings sit behind one entry that carries most of the account's money, so it is a card
+   of its own that shows what is inside before it is opened: the value, its change, and how it
+   splits by kind of security — the same colours as the portfolio page */
+function portCard(id,nm,val,delta,snap){
+  const chev='<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>';
+  const hold=snap&&snap.hold;
+  let mix='';
+  if(hold&&hold.length){
+    const s=summarize(hold),cats=CATS.filter(([k])=>s.cat[k]>0);
+    const pc=k=>s.total?(s.cat[k]/s.total*100):0;
+    mix=`<span class="stack" role="img" aria-label="${cats.map(([k,l])=>l+' '+pc(k).toFixed(0)+'%').join(', ')}">${
+      cats.map(([k])=>`<i style="flex:${s.cat[k]} 0 0;background:${catCol(k)};${catHollow(k)?'opacity:.55':''}"></i>`).join('')}</span>
+      <span class="pc-leg">${cats.map(([k,l])=>`<span><i style="background:${catCol(k)};${catHollow(k)?'opacity:.55':''}"></i>${l}<b class="n">${pc(k).toFixed(0)}%</b></span>`).join('')}</span>`;
+  }
+  const top=hold?`<span class="n">${hold.length}</span> אחזקות · <span class="n">${dshort(snap.date)}</span>`:'';
+  return `<button type="button" class="pcard" data-port="${id}">
+    <span class="pc-top"><span class="pc-nm">${esc(nm)}</span><span class="pc-cnt">${top}${chev}</span></span>
+    <span class="pc-val"><b class="n">${val}</b>${delta}</span>
+    ${mix||'<span class="pc-hint">העלאת קובץ אחזקות מהבנק</span>'}
+  </button>`;
+}
 function openAccount(id,from){
   const a=ACCOUNTS.find(x=>x.id===id);if(!a||isHidden(id))return;
   let origin=null;
@@ -788,12 +825,11 @@ function openAccount(id,from){
   const last=U[n-1],prev=U[n-2];const f=isUsd?usd:ils;
   const linked=S.plink[id];
   const pLast=linked?portsOf(id).slice(-1)[0]:null;
+  let pcard='';
   for(const [k,nm] of a.fields){const fv=last.vals[k]*q,d=prev?fv-prev.vals[k]*q:0;
-    const tapable=k===linked;
-    const sub=!tapable?'':pLast?`<div class="sub"><span class="n">${pLast.hold?pLast.hold.length:'—'}</span> אחזקות · <span class="n">${dlong(pLast.date)}</span></div>`
-      :'<div class="sub">העלאת קובץ אחזקות מהבנק</div>';
-    h+=`<${tapable?'button':'div'} class="row${tapable?' link':''}"${tapable?` data-port="${id}"`:''}><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm"${tapable?'':' style="font-weight:500"'}>${esc(nm)}</span>${sub}</span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${magBy(d,f)}</span>`:''}</span>${tapable?'<svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg>':''}</${tapable?'button':'div'}>`}
-  h+=`</div></section>`;
+    if(k===linked){pcard=portCard(id,nm,f(fv),prev?`<span class="n ${cls(d)}">${arrow(d)} ${magBy(d,f)}</span>`:'',pLast);continue}
+    h+=`<div class="row"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm" style="font-weight:500">${esc(nm)}</span></span><span class="val"><b>${f(fv)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${magBy(d,f)}</span>`:''}</span></div>`}
+  h+=`</div>${pcard}</section>`;
   h+=`<section><div class="panel facts"><div><small>הגבוה ביותר</small><b>${ils(hi)}</b></div><div><small>הנמוך ביותר</small><b>${ils(lo)}</b></div></div></section>`;
   h+=`<section>${foldHead('hist','היסטוריה')}<div class="panel" id="hist" hidden>`;
   for(let i=n-1;i>=0;i--){const d=i?vs[i]-vs[i-1]:0;
