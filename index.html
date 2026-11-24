@@ -1120,6 +1120,8 @@ function priceData(x,accId){
   return {src:'own',t,pts:priceSeries(accId,x.id,365)};
 }
 const pxFmt=()=>v=>nf0.format(Math.round(v*100)/100);
+const usdNf=new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const pxUsd=v=>'$'+usdNf.format(v);
 /* a trading chart reads by shape, not by numbers on an axis: no grid, no tick labels, a dashed
    line at the price the range opened on, and the headline above it changes as a finger drags. */
 const PXR=[['w','שבוע',7],['m','חודש',31],['q','3 חודשים',92],['y','שנה',366],['a','5 שנים',0]];
@@ -1138,7 +1140,7 @@ function wireScrub(box,pts){
   const cross=svg.querySelector('.pxcross'),knob=svg.querySelector('.pxknob');
   const val=box.querySelector('.pxval'),dl=box.querySelector('.pxdelta'),when=box.querySelector('.pxwhen');
   const xs=hit.dataset.xs.split(',').map(Number);
-  const fmt=pxFmt(),first=pts[0].v,base=dl.textContent,baseWhen=when.textContent;
+  const fmt=pxUsd,first=pts[0].v,base=dl.textContent,baseWhen=when.textContent;
   const show=i=>{
     const p=pts[i],d=p.v-first;
     val.textContent=fmt(p.v);
@@ -1206,6 +1208,7 @@ function priceBlock(x,accId){
   }
   const fmt=pxFmt();
   if(src==='market'){
+    const fmt=pxUsd;
     const win=pxSlice(pts,pxRange);
     const first=win[0].v,last=win[win.length-1].v,d=last-first;
     const col=d>0?'var(--up)':d<0?'var(--down)':'var(--muted)';
