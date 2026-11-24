@@ -802,7 +802,7 @@ function portCard(id,nm,val,delta,snap,f){
       cats.map(([k])=>`<i style="flex:${s.cat[k]} 0 0;background:${catCol(k)};${catHollow(k)?'opacity:.55':''}"></i>`).join('')}</span>
       <span class="pc-leg">${cats.map(([k,l])=>`<span><i style="background:${catCol(k)};${catHollow(k)?'opacity:.55':''}"></i>${l}<b class="n">${pc(k).toFixed(0)}%</b></span>`).join('')}</span>`;
   }
-  const top=hold?`<span class="n">${hold.length}</span> אחזקות · <span class="n">${dshort(snap.date)}</span>`:'';
+  const top=hold?`<span class="n">${hold.filter(x=>!isCash(x)).length}</span> אחזקות · <span class="n">${dshort(snap.date)}</span>`:'';
   return `<button type="button" class="pcard" data-port="${id}">
     <span class="pc-top"><span class="pc-nm">${esc(nm)}</span><span class="pc-cnt">${top}${chev}</span></span>
     <span class="pc-val"><b class="n">${val}</b>${delta}</span>
@@ -930,7 +930,7 @@ function openForm(date,pre){
           $('#f-'+keys[0]).value=Math.round(summarize(hold).total);
         }
         upd();
-        lab.textContent=hold.length+' אחזקות · '+pf(summarize(hold).total);lab.classList.add('on');
+        lab.textContent=hold.filter(x=>!isCash(x)).length+' אחזקות · '+pf(summarize(hold).total);lab.classList.add('on');
       }catch(err){lab.textContent='צירוף קובץ';toast(err.message||'לא הצלחתי לקרוא את הקובץ')}
     };
   }
@@ -1927,6 +1927,12 @@ function parsePortfolio(rows){
   return out;
 }
 const ptypeOf=h=>h.cash?'cash':(S.ptype[h.id]||guessType(h));
+/* cash is money sitting in the account, not a security: it is shown on its own line per
+   sub-account and kept out of the holdings list */
+const isCash=h=>!!h.cash||ptypeOf(h)==='cash';
+const SUBLBL={ind:'חשבון רגיל',ira:'IRA'},SUBCOL={ind:'#3B82F6',ira:'#8A2D0C'};
+const subLbl=k=>SUBLBL[k]||k;
+const subCol=k=>acol(SUBCOL[k]||'#6C6C70');
 /* a portfolio can hang off one field or several, and older data stored a single key */
 function plinkOf(id){
   const v=S.plink[id];
@@ -1981,7 +1987,7 @@ const dot=(c,extra='')=>`<span class="spine${catHollow(c)?' hollow':''}" style="
 
 function openPortfolio(accId){
   const a=ACCOUNTS.find(x=>x.id===accId);if(!a||isHidden(accId))return;
-  openPortfolio.filt=null;openPortfolio.taxOpen=false;
+  openPortfolio.filt=null;openPortfolio.taxOpen=false;openPortfolio.acct='';
   openLayer(`<div class="sheet push" role="dialog" aria-label="תיק ניירות ערך"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>${esc(a.short)}</span></button><h2>תיק ניירות ערך</h2><span></span></header><div class="body"></div></div>`,true);
   paintPortfolio(accId);
   refreshRecs(false).catch(()=>{});          /* nothing stale means no request at all */
@@ -2002,12 +2008,24 @@ function portfolioBody(accId){
   const inp=PRIV()?'':`<input type="file" id="pfile" accept=".xlsx,.csv,.txt,.pdf" hidden>`;
   if(!last||!last.hold)
     return inp+`<div class="empty"><h2>${last?'אין פירוט לצילום הזה':'עוד לא הועלה קובץ'}</h2><p>העלו את קובץ האחזקות שייצאתם מ${esc(a.short)} (‎.xlsx‎ או ‎.csv‎). הקובץ נקרא במכשיר ולא נשלח לשום מקום.</p><label class="btn" style="cursor:pointer" for="pfile">בחירת קובץ</label></div>`;
-  const hold=last.hold,s=summarize(hold),ps=prev&&prev.hold?summarize(prev.hold):null;
-  const d=ps?s.total-ps.total:0;
+  const allHold=last.hold;
+  const subs=[...new Set(allHold.map(x=>x.acct).filter(Boolean))];
+  /* one brokerage statement can cover several sub-accounts; the reader picks one or sees them together */
+  if(openPortfolio.acct&&!subs.includes(openPortfolio.acct))openPortfolio.acct='';
+  const av=subs.length>1?(openPortfolio.acct||''):'';
+  const inAcc=arr=>av?arr.filter(x=>x.acct===av):arr;
+  const cashOf=arr=>arr.filter(isCash).reduce((n,x)=>n+x.v,0);
+  const view=inAcc(allHold);
+  const hold=view.filter(x=>!isCash(x)),cash=cashOf(view);
+  const s=summarize(hold),ps=prev&&prev.hold?summarize(inAcc(prev.hold).filter(x=>!isCash(x))):null;
+  const vtot=s.total+cash,ptot=ps?ps.total+cashOf(inAcc(prev.hold)):0;
+  const d=ps?vtot-ptot:0;
   const filt=openPortfolio.filt,srt=openPortfolio.sort||(openPortfolio.sort='v');
-  let h=inp+`<div class="acc-head"><h1>תיק ניירות ערך</h1><div class="big">${pf(s.total)}</div>
-  <div class="meta"><span class="n">${hold.length}</span> אחזקות · נכון ל-<span class="n">${dlong(last.date)}</span></div></div>`;
-  if(ps)h+=`<div class="chips"><div><small>מהצילום הקודם</small><b class="${cls(d)}">${arrow(d)} ${mag(d)}</b> <span class="n ${cls(d)}">${ps.total?pct(d/ps.total,2):''}</span></div>
+  let h=inp+`<div class="acc-head"><h1>תיק ניירות ערך</h1><div class="big">${pf(vtot)}</div>
+  <div class="meta">${av?esc(subLbl(av))+' · ':''}<span class="n">${hold.length}</span> אחזקות${cash?' · מזומן <span class="n">'+pf(cash)+'</span>':''} · נכון ל-<span class="n">${dlong(last.date)}</span></div></div>`;
+  if(subs.length>1)
+    h+=`<div class="segbar" role="tablist" aria-label="בחירת חשבון">${[['','הכול']].concat(subs.map(k=>[k,subLbl(k)])).map(([k,t])=>`<button role="tab" data-acct="${k}" aria-selected="${av===k}">${esc(t)}</button>`).join('')}</div>`;
+  if(ps)h+=`<div class="chips"><div><small>מהצילום הקודם</small><b class="${cls(d)}">${arrow(d)} ${mag(d)}</b> <span class="n ${cls(d)}">${ptot?pct(d/ptot,2):''}</span></div>
   <div><small>רווח על הנייר</small><b class="${cls(s.gain+s.loss)}">${sgn(s.gain+s.loss)}</b></div></div>`;
   // allocation — tapping a row filters the list below
   const cats=CATS.filter(([k])=>s.cat[k]);
@@ -2016,13 +2034,21 @@ function portfolioBody(accId){
   for(const [k,lbl] of cats)
     h+=`<button class="row dotted" data-filt="${k}" aria-pressed="${filt===k}">${dot(k)}<span><span class="nm">${lbl}</span><div class="sub"><span class="n">${s.count[k]}</span> אחזקות</div></span><span class="val"><b>${pf(s.cat[k])}</b><span class="n flat">${(s.cat[k]/s.total*100).toFixed(1)}%</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
   h+=`</div></section>`;
-  const subs=[...new Set(hold.map(x=>x.acct).filter(Boolean))];
-  if(subs.length>1){
-    const SUBLBL={ind:'חשבון רגיל',ira:'IRA'},SUBCOL={ind:acol('#3B82F6'),ira:acol('#8A2D0C')};
-    const tot=k=>hold.filter(x=>x.acct===k).reduce((n,x)=>n+x.v,0);
-    h+=`<section><h2>לפי חשבון</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי חשבון">${
-      subs.map(k=>`<i style="flex:${tot(k)} 0 0;background:${SUBCOL[k]||acol('#6C6C70')}"></i>`).join('')}</div></div>`;
-    for(const k of subs)h+=`<div class="row dotted"><span class="spine" style="background:${SUBCOL[k]||acol('#6C6C70')}"></span><span><span class="nm">${esc(SUBLBL[k]||k)}</span><div class="sub"><span class="n">${hold.filter(x=>x.acct===k).length}</span> אחזקות</div></span><span class="val"><b>${pf(tot(k))}</b><span class="n flat">${(tot(k)/s.total*100).toFixed(1)}%</span></span></div>`;
+  if(cash>0){
+    const rows=av||subs.length<2?[['',cash]]:subs.map(k=>[k,cashOf(allHold.filter(x=>x.acct===k))]).filter(([,v])=>v>0);
+    h+=`<section><h2>מזומן</h2><div class="panel">`;
+    for(const [k,v] of rows)
+      h+=`<div class="row dotted"><span class="spine" style="background:${k?subCol(k):catCol('cash')}"></span><span><span class="nm">${k?esc(subLbl(k)):'יתרת מזומן'}</span>${k?'':'<div class="sub">כסף פנוי, לא נייר ערך</div>'}</span><span class="val"><b>${pf(v)}</b><span class="n flat">${(v/vtot*100).toFixed(1)}%</span></span></div>`;
+    h+=`</div><p class="hint">המזומן לא נספר כאחזקה ולא נכנס להתפלגות לפי סוג נכס, אבל הוא חלק מהשווי הכולל של החשבון.</p></section>`;
+  }
+  if(subs.length>1&&!av){
+    const tot=k=>allHold.filter(x=>x.acct===k).reduce((n,x)=>n+x.v,0);
+    h+=`<section><h2>לפי חשבון <small>לחיצה מסננת</small></h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי חשבון">${
+      subs.map(k=>`<i style="flex:${tot(k)} 0 0;background:${subCol(k)}"></i>`).join('')}</div></div>`;
+    for(const k of subs){
+      const sec=allHold.filter(x=>x.acct===k&&!isCash(x)).length,c=cashOf(allHold.filter(x=>x.acct===k));
+      h+=`<button class="row dotted" data-acct="${k}"><span class="spine" style="background:${subCol(k)}"></span><span><span class="nm">${esc(subLbl(k))}</span><div class="sub"><span class="n">${sec}</span> אחזקות${c?' · מזומן <span class="n">'+pf(c)+'</span>':''}</div></span><span class="val"><b>${pf(tot(k))}</b><span class="n flat">${(tot(k)/vtot*100).toFixed(1)}%</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
+    }
     h+=`</div></section>`;
   }
   const CURCOL={'שקל':acol('#2F9E6E'),'דולר':acol('#3B82F6')};
@@ -2054,12 +2080,14 @@ function portfolioBody(accId){
     <span class="val"><b>${pf(x.v)}</b><span class="n ${cls(x.tg)}">${x.tg?arrow(x.tg)+' '+mag(x.tg):''}</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
   }
   h+=`</div></section>`;
-  if(list.length>1){
+  /* under an account filter only snapshots that still carry their holdings can be split by account */
+  const snaps=av?list.filter(p=>p.hold):list;
+  if(snaps.length>1){
     h+=`<section><h2>צילומים קודמים</h2><div class="panel">`;
-    const tot=p=>p.hold?summarize(p.hold).total:(p.sum?p.sum.total:0);
-    for(let i=list.length-1;i>=0;i--){
-      const dd=i?tot(list[i])-tot(list[i-1]):0;
-      h+=`<div class="row dotted"><span class="spine" style="background:${i?(dd>0?'var(--up)':dd<0?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n">${dlong(list[i].date)}</span><span class="val"><b>${pf(tot(list[i]))}</b>${i?`<span class="n ${cls(dd)}">${arrow(dd)} ${mag(dd)}</span>`:'<span class="flat">ראשון</span>'}</span></div>`;
+    const tot=p=>p.hold?inAcc(p.hold).reduce((n,x)=>n+x.v,0):(p.sum?p.sum.total:0);
+    for(let i=snaps.length-1;i>=0;i--){
+      const dd=i?tot(snaps[i])-tot(snaps[i-1]):0;
+      h+=`<div class="row dotted"><span class="spine" style="background:${i?(dd>0?'var(--up)':dd<0?'var(--down)':'var(--line)'):'var(--line)'}"></span><span class="nm n">${dlong(snaps[i].date)}</span><span class="val"><b>${pf(tot(snaps[i]))}</b>${i?`<span class="n ${cls(dd)}">${arrow(dd)} ${mag(dd)}</span>`:'<span class="flat">ראשון</span>'}</span></div>`;
     }
     h+=`</div></section>`;
   }
@@ -2077,6 +2105,12 @@ function wirePortfolio(accId){
     paintPortfolio(accId,!fromList);
     if(fromList){const el=$('#holds');if(el)el.scrollIntoView({block:'start',behavior:calm()?'auto':'smooth'})}
   });
+  layer.querySelectorAll('[data-acct]').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.acct||'';
+    openPortfolio.acct=(openPortfolio.acct===k)?'':k;
+    openPortfolio.filt=null;
+    paintPortfolio(accId);
+  });
   layer.querySelectorAll('[data-hold]').forEach(b=>b.onclick=()=>openHolding(accId,b.dataset.hold));
   recPaintOpen.list=()=>{const T=stack[stack.length-1];if(T&&T.el.querySelector('[data-hold]'))paintPortfolio(accId,true)};
 }
@@ -2085,17 +2119,18 @@ function openHolding(accId,id){
   const x=last.hold.find(y=>y.id===id);if(!x)return;
   const prev=list[list.length-2],old=prev&&prev.hold?prev.hold.find(y=>y.id===id):null;
   const t=ptypeOf(x),c=catOf(x),f=x.cur==='שקל'?ils:v=>nf0.format(Math.round(v))+' '+x.cur;
+  const ac=ACCOUNTS.find(y=>y.id===accId),af=ac&&ac.cur==='USD'?usd:ils,asg=v=>signedBy(v,af);
   openLayer(`<div class="sheet modal" role="dialog" aria-label="${esc(x.name)}"><header><span class="grab" aria-hidden="true"></span><button data-close>סגירה</button><h2>${esc(x.name)}</h2><span></span></header><div class="body">
-  <div class="acc-head"><div class="big">${ils(x.v)}</div><div class="meta">${esc(CATLBL[c])} · <span class="n">${(x.v/summarize(last.hold).total*100).toFixed(1)}%</span> מהתיק${x.sym?' · '+esc(x.sym):''}</div></div>
+  <div class="acc-head"><div class="big">${af(x.v)}</div><div class="meta">${esc(CATLBL[c])} · <span class="n">${(x.v/summarize(last.hold).total*100).toFixed(1)}%</span> מהתיק${x.sym?' · '+esc(x.sym):''}</div></div>
   ${priceBlock(x,accId)}
   <section><div class="panel facts">
   <div><small>כמות</small><b>${nf0.format(x.qty)}</b></div>
   <div><small>שער אחרון</small><b>${nf0.format(Math.round(x.price*100)/100)}</b></div>
   ${x.cur!=='שקל'?`<div><small>שווי במטבע</small><b>${f(x.vc)}</b></div>`:''}
-  <div><small>רווח מרכישה</small><b class="${cls(x.gain)}">${signedIls(x.gain)}</b></div>
-  <div><small>רווח הון על הנייר</small><b class="${cls(x.tg)}">${signedIls(x.tg)}</b></div>
-  <div><small>מס תיאורטי</small><b class="${cls(x.tx)}">${signedIls(x.tx)}</b></div>
-  ${old?`<div><small>שינוי מהצילום הקודם</small><b class="${cls(x.v-old.v)}">${signedIls(x.v-old.v)}</b></div>`:''}
+  <div><small>רווח מרכישה</small><b class="${cls(x.gain)}">${asg(x.gain)}</b></div>
+  <div><small>רווח הון על הנייר</small><b class="${cls(x.tg)}">${asg(x.tg)}</b></div>
+  <div><small>מס תיאורטי</small><b class="${cls(x.tx)}">${asg(x.tx)}</b></div>
+  ${old?`<div><small>שינוי מהצילום הקודם</small><b class="${cls(x.v-old.v)}">${asg(x.v-old.v)}</b></div>`:''}
   </div></section>
   <p class="hint">${esc(CATLBL[c])}. הסיווג נקבע לפי שם הנייר, והשיוך לישראל או לחו״ל לפי שפת השם והמטבע.</p>
   ${recBlock(x)}</div></div>`);
@@ -2174,25 +2209,25 @@ async function readHoldings(file){
   const m=st.period&&st.period.match(/^(\w+) (\d+), (\d{4})$/);
   if(m){const mi=['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(m[1]);
     if(mi>=0)date=m[3]+'-'+String(mi+1).padStart(2,'0')+'-'+String(+m[2]).padStart(2,'0')}
-  return {hold,subs:st.accounts.map(x=>({kind:x.kind,total:x.total,n:x.holdings.length})),date};
+  return {hold,subs:st.accounts.map(x=>({kind:x.kind,total:x.total,
+    n:x.holdings.filter(h=>!isCash(h)).length,cash:x.holdings.filter(isCash).reduce((t,h)=>t+h.v,0)})),date};
 }
 async function importPortfolio(accId,file){
   const a=ACCOUNTS.find(x=>x.id===accId);
   const pf=a&&a.cur==='USD'?usd:ils;
   try{
     const {hold,subs,date:sdate}=await readHoldings(file);
-    const s=summarize(hold);
+    const s=summarize(hold),cashTot=hold.filter(isCash).reduce((t,x)=>t+x.v,0);
     const fields=a.fields.map(([k,nm])=>[k,nm]);
     const guess=plinkOf(accId)[0]||(fields.find(([k,nm])=>/שוק ההון|קרנות|השקעות/.test(nm))||fields[fields.length-1])[0];
-    const SUBLBL={ind:'חשבון רגיל',ira:'IRA'};
     const prev=plinkOf(accId);
     const pick=(k,sel)=>`<select id="pfld-${k}" style="min-height:44px;border:0;background:transparent;color:var(--tink);font-size:17px">${fields.map(([fk,nm])=>`<option value="${fk}" ${fk===sel?'selected':''}>${esc(nm)}</option>`).join('')}</select>`;
     const subRows=subs?subs.map((x,i)=>{
       const want=prev[i]||(x.kind==='ira'&&(fields.find(([,nm])=>/IRA|גמל|פנסי|השתלמות/i.test(nm))||[])[0])||guess;
-      return `<div class="fld"><label for="pfld-${x.kind}">${esc(SUBLBL[x.kind]||x.kind)}<small>${pf(x.total)} · <span class="n">${x.n}</span> אחזקות</small></label>${pick(x.kind,want)}</div>`;
+      return `<div class="fld"><label for="pfld-${x.kind}">${esc(subLbl(x.kind))}<small>${pf(x.total)} · <span class="n">${x.n}</span> אחזקות${x.cash?' · מזומן <span class="n">'+pf(x.cash)+'</span>':''}</small></label>${pick(x.kind,want)}</div>`;
     }).join(''):'';
     openLayer(`<div class="sheet modal" role="dialog" aria-label="קובץ חדש"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>${subs?'דוח נקרא':'קובץ נקרא'}</h2><span></span></header><div class="body">
-    <div class="acc-head"><div class="big">${pf(s.total)}</div><div class="meta"><span class="n">${hold.length}</span> אחזקות ב${esc(a.short)}</div></div>
+    <div class="acc-head"><div class="big">${pf(s.total)}</div><div class="meta"><span class="n">${hold.filter(x=>!isCash(x)).length}</span> אחזקות ב${esc(a.short)}${cashTot?' · מזומן <span class="n">'+pf(cashTot)+'</span>':''}</div></div>
     <div class="grp"><div class="fld"><label for="pdate">תאריך הצילום</label><input id="pdate" type="date" value="${sdate||today()}"></div>
     ${subs?subRows:`<div class="fld"><label for="pfld-one">ממלא את השדה</label>${pick('one',guess)}</div>`}</div>
     <p class="hint">${subs?'כל חשבון בדוח ממלא שדה אחד. הבחירה תיזכר לפעם הבאה.':'הצילום יישמר בתיק של '+esc(a.short)+', והסכום יוצע לעדכון היתרות של אותו תאריך.'}</p>
