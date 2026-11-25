@@ -66,7 +66,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .hero .deltas small,.chips small{display:block;font-size:13px;color:var(--muted)}
 .hero .deltas b,.chips b{font-family:var(--num);font-size:19px;font-weight:600;direction:ltr;display:inline-block}
 .hero .deltas span,.chips span{font-size:13px}
-.readout{font-size:13px;min-height:18px;color:var(--muted);margin:4px 0 0}
+.readout{font-size:13px;min-height:18px;color:var(--muted);margin:4px 0 0;text-align:center}
 
 .pagehead{padding:calc(var(--sat) + 20px) 20px 2px}
 .pagehead h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.022em;line-height:1.15}
@@ -329,7 +329,7 @@ svg.pxchart .pxknob{stroke:var(--surface);stroke-width:2;vector-effect:non-scali
 .chart-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
 .chart-top b{font-size:22px;font-family:var(--num);letter-spacing:-.2px}
 .chart-top .n{font-size:14px;font-weight:600}
-.chartbox .readout{min-height:17px;font-size:12.5px;color:var(--muted);margin:0 0 4px;direction:rtl}
+.chartbox .readout{min-height:17px;font-size:12.5px;color:var(--muted);margin:0 0 4px;direction:rtl;text-align:center}
 .roll .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .roll{display:inline-flex;direction:ltr;font-variant-numeric:tabular-nums;white-space:nowrap}
 .roll .dig,.roll .sep{display:inline-block;height:1em;line-height:1;vertical-align:bottom}
@@ -830,8 +830,7 @@ function openAccount(id,from){
   const mP=n>1?mvs[n-1]-mvs[n-2]:0,mF=mvs[n-1]-mvs[0];
   const hi=Math.max(...mvs),lo=Math.min(...mvs);
   let h=`<div class="sheet push" role="dialog" aria-label="${esc(a.name)}"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>סקירה</span></button><h2>${esc(a.short)}</h2><span></span></header><div class="body">
-  <div class="acc-head"><h1><span style="color:${acol(a.color)}">●</span> ${esc(a.name)}</h1><div class="big">${ils(v)}</div>
-  <div class="meta"><span class="n">${share(v,C[n-1].total)}%</span> מההון · נכון ל-<span class="n">${dlong(U[n-1].date)}</span>${isUsd?` · <span class="n">${usd(C[n-1].usdAcc[id]||0)}</span>`:''}</div></div>
+  <div class="acc-head"><h1><span style="color:${acol(a.color)}">●</span> ${esc(a.name)}</h1><div class="big">${ils(v)}</div></div>
   <div class="chips"><div><small>מהעדכון הקודם</small>${n>1?`<b class="${cls(mP)}">${arrow(mP)} ${mmag(mP)}</b> <span class="n ${cls(mP)}">${mvs[n-2]?pct(mP/mvs[n-2],2):''}</span>`:'<b class="flat">—</b>'}</div>
   <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(mF)}">${arrow(mF)} ${mmag(mF)}</b> <span class="n ${cls(mF)}">${mvs[0]?pct(mF/mvs[0],2):''}</span>`:'<b class="flat">—</b>'}</div></div>
   <section><h2>שינוי בין העדכונים${isUsd?' <small>בדולרים</small>':''}</h2><div class="panel pad" id="ch-acc">${lineChart(mpts,acol(a.color),{label:a.name})}<p class="readout"></p></div></section>
