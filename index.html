@@ -276,12 +276,16 @@ table.cmp .d small{display:block;font-size:12px}
 .lock{position:fixed;inset:0;z-index:40;overflow:hidden;background:#062A52;color:#fff;
   display:flex;flex-direction:column;align-items:center;
   padding:calc(78px + var(--sat)) 24px calc(34px + var(--sab))}
+/* the OS paints the status bar strip from theme-color, a flat colour, so the top of the screen
+   settles to exactly that colour and the drifting lights start below it */
+.lock::before{content:'';position:absolute;left:0;right:0;top:0;height:150px;z-index:1;pointer-events:none;
+  background:linear-gradient(#062A52 0,#062A52 calc(var(--sat) + 10px),rgba(6,42,82,0) 100%)}
 .lock .blob{position:absolute;border-radius:50%;filter:blur(58px);will-change:transform;pointer-events:none}
 .lock .b1{width:320px;height:320px;top:-40px;inset-inline-start:-70px;background:#1E7FE0;opacity:.72;animation:ldrift1 26s ease-in-out infinite}
 .lock .b2{width:300px;height:300px;top:42%;inset-inline-end:-90px;background:#1FAE9C;opacity:.5;animation:ldrift2 32s ease-in-out infinite}
 @keyframes ldrift1{0%{transform:translate(-6%,-4%) scale(1)}50%{transform:translate(14%,10%) scale(1.22)}100%{transform:translate(-6%,-4%) scale(1)}}
 @keyframes ldrift2{0%{transform:translate(10%,6%) scale(1.1)}50%{transform:translate(-12%,-8%) scale(.9)}100%{transform:translate(10%,6%) scale(1.1)}}
-.lock .in{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
+.lock .in{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
   width:100%;max-width:330px;height:100%}
 .lock h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:16px 0 0}
 .lock p{margin:5px 0 0;color:#CFE2F7;font-size:15px;text-align:center}
