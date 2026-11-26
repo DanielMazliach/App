@@ -1235,7 +1235,10 @@ const toPct=se=>{
 function viewCompare(){
   const U=sorted();let h=`<div class="pagehead"><h1>השוואה</h1><p>שני תאריכים, זה מול זה</p></div>`;
   if(U.length<2){view.innerHTML=h+`<div class="empty"><h2>צריך לפחות שני עדכונים</h2><p>אחרי העדכון השני אפשר יהיה להשוות ביניהם.</p><button class="btn" data-act="new">עדכון חדש</button></div>`;return}
-  const st=viewCompare.st||(viewCompare.st={});if(!U.some(u=>u.date===st.a))st.a=U[U.length-2].date;if(!U.some(u=>u.date===st.b))st.b=U[U.length-1].date;
+  /* the default window is the whole tracked period; a date the reader picks is kept */
+  const st=viewCompare.st||(viewCompare.st={});
+  if(!U.some(u=>u.date===st.a))st.a=U[0].date;
+  if(!U.some(u=>u.date===st.b))st.b=U[U.length-1].date;
   const A=U.find(u=>u.date===st.a),B=U.find(u=>u.date===st.b),ca=calc(A),cb=calc(B);
   const opts=s=>U.map(u=>`<option value="${u.date}" ${u.date===s?'selected':''}>${dlong(u.date)}</option>`).join('');
   h+=`<section><div class="pick"><div><label for="ca">תאריך בסיס</label><select id="ca">${opts(st.a)}</select></div><div><label for="cb">תאריך להשוואה</label><select id="cb">${opts(st.b)}</select></div></div></section>`;
