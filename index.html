@@ -1209,27 +1209,7 @@ function fxExposure(){
   }
   return {fx,total:C.total,by};
 }
-const SPYCOL='#6D4AC4',TACOL='#C2255C';
-/* Tel Aviv is not covered by the free market-data plan — every TA-125 instrument there sits
-   behind a paid tier. What is free is what is already on the device: if one of the holdings is a
-   fund that tracks the index, its closing prices across the uploaded files are the index's shape.
-   Sparse (one point per upload), honest, and nothing is sent anywhere. */
-const TA125=/(^|[^\d])125([^\d]|$)/;
-function taTracker(){
-  for(const a of ACCOUNTS){
-    if(isHidden(a.id))continue;
-    const snaps=portsRaw(a.id).filter(p=>p.hold);
-    if(snaps.length<2)continue;
-    const last=snaps[snaps.length-1];
-    const cand=last.hold.filter(h=>TA125.test(String(h.name||''))&&/[א-ת]/.test(String(h.name||''))&&h.price>0);
-    for(const h of cand.sort((x,y)=>(ptypeOf(y)==='fund')-(ptypeOf(x)==='fund'))){
-      const pts=[];
-      for(const sn of snaps){const m=sn.hold.find(y=>String(y.id)===String(h.id));if(m&&m.price>0)pts.push({d:sn.date,v:m.price})}
-      if(pts.length>1)return {name:h.name,pts};
-    }
-  }
-  return null;
-}
+const SPYCOL='#6D4AC4';
 /* the percent chart's menu: the total, each account, and the index when a key is set */
 function cmpSeries(){
   const U=sorted(),C=U.map(calc);
@@ -1242,8 +1222,6 @@ function cmpSeries(){
     const win=spy.filter(p=>p.d>=from&&p.d<=to);
     if(win.length>1)out.push({id:'SPY',name:'S&P 500',color:acol(SPYCOL),dash:true,pts:win});
   }
-  const ta=taTracker();
-  if(ta)out.push({id:'TA125',name:'ת״א 125',color:acol(TACOL),dash:true,pts:ta.pts,note:ta.name});
   return out;
 }
 /* re-based: each series starts at zero and is read as its change in percent since then */
@@ -1268,7 +1246,6 @@ function viewCompare(){
   const all=cmpSeries();
   if(!st.sel||!st.sel.length)st.sel=['total',...visAcc().slice(0,1).map(a=>a.id)];
   const pick=all.filter(x=>st.sel.includes(x.id)).map(toPct).filter(Boolean);
-  const ta=all.find(x=>x.id==='TA125');
   /* everything together is the line the rest are read against, so it gets a row of its own;
      the others share two rows, as many to a row as that takes */
   const rest=all.slice(1),cols=Math.min(4,Math.max(2,Math.ceil(rest.length/2)));
@@ -1276,7 +1253,7 @@ function viewCompare(){
   h+=`<section><h2>מי צמח יותר <small>הכול באחוזים</small></h2>
   <div class="chipwrap"><div class="chipall">${chip(all[0])}</div>
   <div class="chipgrid" style="--cols:${cols}">${rest.map(chip).join('')}</div>
-  ${(!PX.SPY&&S.td)||!ta?`<div class="chipadd">${!PX.SPY&&S.td?`<button data-spy="1">+ S&amp;P 500</button>`:''}${ta?'':`<button data-ta="1">+ ת״א 125</button>`}</div>`:''}</div>
+  ${!PX.SPY&&S.td?`<div class="chipadd"><button data-spy="1">+ S&amp;P 500</button></div>`:''}</div>
   <div class="panel pad" id="ch-pct">${pick.length?pctChart(pick,{label:'שינוי באחוזים'}):'<p class="hint" style="padding:18px 0;text-align:center;margin:0">בחרו לפחות סדרה אחת.</p>'}<p class="readout"></p></div>`;
   if(pick.length){
     const span=pick[0].pts;
@@ -1284,14 +1261,12 @@ function viewCompare(){
       const v=se.pts[se.pts.length-1].v;
       return `<div class="row dotted"><span class="spine" style="background:${se.color}"></span><span class="nm">${esc(se.name)}</span><span class="val"><b class="n ${cls(v,100)}">${pct(v/100,1)}</b><span class="n flat">מ-${dshort(se.pts[0].d)}</span></span></div>`}).join('')}</div>`;
   }
-  h+=`<p class="hint">כל סדרה מתחילה מאפס בנקודה הראשונה שלה, כך שאפשר להשוות ביניהן בלי קשר לגודל.${S.td?'':' להוספת מדד S&P 500 צריך מפתח Twelve Data בהגדרות.'}${ta?' מדד ת״א 125 נבנה מהמחירים של <b>'+esc(short(ta.note,28))+'</b> בקבצים שהעלית, כי אין מקור חינמי לבורסת תל אביב.':''}</p></section>`;
+  h+=`</section>`;
   h+=`<section><div class="panel facts"><div><small>ימים בין התאריכים</small><b>${Math.round((new Date(B.date)-new Date(A.date))/864e5)}</b></div><div><small>שער דולר</small><b>${A.rate?A.rate.toFixed(3):'—'} → ${B.rate?B.rate.toFixed(3):'—'}</b></div></div></section>`;
   view.innerHTML=h;
   setTop('השוואה');
   if(offscreen)return;
   $('#ca').onchange=e=>{st.a=e.target.value;viewCompare()};$('#cb').onchange=e=>{st.b=e.target.value;viewCompare()};
-  const tb=view.querySelector('[data-ta]');
-  if(tb)tb.onclick=()=>toast('אין מקור חינמי למדד ת״א 125. העלו קובץ אחזקות שיש בו קרן שעוקבת אחריו, והמדד ייבנה מהמחירים שלה.');
   view.querySelectorAll('[data-cmp]').forEach(b=>b.onclick=()=>{
     const k=b.dataset.cmp;
     st.sel=st.sel.includes(k)?st.sel.filter(x=>x!==k):[...st.sel,k];
