@@ -225,11 +225,18 @@ button.row.plain{grid-template-columns:1fr auto 8px}
   mask-image:linear-gradient(to left,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);
   scroll-padding-inline:16px;display:flex;gap:8px;overflow-x:auto;padding:0 16px 4px;margin:0 -16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .chiprow::-webkit-scrollbar{display:none}
-/* a set small enough to fit is laid out in full, so nothing is hidden off the edge */
-.chipwrap{display:flex;flex-wrap:wrap;gap:8px;margin:0 4px 10px}
-.chipwrap button{flex:0 1 auto;min-height:40px;padding:0 13px;border-radius:20px;background:var(--fill);font-size:0.8235rem;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+/* every option is laid out in full, so nothing is hidden off the edge */
+.chipwrap{margin:0 4px 10px;display:grid;gap:8px}
+.chipwrap button{min-height:40px;padding:0 12px;border-radius:20px;background:var(--fill);font-weight:500;
+  font-size:clamp(0.72rem,3.3vw,0.8235rem);color:var(--ink);display:flex;align-items:center;justify-content:center;
+  gap:6px;min-width:0;overflow:hidden}
+.chipwrap button .lb{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .chipwrap button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .chipwrap .spine{width:8px;height:8px;border-radius:50%;flex:none}
+.chipall button{width:100%;min-height:46px;font-size:0.9412rem;font-weight:600}
+.chipgrid{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:8px}
+.chipadd{display:flex;flex-wrap:wrap;gap:8px}
+.chipadd button{flex:1 1 auto;background:none;color:var(--tink);font-weight:600;min-height:40px}
 .chiprow button{flex:none;min-height:40px;padding:0 15px;border-radius:20px;background:var(--fill);font-size:0.8235rem;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap}
 .chiprow button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .chiprow .spine{width:8px;height:8px;border-radius:50%;flex:none}
@@ -710,6 +717,23 @@ function lineChart(pts,color,o={}){
    account of ₪5M and one of ₪75K cannot be read together. So every series is re-based to its own
    first point and drawn as a percentage change, which is the question being asked anyway — which
    of them grew faster. */
+/* A percentage chart is read by how far from zero the lines go, so the axis is cut to the moves
+   that actually happened: the extremes plus a fifth of their span, and grid lines at round
+   percentages inside that. Five lines that fit beat seven that waste half the height. */
+function pctScale(vals){
+  const lo0=Math.min(0,...vals),hi0=Math.max(0,...vals);
+  const span=Math.max(hi0-lo0,0.6);                /* a flat week is flat, not noise magnified */
+  const pad=span*0.12;                             /* just enough air above the highest line */
+  const min=lo0-pad,max=hi0+pad;
+  const STEPS=[0.1,0.25,0.5,1,2,2.5,5,10,20,25,50,100,200,500];
+  const step=STEPS.find(x=>(max-min)/x<=6)||1000;
+  const ticks=[];
+  for(let v=Math.ceil(min/step-1e-9)*step;v<=max+1e-9;v+=step)ticks.push(+v.toFixed(6));
+  if(!ticks.length)ticks.push(0);
+  /* the label must say what the line is: a 2.5 step cannot be printed as a whole number */
+  const frac=ticks.some(t=>Math.abs(t%1)>1e-9);
+  return {min,max,ticks,dec:frac?(step<0.5?2:1):0};
+}
 function pctChart(series,o={}){
   const W=340,H=o.h||190,AX=40,PR=10,T=14,B=24;
   const all=series.flatMap(s=>s.pts);
@@ -717,11 +741,11 @@ function pctChart(series,o={}){
   const tms=all.map(p=>Date.parse(p.d));
   const t0=Math.min(...tms),t1=Math.max(...tms),span=t1-t0||1;
   const vals=series.flatMap(s=>s.pts.map(p=>p.v));
-  const {min,max,ticks}=niceTicks(Math.min(...vals),Math.max(...vals));
+  const {min,max,ticks,dec}=pctScale(vals);
   const x=d=>AX+10+(Date.parse(d)-t0)*(W-PR-10-AX-10)/span;
   const y=v=>T+(max-v)*(H-T-B)/(max-min||1);
   let out=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label||'השוואה באחוזים')}">`;
-  for(const tk of ticks)out+=`<line class="g" x1="${AX}" x2="${W-PR}" y1="${y(tk)}" y2="${y(tk)}" stroke-width="1"/><text x="${AX-7}" y="${y(tk)+3.5}" text-anchor="end">${(tk>0?'+':'')+tk.toFixed(0)}%</text>`;
+  for(const tk of ticks)out+=`<line class="g" x1="${AX}" x2="${W-PR}" y1="${y(tk)}" y2="${y(tk)}" stroke-width="1"/><text x="${AX-7}" y="${y(tk)+3.5}" text-anchor="end">${(tk>0?'+':'')+tk.toFixed(dec)}%</text>`;
   /* the zero line is where each series started: above it is a gain, below it a loss */
   if(min<0&&max>0)out+=`<line x1="${AX}" x2="${W-PR}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ccross)" stroke-width="1"/>`;
   const lab=[t0,t0+span/2,t1].map(t=>new Date(t).toISOString().slice(0,10));
@@ -1245,10 +1269,14 @@ function viewCompare(){
   if(!st.sel||!st.sel.length)st.sel=['total',...visAcc().slice(0,1).map(a=>a.id)];
   const pick=all.filter(x=>st.sel.includes(x.id)).map(toPct).filter(Boolean);
   const ta=all.find(x=>x.id==='TA125');
+  /* everything together is the line the rest are read against, so it gets a row of its own;
+     the others share two rows, as many to a row as that takes */
+  const rest=all.slice(1),cols=Math.min(4,Math.max(2,Math.ceil(rest.length/2)));
+  const chip=x=>`<button data-cmp="${esc(x.id)}" aria-pressed="${st.sel.includes(x.id)}"><span class="spine" style="background:${x.color}"></span><span class="lb">${esc(x.name)}</span></button>`;
   h+=`<section><h2>מי צמח יותר <small>הכול באחוזים</small></h2>
-  <div class="chipwrap">${all.map(x=>`<button data-cmp="${esc(x.id)}" aria-pressed="${st.sel.includes(x.id)}"><span class="spine" style="background:${x.color}"></span>${esc(x.name)}</button>`).join('')}
-  ${!PX.SPY&&S.td?`<button data-spy="1">+ S&amp;P 500</button>`:''}
-  ${ta?'':`<button data-ta="1">+ ת״א 125</button>`}</div>
+  <div class="chipwrap"><div class="chipall">${chip(all[0])}</div>
+  <div class="chipgrid" style="--cols:${cols}">${rest.map(chip).join('')}</div>
+  ${(!PX.SPY&&S.td)||!ta?`<div class="chipadd">${!PX.SPY&&S.td?`<button data-spy="1">+ S&amp;P 500</button>`:''}${ta?'':`<button data-ta="1">+ ת״א 125</button>`}</div>`:''}</div>
   <div class="panel pad" id="ch-pct">${pick.length?pctChart(pick,{label:'שינוי באחוזים'}):'<p class="hint" style="padding:18px 0;text-align:center;margin:0">בחרו לפחות סדרה אחת.</p>'}<p class="readout"></p></div>`;
   if(pick.length){
     const span=pick[0].pts;
