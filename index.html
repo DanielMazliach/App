@@ -2746,7 +2746,7 @@ function treemapBody(){
     h+=`<button class="tile" data-tile="${esc(g.k)}" style="left:${t.x.toFixed(3)}%;top:${(t.y/H*100).toFixed(3)}%;width:${t.w.toFixed(3)}%;height:${(t.h/H*100).toFixed(3)}%;--tc:${g.col}${g.hollow?';--ho:1':''}" title="${esc((g.full||g.label)+' · '+ils(g.v))}">
       ${small?'':`<span class="tl-n">${esc(short(g.label,Math.max(4,Math.round(t.w/2.6))))}</span><span class="tl-p n">${p.toFixed(p<1?1:0)}%</span>`}</button>`;
   }
-  h+=`</div><p class="hint">המפה מראה את כל מה שיש בחשבונות עם קובץ אחזקות, מזומן כלול, לפי שער הדולר של העדכון האחרון. ${treeBy==='sec'?'לחיצה על מלבן פותחת את הנייר; מלבן קטן מדי לא נושא תווית, והלחיצה עדיין עובדת.':''}</p></section>`;
+  h+=`</div></section>`;
   // the long tail, in words
   if(treeBy==='sec'){
     const big=hs.filter(x=>!isCash(x)).slice(0,8);
@@ -2768,7 +2768,7 @@ function spreadBody(){
       <i style="flex:${fx.total-fx.fx} 0 0;background:${acol('#2F9E6E')}"></i><i style="flex:${fx.fx} 0 0;background:${acol('#3B82F6')}"></i></div></div>
       <div class="row dotted"><span class="spine" style="background:${acol('#2F9E6E')}"></span><span class="nm">שקל</span><span class="val"><b>${ils(fx.total-fx.fx)}</b><span class="n flat">${(100-share).toFixed(1)}%</span></span></div>
       <div class="row dotted"><span class="spine" style="background:${acol('#3B82F6')}"></span><span><span class="nm">מטבע חוץ</span><div class="sub">${Object.keys(fx.by).map(id=>esc((ACCOUNTS.find(a=>a.id===id)||{}).short||'')).join(' · ')}</div></span><span class="val"><b>${ils(fx.fx)}</b><span class="n flat">${share.toFixed(1)}%</span></span></div>
-      </div><p class="hint">חשבון דולרי נספר במלואו, ובחשבון שקלי נספרים ניירות שנקובים במטבע חוץ. שינוי של <span class="n">1%</span> בשער הדולר מזיז את ההון בכ-<b class="n">${ils(fx.fx*0.01)}</b>.</p></section>`;
+      </div></section>`;
   }
   /* ---- equities, bonds and cash, and where the equities are listed ----
      a fund is equity too, so what matters for this answer is the market it tracks, not whether
@@ -2791,7 +2791,7 @@ function spreadBody(){
       ${eqIntl>0?row('אמריקאי וחו״ל','',eqIntl,catCol('stock-intl'),true,true):''}
       ${bond>0?row('אג״ח','',bond,catCol('bond'),false,false):''}
       ${cash>0?row('מזומן','',cash,catCol('cash'),false,false):''}
-    </div><p class="hint">קרן סל נספרת כמנייתית${eq>0?', ולכן <span class="n">'+pc(eq).toFixed(1)+'%</span> מהכסף חשוף לשוק המניות':''}. קרן נספרת לפי המדד שבשמה — קרן ישראלית על S&amp;P 500 נספרת כאמריקאית — ומניה לפי שפת שמה והמטבע שלה.</p></section>`;
+    </div></section>`;
   }
   /* ---- how much of everything sits in a few names ---- */
   const hs=allHoldings().filter(h=>!isCash(h));
@@ -2805,7 +2805,6 @@ function spreadBody(){
     <div><small>5 הגדולות מתוך ניירות הערך</small><b class="n">${(t5/tot*100).toFixed(1)}%</b></div>
     <div><small>הגדולה ביותר</small><b class="n">${(hs[0].ils/tot*100).toFixed(1)}%</b></div>
     <div><small>מספר ניירות</small><b class="n">${hs.length}</b></div></div>
-    <p class="hint">נספרו <span class="n">${hs.length}</span> ניירות מכל החשבונות שיש להם קובץ אחזקות, לפי שער הדולר של העדכון האחרון. אותו נייר שמוחזק בשני חשבונות מופיע פעמיים.</p>
     <div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="treemap">מפת כל האחזקות</button></div></section>`;
   }
   const hsx=allHoldings().filter(x=>!isCash(x));
