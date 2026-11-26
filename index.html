@@ -86,7 +86,7 @@ section>h2 small,.foldh h2 small{font-weight:400;font-size:15px;letter-spacing:0
 @media(prefers-reduced-motion:reduce){.foldh .chev{transition:none}}
 .pad{padding:14px 16px}
 
-.stack{display:flex;gap:2px;height:10px;direction:rtl;margin:2px 0}
+.stack{display:flex;gap:3px;height:12px;direction:rtl;margin:2px 0;background:var(--line);border-radius:6px}
 .pcard{display:block;width:100%;margin-top:12px;border:0;border-radius:14px;background:var(--surface);padding:16px;box-sizing:border-box;text-align:start;color:var(--ink);font:inherit}
 .pcard:active{background:var(--line)}
 .pcard>span{display:block}
@@ -97,14 +97,13 @@ section>h2 small,.foldh h2 small{font-weight:400;font-size:15px;letter-spacing:0
 .pc-val{display:flex!important;align-items:baseline;gap:10px;margin-top:6px}
 .pc-val b{font-size:28px;font-weight:700;letter-spacing:-.02em}
 .pc-val>span{font-size:14px;font-weight:600}
-.pcard .stack{display:flex;height:8px;margin-top:14px;border-radius:4px;overflow:hidden}
+.pcard .stack{margin:14px 0 0}
 .pc-leg{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin-top:12px}
 .pc-leg>span{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);min-width:0}
 .pc-leg i{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
 .pc-leg b{margin-inline-start:auto;color:var(--ink);font-weight:600}
 .pc-hint{margin-top:8px;font-size:13px;color:var(--tink);font-weight:600}
-.stack i{display:block;height:100%;min-width:3px;border-radius:2px}
-.stack i:first-child{border-radius:5px 2px 2px 5px}.stack i:last-child{border-radius:2px 5px 5px 2px}
+.stack i{display:block;height:100%;min-width:8px;border-radius:6px}
 
 /* list rows: separators only, inset from the leading edge */
 .row{position:relative;display:grid;grid-template-columns:10px 1fr auto;gap:0 12px;align-items:center;width:100%;min-height:60px;text-align:start;padding:10px 16px;background:var(--surface);transition:background .07s ease-out}
@@ -568,6 +567,7 @@ function loadPorts(d){
     if(!ok.has(id))continue;
     const v=d.plink[id],keys=(Array.isArray(v)?v:[v]).map(String).filter(Boolean);
     if(keys.length)S.plink[id]=keys.length>1?keys:keys[0];
+    else if(Array.isArray(v))S.plink[id]=[];          /* switched off on purpose */
   }
 }
 function clean(list){
@@ -753,7 +753,7 @@ function viewHome(){
   const C=U.map(calc),n=U.length,last=C[n-1],prev=C[n-2],first=C[0];
   const dPrev=prev?last.total-prev.total:0,dFirst=last.total-first.total;
   const win=U.slice(-12),winC=C.slice(-12);
-  let h=`<div class="hero"><h1>הון כולל${PRIV()?' '+PMARK:''}</h1><div class="total" data-roll="total" data-rv="${last.total}">${ils(last.total)}</div><div class="asof">נכון ל-<span class="n">${dlong(U[n-1].date)}</span></div>
+  let h=`<div class="hero"><h1>הון כולל${PRIV()?' '+PMARK:''}</h1><div class="total" data-roll="total" data-rv="${last.total}">${ils(last.total)}</div>
   <div class="deltas"><div><small>מהעדכון הקודם</small>${prev?`<b class="${cls(dPrev)}">${arrow(dPrev)} ${magIls(dPrev)}</b> <span class="n ${cls(dPrev)}">${prev.total?pct(dPrev/prev.total,2):''}</span>`:'<b class="flat">—</b>'}</div>
   <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dFirst)}">${arrow(dFirst)} ${magIls(dFirst)}</b> <span class="n ${cls(dFirst)}">${first.total?pct(dFirst/first.total,2):''}</span>`:'<b class="flat">—</b>'}</div></div>
   <div id="ch-total" class="panel pad">${lineChart(win.map((u,i)=>({d:u.date,v:winC[i].total})),chartInk(),{label:'סה״כ הון לאורך זמן',anim:firstPaint})}<p class="readout"></p></div></div>`;
@@ -1084,7 +1084,11 @@ function openAccEditor(id){
     L.el.querySelectorAll('[data-row]').forEach(b=>b.onclick=()=>{grab();const r=d.rows[+b.dataset.row];r.on=!r.on;if(!r.on&&d.link===r.key)d.link='';paint()});
     const lk=L.el.querySelector('[data-link]');
     if(lk)lk.onclick=()=>{grab();
-      if(d.link){d.link=''}
+      if(d.link){
+        const snaps=(S.ports[d.id]||[]).length;
+        if(snaps&&!confirm(`כיבוי האפשרות ימחק גם ${snaps} צילומי אחזקות ששמורים לחשבון. להמשיך?`))return;
+        d.link='';
+      }
       else{const on=d.rows.filter(r=>r.on);if(!on.length){toast('בחרו קודם מה יש בחשבון');return}
         d.link=(on.find(r=>r.type==='cap')||on[0]).key}
       paint()};
@@ -1110,10 +1114,13 @@ function openAccEditor(id){
       const list=ACCOUNTS.slice();const i=list.findIndex(x=>x.id===d.id);
       if(i<0)list.push(rec);else list[i]=rec;
       setConfig(list);
-      const keep=plinkOf(d.id).filter(k=>on.some(r=>r.key===k));
-      if(d.link&&on.some(r=>r.key===d.link)&&!keep.includes(d.link))keep.unshift(d.link);
-      if(keep.length)S.plink[d.id]=keep.length>1?keep:keep[0];
-      else{delete S.plink[d.id];delete S.ports[d.id]}
+      /* the switch decides: off means off, even when the account had several fields mapped */
+      if(!d.link||!on.some(r=>r.key===d.link)){S.plink[d.id]=[];delete S.ports[d.id]}
+      else{
+        const keep=plinkOf(d.id).filter(k=>k!==d.link&&on.some(r=>r.key===k));
+        keep.unshift(d.link);
+        S.plink[d.id]=keep.length>1?keep:keep[0];
+      }
       S.updates=clean(S.updates);
       closeLayer();setTimeout(render,340);save();toast(i<0?'החשבון נוסף':'נשמר');
     };
@@ -1149,7 +1156,7 @@ function viewSettings(){
   ${p?'':`<button class="row plain" data-act="privcfg"><span><span class="nm">מה מוסתר</span></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
   </div></section>
   ${p?'':`<section><h2>חשבונות</h2><div class="panel">
-  ${ACCOUNTS.map(a=>`<button class="row" data-acced="${a.id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub">${a.fields.length===1?'רכיב אחד':a.fields.length+' רכיבים'}${a.cur==='USD'?' · דולר':''}${S.plink[a.id]?' · קובץ מהבנק':''}</div></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`).join('')}
+  ${ACCOUNTS.map(a=>`<button class="row" data-acced="${a.id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub">${a.fields.length===1?'רכיב אחד':a.fields.length+' רכיבים'}${a.cur==='USD'?' · דולר':''}${plinkOf(a.id).length?' · קובץ מהבנק':''}</div></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`).join('')}
   ${ACCOUNTS.length?'':'<div class="row plain"><span class="nm flat">עוד לא הוגדרו חשבונות</span></div>'}
   </div><div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="accnew">הוספת חשבון</button></div></section>`}
   ${p?'':`<section><h2>המלצות אנליסטים</h2><div class="panel">
@@ -2093,7 +2100,7 @@ function portfolioBody(accId){
   const d=ps?vtot-ptot:0;
   const filt=openPortfolio.filt,srt=openPortfolio.sort||(openPortfolio.sort='v');
   let h=inp+`<div class="acc-head"><h1>תיק ניירות ערך</h1><div class="big">${pf(vtot)}</div>
-  <div class="meta">${av?esc(subLbl(av))+' · ':''}<span class="n">${hold.length}</span> אחזקות${cash?' · מזומן <span class="n">'+pf(cash)+'</span>':''} · נכון ל-<span class="n">${dlong(last.date)}</span></div></div>`;
+  <div class="meta">${av?esc(subLbl(av))+' · ':''}<span class="n">${hold.length}</span> אחזקות${cash?' · מזומן <span class="n">'+pf(cash)+'</span>':''}</div></div>`;
   if(subs.length>1)
     h+=`<div class="segbar" role="tablist" aria-label="בחירת חשבון">${[['','הכול']].concat(subs.map(k=>[k,subLbl(k)])).map(([k,t])=>`<button role="tab" data-acct="${k}" aria-selected="${av===k}">${esc(t)}</button>`).join('')}</div>`;
   if(ps)h+=`<div class="chips"><div><small>מהצילום הקודם</small><b class="${cls(d)}">${arrow(d)} ${mag(d)}</b> <span class="n ${cls(d)}">${ptot?pct(d/ptot,2):''}</span></div>
