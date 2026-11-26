@@ -68,7 +68,12 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .hero .total{font-family:var(--num);font-size:2.7059rem;font-weight:700;letter-spacing:-.024em;line-height:1.08;margin:2px 4px 0;direction:ltr;text-align:right}
 .hero .asof{font-size:0.8824rem;color:var(--muted);margin:2px 4px 0}
 .hero .deltas{display:flex;gap:10px;margin:18px 0 10px}
-.hero .deltas div,.chips div{flex:1;background:var(--surface);border-radius:14px;padding:11px 14px}
+.hero .deltas div,.chips div{flex:1;min-width:0;background:var(--surface);border-radius:14px;padding:11px 14px}
+.hero .deltas div>b,.chips div>b{margin-inline-end:6px}
+/* the figure and its percentage read as one statement, so they stay on one line and shrink
+   together rather than wrapping */
+.hero .deltas div,.chips div{white-space:nowrap}
+.hero .deltas b,.chips b{font-size:clamp(0.88rem,4.4vw,1.1176rem)}
 .hero .deltas small,.chips small{display:block;font-size:0.7647rem;color:var(--muted)}
 .hero .deltas b,.chips b{font-family:var(--num);font-size:1.1176rem;font-weight:600;direction:ltr;display:inline-block}
 .hero .deltas span,.chips span{font-size:0.7647rem}
@@ -92,7 +97,7 @@ section>h2 small,.foldh h2 small{font-weight:400;font-size:0.8824rem;letter-spac
 @media(prefers-reduced-motion:reduce){.foldh .chev{transition:none}}
 .pad{padding:14px 16px}
 
-.stack{display:flex;gap:3px;height:12px;direction:rtl;margin:2px 0;background:var(--line);border-radius:6px}
+.stack{display:flex;gap:3px;height:12px;direction:rtl;margin:2px 0;border-radius:6px}
 .pcard{display:block;width:100%;margin-top:12px;border:0;border-radius:14px;background:var(--surface);padding:16px;box-sizing:border-box;text-align:start;color:var(--ink);font:inherit}
 .pcard:active{background:var(--line)}
 .pcard>span{display:block}
@@ -220,6 +225,11 @@ button.row.plain{grid-template-columns:1fr auto 8px}
   mask-image:linear-gradient(to left,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);
   scroll-padding-inline:16px;display:flex;gap:8px;overflow-x:auto;padding:0 16px 4px;margin:0 -16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .chiprow::-webkit-scrollbar{display:none}
+/* a set small enough to fit is laid out in full, so nothing is hidden off the edge */
+.chipwrap{display:flex;flex-wrap:wrap;gap:8px;margin:0 4px 10px}
+.chipwrap button{flex:0 1 auto;min-height:40px;padding:0 13px;border-radius:20px;background:var(--fill);font-size:0.8235rem;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.chipwrap button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.chipwrap .spine{width:8px;height:8px;border-radius:50%;flex:none}
 .chiprow button{flex:none;min-height:40px;padding:0 15px;border-radius:20px;background:var(--fill);font-size:0.8235rem;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap}
 .chiprow button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .chiprow .spine{width:8px;height:8px;border-radius:50%;flex:none}
@@ -759,7 +769,7 @@ function wireChart(box,pts,fmt){
   const svg=box.querySelector('svg.chart'),out=box.querySelector('.readout');if(!svg||!out)return;
   const hit=svg.querySelector('.hit'),cross=svg.querySelector('.cross');const xs=hit.dataset.xs.split(',').map(Number);
   const show=i=>{out.innerHTML=readoutText(pts[i],pts[i-1],fmt)};
-  show(pts.length-1);
+  out.innerHTML='<span class="flat">גע בגרף כדי לראות נקודה</span>';
   const move=e=>{const r=svg.getBoundingClientRect();const px=(e.clientX-r.left)*340/r.width;let b=0;xs.forEach((v,i)=>{if(Math.abs(v-px)<Math.abs(xs[b]-px))b=i});
     cross.setAttribute('x1',xs[b]);cross.setAttribute('x2',xs[b]);cross.setAttribute('visibility','visible');show(b)};
   hit.addEventListener('pointerdown',move);hit.addEventListener('pointermove',move);
@@ -883,7 +893,10 @@ function viewHome(){
   for(const a of visAcc()){const v=last.acc[a.id],d=prev?v-prev.acc[a.id]:0;
     h+=`<button class="row" data-acc="${a.id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${share(v,last.total)}%</span> מההון</div></span>
     <span class="val"><b data-roll="acc:${a.id}" data-rv="${v}">${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
-  h+=`</div></section>`;
+  h+=`</div>`;
+  if(ACCOUNTS.some(a=>portsOf(a.id).some(p=>p.hold)))
+    h+=`<button class="row link" data-act="spread" style="border-radius:14px;margin-top:12px"><span></span><span class="nm">פיזור וחשיפה</span><span class="val"><span class="n flat">מטבע · ריכוזיות · מפה</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
+  h+=`</section>`;
   h+=PRIV()?'':`<section><button class="btn" data-act="new">עדכון חדש</button></section>`;
   const moved=!offscreen&&rollMem.total!==undefined&&rollMem.total!==last.total;
   view.innerHTML=h;
@@ -924,9 +937,7 @@ function portCard(id,nm,val,delta,snap,f){
   if(hold&&hold.length){
     const s=summarize(hold),cats=CATS.filter(([k])=>s.cat[k]>0);
     const pc=k=>s.total?(s.cat[k]/s.total*100):0;
-    mix=`<span class="stack" role="img" aria-label="${cats.map(([k,l])=>l+' '+pc(k).toFixed(0)+'%').join(', ')}">${
-      cats.map(([k])=>`<i style="flex:${s.cat[k]} 0 0;background:${catCol(k)};${catHollow(k)?'opacity:.55':''}"></i>`).join('')}</span>
-      <span class="pc-leg">${cats.map(([k,l])=>`<span><i style="background:${catCol(k)};${catHollow(k)?'opacity:.55':''}"></i>${l}<b class="n">${pc(k).toFixed(0)}%</b></span>`).join('')}</span>`;
+    mix=`<span class="pc-leg">${cats.map(([k,l])=>`<span><i style="background:${catCol(k)};${catHollow(k)?'opacity:.55':''}"></i>${l}<b class="n">${pc(k).toFixed(0)}%</b></span>`).join('')}</span>`;
   }
   const top=hold?`<span class="n">${hold.filter(x=>!isCash(x)).length}</span> אחזקות · <span class="n">${dshort(snap.date)}</span>`:'';
   return `<button type="button" class="pcard" data-port="${id}">
@@ -1174,11 +1185,31 @@ function fxExposure(){
   }
   return {fx,total:C.total,by};
 }
-const SPYCOL='#6D4AC4';
+const SPYCOL='#6D4AC4',TACOL='#C2255C';
+/* Tel Aviv is not covered by the free market-data plan — every TA-125 instrument there sits
+   behind a paid tier. What is free is what is already on the device: if one of the holdings is a
+   fund that tracks the index, its closing prices across the uploaded files are the index's shape.
+   Sparse (one point per upload), honest, and nothing is sent anywhere. */
+const TA125=/(^|[^\d])125([^\d]|$)/;
+function taTracker(){
+  for(const a of ACCOUNTS){
+    if(isHidden(a.id))continue;
+    const snaps=portsRaw(a.id).filter(p=>p.hold);
+    if(snaps.length<2)continue;
+    const last=snaps[snaps.length-1];
+    const cand=last.hold.filter(h=>TA125.test(String(h.name||''))&&/[א-ת]/.test(String(h.name||''))&&h.price>0);
+    for(const h of cand.sort((x,y)=>(ptypeOf(y)==='fund')-(ptypeOf(x)==='fund'))){
+      const pts=[];
+      for(const sn of snaps){const m=sn.hold.find(y=>String(y.id)===String(h.id));if(m&&m.price>0)pts.push({d:sn.date,v:m.price})}
+      if(pts.length>1)return {name:h.name,pts};
+    }
+  }
+  return null;
+}
 /* the percent chart's menu: the total, each account, and the index when a key is set */
 function cmpSeries(){
   const U=sorted(),C=U.map(calc);
-  const out=[{id:'total',name:'סה״כ הון',color:chartInk(),wide:true,pts:U.map((u,i)=>({d:u.date,v:C[i].total}))}];
+  const out=[{id:'total',name:'כל החשבונות',color:chartInk(),wide:true,pts:U.map((u,i)=>({d:u.date,v:C[i].total}))}];
   for(const a of visAcc())out.push({id:a.id,name:a.short,color:acol(a.color),
     pts:U.map((u,i)=>({d:u.date,v:a.cur==='USD'?(C[i].usdAcc[a.id]||0):C[i].acc[a.id]}))});
   const spy=PX.SPY&&PX.SPY.pts;
@@ -1187,6 +1218,8 @@ function cmpSeries(){
     const win=spy.filter(p=>p.d>=from&&p.d<=to);
     if(win.length>1)out.push({id:'SPY',name:'S&P 500',color:acol(SPYCOL),dash:true,pts:win});
   }
+  const ta=taTracker();
+  if(ta)out.push({id:'TA125',name:'ת״א 125',color:acol(TACOL),dash:true,pts:ta.pts,note:ta.name});
   return out;
 }
 /* re-based: each series starts at zero and is read as its change in percent since then */
@@ -1207,14 +1240,15 @@ function viewCompare(){
       t+=`<tr><td>${col?`<span style="color:${col}">●</span> `:''}${nm}</td><td class="n">${compact(va)}</td><td class="n">${compact(vb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}</span><small class="n ${cls(d)}">${va?pct(d/va):''}</small></td></tr>`}
     const d=sb-sa;return t+`<tr class="tot"><td>סה״כ</td><td class="n">${compact(sa)}</td><td class="n">${compact(sb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}</span><small class="n ${cls(d)}">${sa?pct(d/sa,2):''}</small></td></tr></tbody></table></div></section>`};
   h+=tbl('לפי חשבון',visAcc().map(a=>[esc(a.short),ca.acc[a.id],cb.acc[a.id],acol(a.color)]));
-  h+=`<section><div class="panel facts"><div><small>ימים בין התאריכים</small><b>${Math.round((new Date(B.date)-new Date(A.date))/864e5)}</b></div><div><small>שער דולר</small><b>${A.rate?A.rate.toFixed(3):'—'} → ${B.rate?B.rate.toFixed(3):'—'}</b></div></div></section>`;
   /* ---- the percent chart: any number of series, each from its own starting point ---- */
   const all=cmpSeries();
   if(!st.sel||!st.sel.length)st.sel=['total',...visAcc().slice(0,1).map(a=>a.id)];
   const pick=all.filter(x=>st.sel.includes(x.id)).map(toPct).filter(Boolean);
+  const ta=all.find(x=>x.id==='TA125');
   h+=`<section><h2>מי צמח יותר <small>הכול באחוזים</small></h2>
-  <div class="chiprow">${all.map(x=>`<button data-cmp="${esc(x.id)}" aria-pressed="${st.sel.includes(x.id)}"><span class="spine" style="background:${x.color}"></span>${esc(x.name)}</button>`).join('')}
-  ${!PX.SPY&&S.td?`<button data-spy="1">+ S&amp;P 500</button>`:''}</div>
+  <div class="chipwrap">${all.map(x=>`<button data-cmp="${esc(x.id)}" aria-pressed="${st.sel.includes(x.id)}"><span class="spine" style="background:${x.color}"></span>${esc(x.name)}</button>`).join('')}
+  ${!PX.SPY&&S.td?`<button data-spy="1">+ S&amp;P 500</button>`:''}
+  ${ta?'':`<button data-ta="1">+ ת״א 125</button>`}</div>
   <div class="panel pad" id="ch-pct">${pick.length?pctChart(pick,{label:'שינוי באחוזים'}):'<p class="hint" style="padding:18px 0;text-align:center;margin:0">בחרו לפחות סדרה אחת.</p>'}<p class="readout"></p></div>`;
   if(pick.length){
     const span=pick[0].pts;
@@ -1222,36 +1256,14 @@ function viewCompare(){
       const v=se.pts[se.pts.length-1].v;
       return `<div class="row dotted"><span class="spine" style="background:${se.color}"></span><span class="nm">${esc(se.name)}</span><span class="val"><b class="n ${cls(v,100)}">${pct(v/100,1)}</b><span class="n flat">מ-${dshort(se.pts[0].d)}</span></span></div>`}).join('')}</div>`;
   }
-  h+=`<p class="hint">כל סדרה מתחילה מאפס בנקודה הראשונה שלה, כך שאפשר להשוות ביניהן בלי קשר לגודל. ${S.td?'':'להוספת מדד S&P 500 צריך מפתח Twelve Data בהגדרות.'}</p></section>`;
-  /* ---- what is not in shekels ---- */
-  const fx=fxExposure();
-  if(fx&&fx.total>0&&fx.fx>0){
-    const share=fx.fx/fx.total*100;
-    h+=`<section><h2>חשיפה מטבעית</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="חשיפה למטבע חוץ ${share.toFixed(0)}%">
-      <i style="flex:${fx.total-fx.fx} 0 0;background:${acol('#2F9E6E')}"></i><i style="flex:${fx.fx} 0 0;background:${acol('#3B82F6')}"></i></div></div>
-      <div class="row dotted"><span class="spine" style="background:${acol('#2F9E6E')}"></span><span class="nm">שקל</span><span class="val"><b>${ils(fx.total-fx.fx)}</b><span class="n flat">${(100-share).toFixed(1)}%</span></span></div>
-      <div class="row dotted"><span class="spine" style="background:${acol('#3B82F6')}"></span><span><span class="nm">מטבע חוץ</span><div class="sub">${Object.keys(fx.by).map(id=>esc((ACCOUNTS.find(a=>a.id===id)||{}).short||'')).join(' · ')}</div></span><span class="val"><b>${ils(fx.fx)}</b><span class="n flat">${share.toFixed(1)}%</span></span></div>
-      </div><p class="hint">חשבון דולרי נספר במלואו, ובחשבון שקלי נספרים ניירות שנקובים במטבע חוץ. שינוי של <span class="n">1%</span> בשער הדולר מזיז את ההון בכ-<b class="n">${ils(fx.fx*0.01)}</b>.</p></section>`;
-  }
-  /* ---- how much of everything sits in a few names ---- */
-  const hs=allHoldings().filter(h=>!isCash(h));
-  if(hs.length>2){
-    const tot=hs.reduce((n,h)=>n+h.ils,0);
-    const top=hs.slice(0,5);
-    const t5=top.reduce((n,h)=>n+h.ils,0);
-    h+=`<section><h2>ריכוזיות <small>כל החשבונות יחד</small></h2><div class="panel">
-    ${top.map(x=>`<div class="row dotted">${dot(catOf(x))}<span><span class="nm">${esc(short(dispName(x)))}</span><div class="sub">${esc(x.where)}${x.sym&&x.sym.toUpperCase()!==dispName(x).toUpperCase()?' · <span class="n">'+esc(x.sym)+'</span>':''}</div></span><span class="val"><b>${ils(x.ils)}</b><span class="n flat">${(x.ils/tot*100).toFixed(1)}%</span></span></div>`).join('')}
-    </div><div class="panel facts" style="margin-top:10px">
-    <div><small>5 הגדולות מתוך ניירות הערך</small><b class="n">${(t5/tot*100).toFixed(1)}%</b></div>
-    <div><small>הגדולה ביותר</small><b class="n">${(hs[0].ils/tot*100).toFixed(1)}%</b></div>
-    <div><small>מספר ניירות</small><b class="n">${hs.length}</b></div></div>
-    <p class="hint">נספרו <span class="n">${hs.length}</span> ניירות מכל החשבונות שיש להם קובץ אחזקות, לפי שער הדולר של העדכון האחרון. אותו נייר שמוחזק בשני חשבונות מופיע פעמיים.</p>
-    <div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="treemap">מפת כל האחזקות</button></div></section>`;
-  }
+  h+=`<p class="hint">כל סדרה מתחילה מאפס בנקודה הראשונה שלה, כך שאפשר להשוות ביניהן בלי קשר לגודל.${S.td?'':' להוספת מדד S&P 500 צריך מפתח Twelve Data בהגדרות.'}${ta?' מדד ת״א 125 נבנה מהמחירים של <b>'+esc(short(ta.note,28))+'</b> בקבצים שהעלית, כי אין מקור חינמי לבורסת תל אביב.':''}</p></section>`;
+  h+=`<section><div class="panel facts"><div><small>ימים בין התאריכים</small><b>${Math.round((new Date(B.date)-new Date(A.date))/864e5)}</b></div><div><small>שער דולר</small><b>${A.rate?A.rate.toFixed(3):'—'} → ${B.rate?B.rate.toFixed(3):'—'}</b></div></div></section>`;
   view.innerHTML=h;
   setTop('השוואה');
   if(offscreen)return;
   $('#ca').onchange=e=>{st.a=e.target.value;viewCompare()};$('#cb').onchange=e=>{st.b=e.target.value;viewCompare()};
+  const tb=view.querySelector('[data-ta]');
+  if(tb)tb.onclick=()=>toast('אין מקור חינמי למדד ת״א 125. העלו קובץ אחזקות שיש בו קרן שעוקבת אחריו, והמדד ייבנה מהמחירים שלה.');
   view.querySelectorAll('[data-cmp]').forEach(b=>b.onclick=()=>{
     const k=b.dataset.cmp;
     st.sel=st.sel.includes(k)?st.sel.filter(x=>x!==k):[...st.sel,k];
@@ -2628,6 +2640,7 @@ async function importPortfolio(accId,file){
       addSnapshot(accId,date,hold);
       S.plink[accId]=keys.length>1?keys:keys[0];
       await save();
+      render();                                 /* the page underneath gains its portfolio links */
       refreshRecs(false);                       /* new holdings get their consensus without being asked */
       closeLayer();
       const u=S.updates.find(x=>x.date===date);
@@ -2721,6 +2734,42 @@ function treemapBody(){
     h+=`</div></section>`;
   }
   return h;
+}
+/* Exposure and concentration are about the whole portfolio rather than two dates, so they live
+   on a page of their own, reached from the overview. */
+function spreadBody(){
+  let h=`<div class="pagehead" style="padding-top:6px"><h1>פיזור וחשיפה</h1><p>כל החשבונות יחד, לפי העדכון האחרון</p></div>`;
+  /* ---- what is not in shekels ---- */
+  const fx=fxExposure();
+  if(fx&&fx.total>0&&fx.fx>0){
+    const share=fx.fx/fx.total*100;
+    h+=`<section><h2>חשיפה מטבעית</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="חשיפה למטבע חוץ ${share.toFixed(0)}%">
+      <i style="flex:${fx.total-fx.fx} 0 0;background:${acol('#2F9E6E')}"></i><i style="flex:${fx.fx} 0 0;background:${acol('#3B82F6')}"></i></div></div>
+      <div class="row dotted"><span class="spine" style="background:${acol('#2F9E6E')}"></span><span class="nm">שקל</span><span class="val"><b>${ils(fx.total-fx.fx)}</b><span class="n flat">${(100-share).toFixed(1)}%</span></span></div>
+      <div class="row dotted"><span class="spine" style="background:${acol('#3B82F6')}"></span><span><span class="nm">מטבע חוץ</span><div class="sub">${Object.keys(fx.by).map(id=>esc((ACCOUNTS.find(a=>a.id===id)||{}).short||'')).join(' · ')}</div></span><span class="val"><b>${ils(fx.fx)}</b><span class="n flat">${share.toFixed(1)}%</span></span></div>
+      </div><p class="hint">חשבון דולרי נספר במלואו, ובחשבון שקלי נספרים ניירות שנקובים במטבע חוץ. שינוי של <span class="n">1%</span> בשער הדולר מזיז את ההון בכ-<b class="n">${ils(fx.fx*0.01)}</b>.</p></section>`;
+  }
+  /* ---- how much of everything sits in a few names ---- */
+  const hs=allHoldings().filter(h=>!isCash(h));
+  if(hs.length>2){
+    const tot=hs.reduce((n,h)=>n+h.ils,0);
+    const top=hs.slice(0,5);
+    const t5=top.reduce((n,h)=>n+h.ils,0);
+    h+=`<section><h2>ריכוזיות <small>כל החשבונות יחד</small></h2><div class="panel">
+    ${top.map(x=>`<div class="row dotted">${dot(catOf(x))}<span><span class="nm">${esc(short(dispName(x)))}</span><div class="sub">${esc(x.where)}${x.sym&&x.sym.toUpperCase()!==dispName(x).toUpperCase()?' · <span class="n">'+esc(x.sym)+'</span>':''}</div></span><span class="val"><b>${ils(x.ils)}</b><span class="n flat">${(x.ils/tot*100).toFixed(1)}%</span></span></div>`).join('')}
+    </div><div class="panel facts" style="margin-top:10px">
+    <div><small>5 הגדולות מתוך ניירות הערך</small><b class="n">${(t5/tot*100).toFixed(1)}%</b></div>
+    <div><small>הגדולה ביותר</small><b class="n">${(hs[0].ils/tot*100).toFixed(1)}%</b></div>
+    <div><small>מספר ניירות</small><b class="n">${hs.length}</b></div></div>
+    <p class="hint">נספרו <span class="n">${hs.length}</span> ניירות מכל החשבונות שיש להם קובץ אחזקות, לפי שער הדולר של העדכון האחרון. אותו נייר שמוחזק בשני חשבונות מופיע פעמיים.</p>
+    <div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="treemap">מפת כל האחזקות</button></div></section>`;
+  }
+  const hsx=allHoldings().filter(x=>!isCash(x));
+  if(!hsx.length&&!fxExposure())h+=`<div class="empty"><h2>אין עדיין נתונים</h2><p>אחרי העלאת קובץ אחזקות אחד לפחות אפשר יהיה לראות כאן את הפיזור והחשיפה.</p></div>`;
+  return h;
+}
+function openSpread(){
+  openLayer(`<div class="sheet push" role="dialog" aria-label="פיזור וחשיפה"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>סקירה</span></button><h2>פיזור וחשיפה</h2><span></span></header><div class="body">${spreadBody()}</div></div>`,true);
 }
 function openTreemap(){
   const hs=allHoldings();
@@ -2879,6 +2928,7 @@ document.addEventListener('click',e=>{
   else ({new:()=>ACCOUNTS.length?openForm():openImport(),backup:doBackup,csv:doCsv,import:openImport,setpass:setPass,rmpass:rmPass,locknow:lockNow,
     privcfg:openPrivCfg,
     treemap:openTreemap,
+    spread:openSpread,
     recall:async()=>{const k=$('#fhkey');if(k)S.fh=k.value.trim().slice(0,80);
       if(!S.fh){toast('צריך מפתח');return}
       await save();toast('מושך…');const n=await refreshRecs(true);
