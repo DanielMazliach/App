@@ -27,6 +27,7 @@
   --press:#E8F0FE; --errbg:#FFE5E7; --errink:#A1000F; --toast:#3A3A3CF2; --ontoast:#FFFFFF;
   --cline:#1C1C1E; --cgrid:#E5E5EA; --cring:#FFFFFF; --ccross:#9AA8B4; --knobshadow:rgba(0,0,0,.16);
   --segbg:#7676801F; --segon:#FFFFFF; --segsh:0 1px 3px #0000001f;
+  --ctext:#636366; --tabink:#5E5E63; --rowpress:#E5E5EA;
   --num: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "SF Hebrew", "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
   --txt: -apple-system, system-ui, "SF Hebrew", "Segoe UI", "Noto Sans Hebrew", "Arial Hebrew", Arial, sans-serif;
   --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
@@ -41,11 +42,16 @@
     --press:#0A84FF2E; --errbg:#3A1216; --errink:#FF6A6A; --toast:#48484AF2; --ontoast:#FFFFFF;
     --cline:#F2F2F7; --cgrid:#2C2C2E; --cring:#1C1C1E; --ccross:#636366; --knobshadow:rgba(0,0,0,.5);
     --segbg:#1C1C1E; --segon:#636366; --segsh:none;
+    --ctext:#98989F; --tabink:#98989F; --rowpress:#2C2C2E;
   }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg)}
-body{font-family:var(--txt);color:var(--ink);font-size:17px;line-height:1.3;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
+/* -apple-system-body carries the reader's Dynamic Type size, so the root grows with it and
+   every size below, written in rem, grows with it too. 17px is the default. */
+html{font:-apple-system-body;font-family:var(--txt)}
+@supports not (font:-apple-system-body){html{font-size:1rem}}
+body{font-family:var(--txt);color:var(--ink);font-size:1rem;line-height:1.3;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none;padding:0}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
@@ -58,27 +64,27 @@ button{cursor:pointer;border:0;background:none;padding:0}
 
 /* overview header: the total is the title */
 .hero{padding:calc(var(--sat) + 20px) 16px 0}
-.hero h1{margin:0 4px;font-size:15px;font-weight:600;color:var(--muted)}
-.hero .total{font-family:var(--num);font-size:46px;font-weight:700;letter-spacing:-.024em;line-height:1.08;margin:2px 4px 0;direction:ltr;text-align:right}
-.hero .asof{font-size:15px;color:var(--muted);margin:2px 4px 0}
+.hero h1{margin:0 4px;font-size:0.8824rem;font-weight:600;color:var(--muted)}
+.hero .total{font-family:var(--num);font-size:2.7059rem;font-weight:700;letter-spacing:-.024em;line-height:1.08;margin:2px 4px 0;direction:ltr;text-align:right}
+.hero .asof{font-size:0.8824rem;color:var(--muted);margin:2px 4px 0}
 .hero .deltas{display:flex;gap:10px;margin:18px 0 10px}
 .hero .deltas div,.chips div{flex:1;background:var(--surface);border-radius:14px;padding:11px 14px}
-.hero .deltas small,.chips small{display:block;font-size:13px;color:var(--muted)}
-.hero .deltas b,.chips b{font-family:var(--num);font-size:19px;font-weight:600;direction:ltr;display:inline-block}
-.hero .deltas span,.chips span{font-size:13px}
-.readout{font-size:13px;min-height:18px;color:var(--muted);margin:4px 0 0;text-align:center}
+.hero .deltas small,.chips small{display:block;font-size:0.7647rem;color:var(--muted)}
+.hero .deltas b,.chips b{font-family:var(--num);font-size:1.1176rem;font-weight:600;direction:ltr;display:inline-block}
+.hero .deltas span,.chips span{font-size:0.7647rem}
+.readout{font-size:0.7647rem;min-height:18px;color:var(--muted);margin:4px 0 0;text-align:center}
 
 .pagehead{padding:calc(var(--sat) + 20px) 20px 2px}
-.pagehead h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.022em;line-height:1.15}
-.pagehead p{margin:2px 0 0;font-size:15px;color:var(--muted)}
+.pagehead h1{margin:0;font-size:2rem;font-weight:700;letter-spacing:-.022em;line-height:1.15}
+.pagehead p{margin:2px 0 0;font-size:0.8824rem;color:var(--muted)}
 
 section{margin:28px 16px 0}
-section>h2{font-size:22px;font-weight:700;letter-spacing:-.016em;line-height:1.2;margin:0 4px 10px}
-section>h2 small,.foldh h2 small{font-weight:400;font-size:15px;letter-spacing:0;color:var(--muted);margin-inline-start:6px}
+section>h2{font-size:1.2941rem;font-weight:700;letter-spacing:-.016em;line-height:1.2;margin:0 4px 10px}
+section>h2 small,.foldh h2 small{font-weight:400;font-size:0.8824rem;letter-spacing:0;color:var(--muted);margin-inline-start:6px}
 .panel{background:var(--surface);border-radius:14px;overflow:hidden}
 .foldh{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;background:0;border:0;padding:0;margin:0 4px 6px;
   font:inherit;color:inherit;text-align:start;-webkit-tap-highlight-color:transparent}
-.foldh h2{font-size:22px;font-weight:700;letter-spacing:-.016em;line-height:1.2;margin:0}
+.foldh h2{font-size:1.2941rem;font-weight:700;letter-spacing:-.016em;line-height:1.2;margin:0}
 .foldh .chev{width:9px;height:15px;flex:0 0 auto;fill:none;stroke:var(--tink);stroke-width:2.6;
   stroke-linecap:round;stroke-linejoin:round;transform:rotate(-90deg);transition:transform .22s var(--ease)}
 .foldh[aria-expanded="true"] .chev{transform:rotate(90deg)}
@@ -92,34 +98,34 @@ section>h2 small,.foldh h2 small{font-weight:400;font-size:15px;letter-spacing:0
 .pcard>span{display:block}
 .pc-top{display:flex!important;align-items:center;justify-content:space-between;gap:10px}
 .pc-nm{font-weight:600}
-.pc-cnt{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.pc-cnt{display:flex;align-items:center;gap:8px;font-size:0.7647rem;color:var(--muted)}
 .pcard .chev{width:8px;height:14px;fill:none;stroke:var(--chev);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .pc-val{display:flex!important;align-items:baseline;gap:10px;margin-top:6px}
-.pc-val b{font-size:28px;font-weight:700;letter-spacing:-.02em}
-.pc-val>span{font-size:14px;font-weight:600}
+.pc-val b{font-size:1.6471rem;font-weight:700;letter-spacing:-.02em}
+.pc-val>span{font-size:0.8235rem;font-weight:600}
 .pcard .stack{margin:14px 0 0}
 .pc-leg{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin-top:12px}
-.pc-leg>span{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);min-width:0}
+.pc-leg>span{display:flex;align-items:center;gap:7px;font-size:0.7647rem;color:var(--ink2);min-width:0}
 .pc-leg i{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
 .pc-leg b{margin-inline-start:auto;color:var(--ink);font-weight:600}
-.pc-hint{margin-top:8px;font-size:13px;color:var(--tink);font-weight:600}
+.pc-hint{margin-top:8px;font-size:0.7647rem;color:var(--tink);font-weight:600}
 .stack i{display:block;height:100%;min-width:8px;border-radius:6px}
 
 /* list rows: separators only, inset from the leading edge */
-.row{position:relative;display:grid;grid-template-columns:10px 1fr auto;gap:0 12px;align-items:center;width:100%;min-height:60px;text-align:start;padding:10px 16px;background:var(--surface);transition:background .07s ease-out}
+.row{position:relative;display:grid;grid-template-columns:10px 1fr auto;gap:0 12px;align-items:center;width:100%;min-height:max(60px,3.5rem);text-align:start;padding:10px 16px;background:var(--surface);transition:background .07s ease-out}
 .row::before,.facts div::before{content:"";position:absolute;top:0;inset-inline:38px 0;height:1px;background:var(--sep);transform:scaleY(.5);transform-origin:top}
 .row:first-child::before,.facts div:first-child::before{display:none}
 .row .spine{width:10px;height:10px;border-radius:50%}
 /* a name that wraps makes the row 82px while its neighbours are 64px, and the column stops
    reading as a column. one line, ellipsis; the full name is on the holding's own page. */
-.row .nm{font-weight:400;font-size:17px;display:block;unicode-bidi:isolate;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .nm{font-weight:400;font-size:1rem;display:block;unicode-bidi:isolate;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row>span:nth-child(2){min-width:0}
-.row .sub{font-size:13px;color:var(--muted);margin-top:1px}
+.row .sub{font-size:0.7647rem;color:var(--muted);margin-top:1px}
 .row .val{text-align:left}
-.row .val b{font-family:var(--num);font-size:17px;font-weight:600;display:block;direction:ltr}
-.row .val span{font-size:13px}
+.row .val b{font-family:var(--num);font-size:1rem;font-weight:600;display:block;direction:ltr}
+.row .val span{font-size:0.7647rem}
 button.row{grid-template-columns:10px 1fr auto 8px}
-button.row:active{background:#E5E5EA}
+button.row:active{background:var(--rowpress)}
 .row .chev{width:8px;height:14px;fill:none;stroke:var(--chev);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .sw{width:51px;height:31px;border-radius:16px;background:var(--line);border:0;padding:0;position:relative;flex:0 0 auto;transition:background .28s cubic-bezier(.32,.72,0,1);-webkit-tap-highlight-color:transparent}
 .sw[aria-checked="true"]{background:var(--up)}
@@ -127,26 +133,26 @@ button.row:active{background:#E5E5EA}
 .sw[aria-checked="true"] i{transform:translateX(-20px)}
 .sw:active i{width:29px}
 .pmk{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;opacity:.4;vertical-align:-1px}
-.rec{display:inline-flex;align-items:center;font-size:13px;font-weight:600;padding:1px 7px;border-radius:7px;line-height:1.5}
+.rec{display:inline-flex;align-items:center;font-size:0.7647rem;font-weight:600;padding:1px 7px;border-radius:7px;line-height:1.5}
 .rec.buy{background:color-mix(in srgb,var(--up) 15%,transparent);color:var(--up)}
 .rec.hold{background:color-mix(in srgb,var(--muted) 20%,transparent);color:var(--ink2)}
 .rec.sell{background:color-mix(in srgb,var(--down) 14%,transparent);color:var(--down)}
 .rec.none{background:color-mix(in srgb,var(--muted) 14%,transparent);color:var(--muted);font-weight:500}
-.recwait{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+.recwait{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:0.7647rem}
 .recwait .ring{width:15px;height:15px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--muted);animation:ringspin .75s linear infinite;flex:0 0 auto}
-.bigrec{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:1px 0 2px}
+.bigrec{font-size:1.5294rem;font-weight:700;letter-spacing:-.02em;margin:1px 0 2px}
 .bigrec.buy{color:var(--up)}.bigrec.sell{color:var(--down)}
 .cons{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;margin:6px 0 12px}
 .cons i{display:block}
-.legend{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:13px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:0.7647rem;color:var(--muted)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend b{width:9px;height:9px;border-radius:50%;display:inline-block}
 .swatches{display:flex;gap:8px;justify-content:space-between}
 .sw-c{width:36px;height:36px;border-radius:50%;border:0;padding:0;position:relative;-webkit-tap-highlight-color:transparent}
 .sw-c::before{content:"";position:absolute;inset:-4px;border-radius:50%}  /* 44×44 to the finger */
 .sw-c[aria-pressed="true"]::after{content:"";position:absolute;inset:-4px;border-radius:50%;box-shadow:0 0 0 2px var(--ink)}
-.pick1{min-height:44px;border:0;background:transparent;color:var(--tink);font-size:17px;text-align:start}
-.row .lblin{width:100%;border:0;background:transparent;font:inherit;font-size:17px;color:var(--ink);padding:3px 0;border-radius:6px;transition:background .15s}
+.pick1{min-height:44px;border:0;background:transparent;color:var(--tink);font-size:1rem;text-align:start}
+.row .lblin{width:100%;border:0;background:transparent;font:inherit;font-size:1rem;color:var(--ink);padding:3px 0;border-radius:6px;transition:background .15s}
 .row .lblin:focus{background:var(--bg);outline:0;padding:3px 7px;margin:0 -7px}
 .row .lblin::placeholder{color:var(--chev)}
 @media(prefers-reduced-motion:reduce){.sw,.sw i{transition:none}}
@@ -166,16 +172,16 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 
 .facts div{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;padding:10px 16px;background:var(--surface)}
 .facts div::before{inset-inline-start:16px}
-.facts small{font-size:17px;color:var(--ink)}
-.facts b{font-family:var(--num);font-size:17px;font-weight:400;color:var(--muted);direction:ltr}
+.facts small{font-size:1rem;color:var(--ink)}
+.facts b{font-family:var(--num);font-size:1rem;font-weight:400;color:var(--muted);direction:ltr}
 .facts b.up{color:var(--up)}.facts b.down{color:var(--down)}
 .row.link .nm{color:var(--tink);font-weight:500}
 .row.link .chev{stroke:var(--tink);stroke-width:2.4}
 
-.note{font-size:15px;color:var(--ink2);background:var(--surface);border-radius:14px;padding:12px 16px;margin:18px 16px 0;display:flex;gap:12px;align-items:center;justify-content:space-between}
+.note{font-size:0.8824rem;color:var(--ink2);background:var(--surface);border-radius:14px;padding:12px 16px;margin:18px 16px 0;display:flex;gap:12px;align-items:center;justify-content:space-between}
 .note button{color:var(--tink);font-weight:600;white-space:nowrap;min-height:44px;padding-inline:4px}
 
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;border-radius:14px;background:var(--btn);color:var(--onTint);font-weight:600;font-size:17px;padding:0 18px;transition:opacity .09s ease-out,transform .09s ease-out}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;border-radius:14px;background:var(--btn);color:var(--onTint);font-weight:600;font-size:1rem;padding:0 18px;transition:opacity .09s ease-out,transform .09s ease-out}
 .btn.ghost{background:var(--fill);color:var(--tink)}
 .btn.danger{background:var(--fill);color:var(--down)}
 .btn:active{opacity:.7;transform:scale(.985)}
@@ -184,7 +190,7 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 
 .tabbar{position:fixed;inset:auto 0 0 0;background:var(--bar);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:0 -.5px 0 var(--sep);display:flex;justify-content:center;padding-bottom:var(--sab);z-index:5}
 .tabbar div{display:flex;width:100%;max-width:560px}
-.tabbar button{flex:1;height:52px;font-size:11px;font-weight:500;color:#8E8E93;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.tabbar button{flex:1;min-height:52px;padding:4px 2px;font-size:0.6471rem;font-weight:500;color:var(--tabink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .tabbar svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .tabbar button[aria-current="page"]{color:var(--tink)}
 
@@ -192,29 +198,29 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 .sheet{position:fixed;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column;touch-action:pan-y;will-change:transform}
 .sheet header{position:relative;background:var(--barsheet);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:0 .5px 0 transparent;transition:box-shadow .2s;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:calc(var(--sat) + 4px) 10px 4px;min-height:calc(var(--sat) + 48px)}
 .sheet header.edge{box-shadow:0 .5px 0 var(--sep)}
-.sheet header h2{margin:0;font-size:17px;font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw}
-.sheet header button{color:var(--tink);font-size:17px;min-height:44px;padding:0 6px;justify-self:start;display:flex;align-items:center;gap:3px}
+.sheet header h2{margin:0;font-size:1rem;font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw}
+.sheet header button{color:var(--tink);font-size:1rem;min-height:44px;padding:0 6px;justify-self:start;display:flex;align-items:center;gap:3px}
 .sheet header button:active{opacity:.4}
 .sheet header button svg{width:12px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .sheet .body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(28px + var(--sab))}
 .sheet footer{background:var(--bar);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:0 -.5px 0 var(--sep);padding:10px 16px calc(10px + var(--sab));display:flex;align-items:center;gap:14px}
 .sheet footer .sum{flex:1;min-width:0}
-.sheet footer .sum small{display:block;color:var(--muted);font-size:13px}
-.sheet footer .sum b{font-family:var(--num);font-size:22px;font-weight:600;letter-spacing:-.01em;direction:ltr;display:inline-block}
+.sheet footer .sum small{display:block;color:var(--muted);font-size:0.7647rem}
+.sheet footer .sum b{font-family:var(--num);font-size:1.2941rem;font-weight:600;letter-spacing:-.01em;direction:ltr;display:inline-block}
 .sheet footer .btn{width:auto;min-width:120px}
 .sheet.modal{top:calc(var(--sat) + 10px);border-radius:12px 12px 0 0;overflow:hidden}
 .sheet.modal header{touch-action:none;padding-top:14px;min-height:58px}
 .grab{position:absolute;top:6px;left:0;right:0;height:5px;margin:0 auto;width:36px;border-radius:3px;background:var(--grab)}
 .scrim{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none}
 .segbar{display:flex;gap:2px;background:var(--segbg);border-radius:9px;padding:2px;margin:0 4px 10px}
-.segbar button{position:relative;flex:1;min-height:36px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink)}
+.segbar button{position:relative;flex:1;min-height:36px;border-radius:7px;font-size:0.7647rem;font-weight:500;color:var(--ink)}
 .segbar button::before{content:"";position:absolute;inset:-4px 0;pointer-events:auto}
 .segbar button[aria-selected="true"]{background:var(--segon);font-weight:600;box-shadow:var(--segsh)}
 .chiprow{-webkit-mask-image:linear-gradient(to left,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);
   mask-image:linear-gradient(to left,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);
   scroll-padding-inline:16px;display:flex;gap:8px;overflow-x:auto;padding:0 16px 4px;margin:0 -16px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .chiprow::-webkit-scrollbar{display:none}
-.chiprow button{flex:none;min-height:40px;padding:0 15px;border-radius:20px;background:var(--fill);font-size:14px;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.chiprow button{flex:none;min-height:40px;padding:0 15px;border-radius:20px;background:var(--fill);font-size:0.8235rem;font-weight:500;color:var(--ink);display:flex;align-items:center;gap:6px;white-space:nowrap}
 .chiprow button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .chiprow .spine{width:8px;height:8px;border-radius:50%;flex:none}
 .chiprow .spine.hollow{box-shadow:inset 0 0 0 2.5px var(--c)}
@@ -225,50 +231,53 @@ button.row[aria-pressed="true"] .nm{font-weight:600}
 #app,#tabbar{will-change:transform}
 
 .acc-head{padding:6px 20px 0}
-.acc-head h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.022em;line-height:1.15}
+.acc-head h1{margin:0;font-size:2rem;font-weight:700;letter-spacing:-.022em;line-height:1.15}
 .acc-head h1 span{font-size:.5em;vertical-align:middle}
-.acc-head .big{font-family:var(--num);font-size:34px;font-weight:600;letter-spacing:-.02em;direction:ltr;text-align:right;margin-top:14px;line-height:1.1}
-.acc-head .meta{color:var(--muted);font-size:15px;margin-top:2px}
+.acc-head .big{font-family:var(--num);font-size:2rem;font-weight:600;letter-spacing:-.02em;direction:ltr;text-align:right;margin-top:14px;line-height:1.1}
+.acc-head .meta{color:var(--muted);font-size:0.8824rem;margin-top:2px}
 .chips{display:flex;gap:10px;margin:18px 16px 0}
 
 /* forms: grouped rows, borderless fields */
 .grp{margin:22px 16px 0;background:var(--surface);border-radius:14px;overflow:hidden}
-.grp h3{margin:0;padding:12px 16px 2px;font-size:13px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px}
+.grp h3{margin:0;padding:12px 16px 2px;font-size:0.7647rem;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px}
 .grp h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c,var(--muted));flex:none}
-.grp h3 small{font-weight:400;font-size:13px}
-.fld{position:relative;display:grid;grid-template-columns:1fr 150px;align-items:center;gap:10px;min-height:48px;padding:3px 16px}
+.grp h3 small{font-weight:400;font-size:0.7647rem}
+.fld{position:relative;display:grid;grid-template-columns:1fr minmax(110px,150px);align-items:center;gap:10px;min-height:max(48px,2.9rem);padding:3px 16px}
 .fld + .fld::before{content:"";position:absolute;top:0;inset-inline:16px 0;height:1px;background:var(--sep);transform:scaleY(.5);transform-origin:top}
-.fld label{font-size:17px}
-.fld label small{display:block;color:var(--muted);font-size:13px;direction:rtl}
-.fld input{width:100%;height:40px;border:0;border-radius:8px;padding:0 8px;font-family:var(--num);font-size:17px;direction:ltr;text-align:left;background:transparent;color:var(--ink);font-variant-numeric:tabular-nums;transition:background .15s}
+.fld label{font-size:1rem}
+.fld label small{display:block;color:var(--muted);font-size:0.7647rem;direction:rtl}
+.fld input{width:100%;height:40px;border:0;border-radius:8px;padding:0 8px;font-family:var(--num);font-size:1rem;direction:ltr;text-align:left;background:transparent;color:var(--ink);font-variant-numeric:tabular-nums;transition:background .15s}
 .fld input::placeholder{color:var(--chev)}
 .fld input:focus{background:var(--bg);outline:0}
 .fld input[type=date]{-webkit-appearance:none;appearance:none}
 .fld.wide{grid-template-columns:96px 1fr}
 .fld.wide input{direction:rtl;text-align:start;font-family:inherit;font-variant-numeric:normal}
 .fld .inl{display:flex;gap:4px;align-items:center}
-.fld .inl button{white-space:nowrap;font-size:15px;color:var(--tink);padding:0 4px;min-height:44px}
+.fld .inl button{white-space:nowrap;font-size:0.8824rem;color:var(--tink);padding:0 4px;min-height:44px}
+.fld .inl input{min-width:0;flex:1}
+.fld .inl .neg{flex:0 0 auto;min-width:34px;font-family:var(--num);font-size:1.1176rem;color:var(--chev)}
+.fld .inl .neg:active{color:var(--tink)}
 .fld .inl button:active{opacity:.4}
-.fld .inl .atbtn{color:var(--tink);font-size:15px;min-height:44px;display:flex;align-items:center;cursor:pointer;white-space:nowrap}
+.fld .inl .atbtn{color:var(--tink);font-size:0.8824rem;min-height:44px;display:flex;align-items:center;cursor:pointer;white-space:nowrap}
 .fld label small.on{color:var(--up);font-weight:600}
 .fld label small.gone{color:var(--down);font-weight:600;text-decoration:line-through}
-.fld .inl .atrm{background:none;border:0;padding:0 8px;min-height:44px;flex:0 0 auto;white-space:nowrap;color:var(--down);font-size:15px;font-family:inherit;cursor:pointer}
-.hint{font-size:13px;color:var(--muted);padding:6px 16px 12px;margin:0}
-.err{margin:16px 16px 0;background:var(--errbg);color:var(--errink);border-radius:12px;padding:11px 14px;font-size:15px}
+.fld .inl .atrm{background:none;border:0;padding:0 8px;min-height:44px;flex:0 0 auto;white-space:nowrap;color:var(--down);font-size:0.8824rem;font-family:inherit;cursor:pointer}
+.hint{font-size:0.7647rem;color:var(--muted);padding:6px 16px 12px;margin:0}
+.err{margin:16px 16px 0;background:var(--errbg);color:var(--errink);border-radius:12px;padding:11px 14px;font-size:0.8824rem}
 
-table.cmp{width:100%;border-collapse:collapse;font-size:15px}
-table.cmp th{font-weight:400;color:var(--muted);font-size:13px;text-align:left;padding:12px 8px 6px}
+table.cmp{width:100%;border-collapse:collapse;font-size:0.8824rem}
+table.cmp th{font-weight:400;color:var(--muted);font-size:0.7647rem;text-align:left;padding:12px 8px 6px}
 table.cmp th:first-child,table.cmp td:first-child{text-align:right;padding-inline-start:16px}
 table.cmp td{padding:12px 8px;box-shadow:inset 0 .5px 0 var(--sep);text-align:left}
 table.cmp td:last-child,table.cmp th:last-child{padding-left:16px}
 table.cmp tr.tot td{font-weight:600}
-table.cmp .d small{display:block;font-size:12px}
+table.cmp .d small{display:block;font-size:0.7059rem}
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.pick label{font-size:13px;color:var(--muted);display:block;margin:0 4px}
-.pick select{width:100%;height:48px;border:0;border-radius:12px;background:var(--surface);color:var(--tink);padding:0 12px;font-size:17px;margin-top:6px}
+.pick label{font-size:0.7647rem;color:var(--muted);display:block;margin:0 4px}
+.pick select{width:100%;height:48px;border:0;border-radius:12px;background:var(--surface);color:var(--tink);padding:0 12px;font-size:1rem;margin-top:6px}
 .empty{text-align:center;padding:56px 28px;color:var(--muted)}
-.empty h2{font-size:22px;font-weight:700;letter-spacing:-.016em;margin:0 0 6px;color:var(--ink)}
-.empty p{margin:0 0 22px;font-size:15px}
+.empty h2{font-size:1.2941rem;font-weight:700;letter-spacing:-.016em;margin:0 0 6px;color:var(--ink)}
+.empty p{margin:0 0 22px;font-size:0.8824rem}
 .cover{position:fixed;inset:0;background:var(--bg);z-index:38}
 /* the lock screen keeps its own ground in both colour schemes: two slow lights drifting behind
    a deep blue, so the locked state is recognised before a word is read */
@@ -286,49 +295,57 @@ table.cmp .d small{display:block;font-size:12px}
 @keyframes ldrift2{0%{transform:translate(10%,6%) scale(1.1)}50%{transform:translate(-12%,-8%) scale(.9)}100%{transform:translate(10%,6%) scale(1.1)}}
 .lock .in{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
   width:100%;max-width:330px;height:100%}
-.lock h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:16px 0 0}
-.lock p{margin:5px 0 0;color:#CFE2F7;font-size:15px;text-align:center}
+.lock h1{font-size:1.5294rem;font-weight:700;letter-spacing:-.02em;margin:16px 0 0}
+.lock p{margin:5px 0 0;color:#CFE2F7;font-size:0.8824rem;text-align:center}
 .lock .dots{display:flex;gap:18px;margin-top:34px;height:13px;direction:ltr}
 .lock .dots i{width:13px;height:13px;border-radius:50%;box-sizing:border-box;border:1.5px solid #FFFFFF66;
   transition:background .18s ease,transform .18s cubic-bezier(.32,.72,0,1)}
 .lock .dots i.on{background:#fff;border-color:#fff;transform:scale(1.12)}
-.lock .msg{min-height:22px;margin-top:16px;font-size:15px;font-weight:600;color:#FFD3CE;text-align:center}
+.lock .msg{min-height:22px;margin-top:16px;font-size:0.8824rem;font-weight:600;color:#FFD3CE;text-align:center}
 .lock .pad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 24px;justify-items:center;margin:auto 0 28px;direction:ltr}
 .lock .pad button{display:flex;align-items:center;justify-content:center;width:76px;height:76px;border-radius:50%;
-  border:0;background:#FFFFFF1F;color:#fff;font-family:var(--num);font-size:31px;font-weight:400}
+  border:0;background:#FFFFFF1F;color:#fff;font-family:var(--num);font-size:1.8235rem;font-weight:400}
 .lock .pad button:active{background:#FFFFFF3D}
-.lock .pad button.bare{background:transparent;font-size:26px}
+.lock .pad button.bare{background:transparent;font-size:1.5294rem}
 .lock .pad button[disabled]{opacity:.4}
 .lock .shake{animation:lshake .42s ease-in-out}
 @keyframes lshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
 @media (prefers-reduced-motion:reduce){.lock .blob{animation:none}.lock .shake{animation:none}.lock .dots i{transition:none}}
-textarea{width:100%;min-height:120px;border:0;border-radius:10px;background:var(--bg);padding:10px;font-size:13px;direction:ltr;font-family:ui-monospace,Menlo,monospace}
+textarea{width:100%;min-height:120px;border:0;border-radius:10px;background:var(--bg);padding:10px;font-size:0.7647rem;direction:ltr;font-family:ui-monospace,Menlo,monospace}
 svg.chart{display:block;width:100%;height:auto;touch-action:pan-y;direction:ltr}
-svg.chart text{font-family:var(--num);font-size:11px;fill:#8E8E93}
+svg.chart text{font-family:var(--num);font-size:11px;fill:var(--ctext)}
 svg.chart .g{stroke:var(--cgrid)}
 svg.chart .cross{stroke:var(--ccross)}
 svg.chart circle{stroke:var(--cring)}
 /* the trading chart runs to both edges of the sheet; only its head and its tabs are inset */
 .pxwrap{margin:0 -16px}
 .pxhead{padding:0 20px 10px;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px}
-.pxhead .pxval{font-size:30px;font-weight:700;font-family:var(--num);letter-spacing:-.02em;line-height:1.1;flex:0 0 auto}
-.pxhead .pxdelta{font-size:15px;font-weight:600;flex:0 0 auto}
-.pxhead .pxwhen{flex:1 0 100%;font-size:12.5px;color:var(--muted);min-height:16px}
+.pxhead .pxval{font-size:1.7647rem;font-weight:700;font-family:var(--num);letter-spacing:-.02em;line-height:1.1;flex:0 0 auto}
+.pxhead .pxdelta{font-size:0.8824rem;font-weight:600;flex:0 0 auto}
+.pxhead .pxwhen{flex:1 0 100%;font-size:0.7353rem;color:var(--muted);min-height:16px}
 svg.pxchart{display:block;width:100%;height:170px;touch-action:pan-y;direction:ltr;overflow:visible}
 svg.pxchart .pxbase{stroke:var(--muted);stroke-opacity:.45;stroke-width:1;stroke-dasharray:3 4;vector-effect:non-scaling-stroke}
 svg.pxchart .pxcross{stroke:var(--ccross);stroke-width:1}
 svg.pxchart .pxknob{stroke:var(--surface);stroke-width:2;vector-effect:non-scaling-stroke}
 .pxtabs{display:flex;gap:2px;background:var(--segbg);border-radius:9px;padding:2px;margin:14px 20px 0}
-.pxtabs button{position:relative;flex:1;min-height:36px;border:0;border-radius:7px;background:transparent;color:var(--ink);font:inherit;font-size:13px;font-weight:500}
+.pxtabs button{position:relative;flex:1;min-height:36px;border:0;border-radius:7px;background:transparent;color:var(--ink);font:inherit;font-size:0.7647rem;font-weight:500}
 .pxtabs button::before{content:"";position:absolute;inset:-4px 0;pointer-events:auto}
 .pxtabs button[aria-selected="true"]{background:var(--segon);font-weight:600;box-shadow:var(--segsh)}
 .hint.pxnote{display:flex;align-items:center;justify-content:space-between;gap:12px;white-space:nowrap}
 .hint.pxnote>span{overflow:hidden;text-overflow:ellipsis}
-.hint.pxnote button{flex:0 0 auto;border:0;background:transparent;color:var(--tink);font:inherit;font-size:13px;font-weight:600;min-height:44px;padding-inline:4px}
+.hint.pxnote button{flex:0 0 auto;border:0;background:transparent;color:var(--tink);font:inherit;font-size:0.7647rem;font-weight:600;min-height:44px;padding-inline:4px}
 .chart-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
-.chart-top b{font-size:22px;font-family:var(--num);letter-spacing:-.2px}
-.chart-top .n{font-size:14px;font-weight:600}
-.chartbox .readout{min-height:17px;font-size:12.5px;color:var(--muted);margin:0 0 4px;direction:rtl;text-align:center}
+.chart-top b{font-size:1.2941rem;font-family:var(--num);letter-spacing:-.2px}
+.chart-top .n{font-size:0.8235rem;font-weight:600}
+.chartbox .readout{min-height:17px;font-size:0.7353rem;color:var(--muted);margin:0 0 4px;direction:rtl;text-align:center}
+.treewrap{position:relative;width:100%;padding-top:var(--ar);background:var(--surface);border-radius:14px;overflow:hidden}
+.tile{position:absolute;border:0;padding:0;overflow:hidden;background:var(--tc);
+  box-shadow:inset 0 0 0 1.5px var(--bg);display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;
+  gap:1px;padding:4px 5px;color:#fff;text-align:start;min-width:0}
+.tile[style*="--ho"]{opacity:.78}      /* abroad reads lighter, and the label still carries */
+.tile:active{filter:brightness(1.25)}
+.tile .tl-n{font-size:0.7059rem;font-weight:600;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.tile .tl-p{font-size:0.6471rem;opacity:.92;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .roll .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .roll{display:inline-flex;direction:ltr;font-variant-numeric:tabular-nums;white-space:nowrap}
 .roll .dig,.roll .sep{display:inline-block;height:1em;line-height:1;vertical-align:bottom}
@@ -342,23 +359,23 @@ svg.pxchart .pxknob{stroke:var(--surface);stroke-width:2;vector-effect:non-scali
   transition:opacity .2s ease-out,transform .2s var(--ease),visibility 0s linear .2s}
 #topbar.on{opacity:1;transform:none;visibility:visible;transition-delay:0s,0s,0s;
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
-#topbar span{font-size:16px;font-weight:600;letter-spacing:-.01em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#topbar span{font-size:0.9412rem;font-weight:600;letter-spacing:-.01em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #topbar span.n{font-family:var(--num);direction:ltr}
 #pull{position:fixed;inset:calc(var(--sat) + 2px) 0 auto 0;z-index:4;display:flex;flex-direction:column;align-items:center;gap:4px;
-  opacity:0;pointer-events:none;color:var(--muted);font-size:13px}
+  opacity:0;pointer-events:none;color:var(--muted);font-size:0.7647rem}
 #pull .ring{width:20px;height:20px;border-radius:50%;border:2.2px solid var(--line);border-top-color:var(--muted)}
 #pull.go .ring{animation:ringspin .75s linear infinite}
 #pull .txt{font-family:var(--num);direction:ltr}
 @keyframes ringspin{to{transform:rotate(360deg)}}
 .moving .tabbar,.moving .sheet header,.moving .sheet footer,.moving #topbar.on{
   backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-.toast{position:fixed;inset:auto 0 calc(76px + var(--sab)) 0;width:max-content;max-width:calc(100% - 40px);margin:0 auto;background:var(--toast);color:var(--ontoast);border-radius:22px;padding:11px 20px;text-align:center;z-index:30;font-size:15px}
+.toast{position:fixed;inset:auto 0 calc(76px + var(--sab)) 0;width:max-content;max-width:calc(100% - 40px);margin:0 auto;background:var(--toast);color:var(--ontoast);border-radius:22px;padding:11px 20px;text-align:center;z-index:30;font-size:0.8824rem}
 
 @media (prefers-reduced-transparency:reduce){
   .tabbar,.sheet header,.sheet footer{background:var(--bg)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 }
 @media (prefers-contrast:more){
-  :root{--sep:#3C3C4399;--muted:#48484A}
+  :root{--sep:#3C3C4399;--muted:#48484A;--ctext:#48484A;--tabink:#48484A}
   .panel,.chips div,.hero .deltas div,.grp{outline:1px solid #8E8E93;outline-offset:-1px}
 }
 @media (prefers-reduced-motion:no-preference){
@@ -388,17 +405,22 @@ svg.pxchart .pxknob{stroke:var(--surface);stroke-width:2;vector-effect:non-scali
 /* ---------- model ---------- */
 /* accounts are not part of the code: they arrive with the backup file and live only on the device */
 let ACCOUNTS=[],FIELDS=[];
-function setConfig(list){const ok=[];for(const a of Array.isArray(list)?list:[]){if(!a||!a.id||!Array.isArray(a.fields))continue;ok.push({id:String(a.id),name:String(a.name||a.id),short:String(a.short||a.name||a.id),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#44566A',cur:a.cur==='USD'?'USD':'ILS',fields:a.fields.filter(f=>Array.isArray(f)&&f[0]).map(f=>[String(f[0]),String(f[1]||f[0]),['cur','fx','cap','sav'].includes(f[2])?f[2]:'cap',!!f[3]])})}ACCOUNTS=ok;FIELDS=ok.flatMap(a=>a.fields.map(f=>f[0]))}
+const cleanFields=l=>(Array.isArray(l)?l:[]).filter(f=>Array.isArray(f)&&f[0]).map(f=>[String(f[0]),String(f[1]||f[0]),['cur','fx','cap','sav'].includes(f[2])?f[2]:'cap',!!f[3]]);
+function setConfig(list){const ok=[];for(const a of Array.isArray(list)?list:[]){if(!a||!a.id||!Array.isArray(a.fields))continue;ok.push({id:String(a.id),name:String(a.name||a.id),short:String(a.short||a.name||a.id),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#44566A',cur:a.cur==='USD'?'USD':'ILS',fields:cleanFields(a.fields),
+  /* components switched off: their keys, so switching one back on reuses the key its history sits under */
+  gone:cleanFields(a.gone)})}ACCOUNTS=ok;FIELDS=ok.flatMap(a=>a.fields.map(f=>f[0]))}
 const KEY='ft.data.v1', META='ft.meta.v1';
 let S={updates:[],ports:{},ptype:{},plink:{},priv:false,pmask:{},fh:'',tick:{},rec:{}}, cryptoKey=null, encMeta=null, tab='home';
 
 const num=v=>{
   if(typeof v==='number')return Number.isFinite(v)?v:0;
   const raw=String(v??'');
-  const paren=/\(\s*[\d.,]+\s*\)/.test(raw);               /* (1,000) means minus, in a bank file */
-  const x=parseFloat(raw.replace(/[^0-9.\-]/g,''));          /* commas, ₪, $, spaces, RTL marks */
+  const t=raw.replace(/[\u2212\u2012-\u2015]/g,'-').trim();  /* a real minus sign, or a dash */
+  /* a minus can arrive in three shapes: before, after, or as brackets around the number */
+  const neg=/^\(\s*[\d.,\s]+\s*\)$/.test(t)||/^-/.test(t)||/-\s*$/.test(t);
+  const x=parseFloat(t.replace(/[^0-9.]/g,''));              /* commas, ₪, $, spaces, RTL marks */
   if(!Number.isFinite(x))return 0;
-  return paren?-Math.abs(x):x;
+  return neg?-Math.abs(x):x;
 };
 /* ---------- private mode ----------
    for when the screen is not only mine: an account can be left out altogether, or shown at
@@ -453,8 +475,8 @@ const chartInk=()=>DARK()?'#F2F2F7':'#1C1C1E';
 
 /* ---------- format ---------- */
 const nf0=new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
-const ils=v=>'₪'+nf0.format(Math.round(v));
-const usd=v=>'$'+nf0.format(Math.round(v));
+const ils=v=>(v<0?'−':'')+'₪'+nf0.format(Math.abs(Math.round(v)));
+const usd=v=>(v<0?'−':'')+'$'+nf0.format(Math.abs(Math.round(v)));
 const signedBy=(v,f)=>(v>0?'+':v<0?'−':'')+f(Math.abs(v));   // e.g. +₪40,873 / −$1,989
 const signedIls=v=>signedBy(v,ils);
 /* beside an arrow the sign is the third thing saying the same thing, after the arrow and the
@@ -474,12 +496,20 @@ function short(t,n){
 }
 const magBy=(v,f)=>f(Math.abs(v));
 const pct=(v,d=1)=>(v>0?'+':v<0?'−':'')+Math.abs(v*100).toFixed(d)+'%';
-const cls=v=>v>0.5?'up':v<-0.5?'down':'flat';
-const arrow=v=>v>0.5?'▲':v<-0.5?'▼':'●';
+/* ±0.5 is the right nothing-happened band for shekels, and far too wide for a dollar price:
+   where a base is known the band is a tenth of a percent of it instead */
+const eps=base=>base?Math.max(Math.abs(base)*0.001,0.005):0.5;
+const cls=(v,base)=>{const e=eps(base);return v>e?'up':v<-e?'down':'flat'};
+const arrow=(v,base)=>{const e=eps(base);return v>e?'▲':v<-e?'▼':'●'};
 const dshort=d=>{const [y,m,dd]=d.split('-');return +dd+'/'+ +m+'/'+y.slice(2)};
 const dlong=d=>{const [y,m,dd]=d.split('-');return +dd+'/'+ +m+'/'+y};
+const dayOf=ts=>{const t=new Date(ts);return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')};
 const today=()=>{const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* a share price has agorot or cents, and a brokerage can hold a fraction of a share */
+const nf2=new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const priceF=v=>Math.abs(v)>=1000?nf0.format(Math.round(v)):nf2.format(v);
+const qtyF=v=>v%1?new Intl.NumberFormat('en-US',{maximumFractionDigits:4}).format(v):nf0.format(v);
 const compact=v=>{const a=Math.abs(v);return a>=1e6?(v/1e6).toFixed(a>=1e7?1:2)+'M':a>=1e4?(v/1e3).toFixed(a>=1e5?0:1)+'K':nf0.format(v)};
 
 /* ---------- storage (optionally encrypted on device) ---------- */
@@ -492,10 +522,14 @@ async function deriveKey(pass,salt){
 function readRaw(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
 function meta(){try{return JSON.parse(localStorage.getItem(META)||'{}')}catch(e){return {}}}
 function setMeta(p){try{localStorage.setItem(META,JSON.stringify({...meta(),...p}))}catch(e){}}
-let saveChain=Promise.resolve();
+let saveChain=Promise.resolve(),plainOK=false;
 function save(){
+  /* while the app is locked the key is gone and memory has been emptied. anything still in flight
+     (a refresh that lands late) must not write that empty state over the encrypted store. the
+     only plaintext write over an encrypted one is removing the lock, which says so explicitly. */
+  if(!cryptoKey&&!plainOK){const r=readRaw();if(r&&r.enc)return saveChain}
   saveChain=saveChain.then(async()=>{
-    const plain=JSON.stringify({v:3,accounts:ACCOUNTS,updates:S.updates,ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,td:S.td,tick:S.tick,rec:S.rec});
+    const plain=JSON.stringify({v:4,accounts:ACCOUNTS,updates:S.updates,ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,td:S.td,tick:S.tick,rec:S.rec});
     let out;
     if(cryptoKey){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},cryptoKey,new TextEncoder().encode(plain));out={enc:1,salt:encMeta.salt,iv:b64(iv),ct:b64(ct)};if(encMeta.pinLen)out.pinLen=encMeta.pinLen}
     else out={enc:0,data:JSON.parse(plain)};
@@ -515,7 +549,9 @@ function lockNow(){
   if(!cryptoKey||document.querySelector('.lock'))return;
   cryptoKey=null;                       // the key leaves memory until the code is re-entered
   closeAllLayers();
-  S.updates=[];S.ports={};S.ptype={};S.plink={};S.priv=false;S.pmask={};S.fh='';S.td='';S.tick={};S.rec={};PX={};$('#tabbar').hidden=true;view.innerHTML='';
+  S.updates=[];S.ports={};S.ptype={};S.plink={};S.priv=false;S.pmask={};S.fh='';S.td='';S.tick={};S.rec={};PX={};
+  setConfig([]);pageCache={};for(const k in rollMem)delete rollMem[k];
+  $('#tabbar').hidden=true;view.innerHTML='';
   lockScreen();
 }
 document.addEventListener('visibilitychange',()=>{
@@ -526,7 +562,7 @@ document.addEventListener('visibilitychange',()=>{
 window.addEventListener('pagehide',()=>{hiddenAt=Date.now();cover(true)});
 function applyPlain(pt){
   const d=JSON.parse(new TextDecoder().decode(pt));
-  setConfig(d.accounts);S.updates=clean(d.updates);loadPorts(d);
+  setConfig(d.accounts);S.updates=clean(d.updates);loadPorts(d,true);
 }
 async function unlock(pass){
   const raw=readRaw();
@@ -549,18 +585,24 @@ async function unlock(pass){
   cryptoKey=k;encMeta={salt:raw.salt,pinLen:pinLenOf(pass)};
   if(storedPinLen(raw)!==encMeta.pinLen)save();
 }
-function loadPorts(d){
-  S.ports={};S.ptype={};S.plink={};S.priv=!!d.priv;S.pmask={};
-  S.fh=typeof d.fh==='string'?d.fh.trim().slice(0,80):'';
-  S.td=typeof d.td==='string'?d.td.trim().slice(0,80):'';
-  S.tick={};for(const k in (d.tick||{})){const v=String(d.tick[k]||'').toUpperCase().replace(/[^A-Z0-9.\-]/g,'').slice(0,12);if(v)S.tick[String(k)]=v}
-  S.rec={};for(const k in (d.rec||{})){const r=d.rec[k];if(r&&typeof r==='object')S.rec[String(k)]={ts:num(r.ts),sb:num(r.sb),b:num(r.b),h:num(r.h),s:num(r.s),ss:num(r.ss),period:String(r.period||''),tm:num(r.tm),tl:num(r.tl),th:num(r.th),px:num(r.px)}}
+/* merge: a restore brings in what the backup holds and leaves alone what it does not, so loading
+   an older file cannot wipe a newer snapshot or the API keys. boot and unlock pass fresh=true. */
+function loadPorts(d,fresh){
+  if(fresh){S.ports={};S.ptype={};S.plink={};S.pmask={};S.tick={};S.rec={};S.fh='';S.td=''}
+  if(fresh||'priv' in d)S.priv=!!d.priv;
+  if(typeof d.fh==='string'&&(fresh||d.fh.trim()))S.fh=d.fh.trim().slice(0,80);
+  if(typeof d.td==='string'&&(fresh||d.td.trim()))S.td=d.td.trim().slice(0,80);
+  for(const k in (d.tick||{})){const v=String(d.tick[k]||'').toUpperCase().replace(/[^A-Z0-9.\-]/g,'').slice(0,12);if(v)S.tick[String(k)]=v}
+  for(const k in (d.rec||{})){const r=d.rec[k];if(r&&typeof r==='object')S.rec[String(k)]={ts:num(r.ts),sb:num(r.sb),b:num(r.b),h:num(r.h),s:num(r.s),ss:num(r.ss),period:String(r.period||''),tm:num(r.tm),tl:num(r.tl),th:num(r.th),px:num(r.px)}}
   const ok=new Set(ACCOUNTS.map(a=>a.id));
   for(const id in (d.pmask||{}))if(ok.has(id)&&['half','hide'].includes(d.pmask[id]))S.pmask[id]=d.pmask[id];
   for(const id in (d.ports||{})){
     if(!ok.has(id))continue;
     const list=(d.ports[id]||[]).filter(p=>p&&/^\d{4}-\d{2}-\d{2}$/.test(p.date));
-    if(list.length)S.ports[id]=list;
+    if(!list.length)continue;
+    const have=new Map((S.ports[id]||[]).map(p=>[p.date,p]));
+    for(const p of list)have.set(p.date,p);                  /* same date: the file wins */
+    S.ports[id]=[...have.values()].sort((a,b)=>a.date<b.date?-1:1);
   }
   for(const k in (d.ptype||{}))if(['stock','bond','fund','cash'].includes(d.ptype[k]))S.ptype[String(k)]=d.ptype[k];
   for(const id in (d.plink||{})){
@@ -574,7 +616,10 @@ function clean(list){
   const out=[];const seen=new Set();
   for(const u of Array.isArray(list)?list:[]){
     if(!u||!/^\d{4}-\d{2}-\d{2}$/.test(u.date)||seen.has(u.date))continue;seen.add(u.date);
-    const vals={};for(const k of FIELDS)vals[k]=num(u.vals&&u.vals[k]);
+    /* values of a component that is switched off stay in the update, unseen, so switching it
+       back on brings its history back. only deleting the account removes them. */
+    const vals={};for(const k in (u.vals||{}))if(/^[\w-]{1,40}$/.test(k))vals[k]=num(u.vals[k]);
+    for(const k of FIELDS)if(!(k in vals))vals[k]=0;
     out.push({date:u.date,vals,rate:num(u.rate)});
   }
   return out;
@@ -597,8 +642,30 @@ function tickFmt(ticks){const span=ticks[ticks.length-1]-ticks[0];const mx=Math.
   if(mx>=1e6){const d=span/ (ticks.length-1)>=1e5?1:span/(ticks.length-1)>=1e4?2:3;return v=>(v/1e6).toFixed(d)+'M'}
   if(mx>=1e4){const d=span/(ticks.length-1)>=1e3?0:1;return v=>(v/1e3).toFixed(d)+'K'}
   return v=>nf0.format(v)}
+/* A chart can hold about two dozen points before they stop being readable. Past that the series
+   is thinned rather than cropped: the first and the last are kept, and the points in between are
+   the ones nearest to evenly spaced moments in time — so a year of weekly entries still reads as
+   a year, with the gaps where the gaps really were. */
+const CHARTMAX=24;
+function sampleEven(pts,max){
+  const m=max||CHARTMAX;
+  if(pts.length<=m)return pts;
+  const t=pts.map(p=>Date.parse(p.d));
+  const ok=t.every(Number.isFinite)&&t[t.length-1]>t[0];
+  const keep=new Set([0,pts.length-1]);
+  for(let i=1;i<m-1;i++){
+    const f=i/(m-1);
+    let best=0;
+    if(ok){const want=t[0]+(t[t.length-1]-t[0])*f;let bd=Infinity;
+      for(let j=0;j<t.length;j++){const d=Math.abs(t[j]-want);if(d<bd){bd=d;best=j}}}
+    else best=Math.round(f*(pts.length-1));
+    keep.add(best);
+  }
+  return pts.filter((_,i)=>keep.has(i));
+}
 /* line with point markers; y-axis hugs the data (a bit below the lowest, a bit above the highest) */
 function lineChart(pts,color,o={}){
+  pts=sampleEven(pts,o.max);
   const W=340,H=o.h||170,AX=46,PR=10,T=14,B=24,dark=!!o.dark;   // AX: width reserved for the value axis, on the left
   const vs=pts.map(p=>p.v);const {min,max,ticks}=niceTicks(Math.min(...vs),Math.max(...vs));const tf=tickFmt(ticks);
   /* the x axis is time, not position in the list: a month of silence is drawn a month wide, so
@@ -629,13 +696,66 @@ function lineChart(pts,color,o={}){
   s+=`<rect class="hit" x="0" y="0" width="${W}" height="${H}" fill="transparent" data-xs="${pts.map((p,i)=>x(i).toFixed(1)).join(',')}"/></svg>`;
   return s;
 }
+/* Several series on one pair of axes only works when they share a unit. Money does not: an
+   account of ₪5M and one of ₪75K cannot be read together. So every series is re-based to its own
+   first point and drawn as a percentage change, which is the question being asked anyway — which
+   of them grew faster. */
+function pctChart(series,o={}){
+  const W=340,H=o.h||190,AX=40,PR=10,T=14,B=24;
+  const all=series.flatMap(s=>s.pts);
+  if(all.length<2)return '';
+  const tms=all.map(p=>Date.parse(p.d));
+  const t0=Math.min(...tms),t1=Math.max(...tms),span=t1-t0||1;
+  const vals=series.flatMap(s=>s.pts.map(p=>p.v));
+  const {min,max,ticks}=niceTicks(Math.min(...vals),Math.max(...vals));
+  const x=d=>AX+10+(Date.parse(d)-t0)*(W-PR-10-AX-10)/span;
+  const y=v=>T+(max-v)*(H-T-B)/(max-min||1);
+  let out=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label||'השוואה באחוזים')}">`;
+  for(const tk of ticks)out+=`<line class="g" x1="${AX}" x2="${W-PR}" y1="${y(tk)}" y2="${y(tk)}" stroke-width="1"/><text x="${AX-7}" y="${y(tk)+3.5}" text-anchor="end">${(tk>0?'+':'')+tk.toFixed(0)}%</text>`;
+  /* the zero line is where each series started: above it is a gain, below it a loss */
+  if(min<0&&max>0)out+=`<line x1="${AX}" x2="${W-PR}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ccross)" stroke-width="1"/>`;
+  const lab=[t0,t0+span/2,t1].map(t=>new Date(t).toISOString().slice(0,10));
+  lab.forEach((d,i)=>out+=`<text x="${x(d).toFixed(1)}" y="${H-7}" text-anchor="${i===0?'start':i===2?'end':'middle'}">${dshort(d)}</text>`);
+  out+=`<line class="cross" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>`;
+  for(const se of series){
+    const pts=sampleEven(se.pts,60);
+    out+=`<polyline fill="none" stroke="${se.color}" stroke-width="${se.wide?2.6:2}" stroke-linejoin="round" stroke-linecap="round"${se.dash?' stroke-dasharray="5 4"':''} points="${pts.map(p=>x(p.d).toFixed(1)+','+y(p.v).toFixed(1)).join(' ')}"/>`;
+    const l=pts[pts.length-1];
+    out+=`<circle cx="${x(l.d).toFixed(1)}" cy="${y(l.v).toFixed(1)}" r="3.5" fill="${se.color}" stroke-width="2"/>`;
+  }
+  const grid=[];for(let i=0;i<=60;i++)grid.push((AX+10+i*(W-PR-10-AX-10)/60).toFixed(1));
+  out+=`<rect class="hit" x="0" y="0" width="${W}" height="${H}" fill="transparent" data-t0="${t0}" data-t1="${t1}"/></svg>`;
+  return out;
+}
+/* the readout names every series at the moment under the finger */
+function wirePct(box,series){
+  if(!box||offscreen)return;
+  const svg=box.querySelector('svg.chart'),out=box.querySelector('.readout');if(!svg||!out)return;
+  const hit=svg.querySelector('.hit'),cross=svg.querySelector('.cross');
+  const t0=+hit.dataset.t0,t1=+hit.dataset.t1,AX=50,R=330;
+  const at=t=>series.map(se=>{
+    let best=null;for(const p of se.pts){const d=Math.abs(Date.parse(p.d)-t);if(!best||d<best.d)best={d,p}}
+    return best?`<span class="n" style="color:${se.color}">${se.name} ${pct(best.p.v/100,1)}</span>`:'';
+  }).filter(Boolean).join(' · ');
+  const move=e=>{
+    const r=svg.getBoundingClientRect();
+    const vx=(e.clientX-r.left)*340/r.width;
+    const f=Math.max(0,Math.min(1,(vx-AX)/(R-AX)));
+    const t=t0+(t1-t0)*f;
+    cross.setAttribute('x1',vx.toFixed(1));cross.setAttribute('x2',vx.toFixed(1));cross.setAttribute('visibility','visible');
+    out.innerHTML=`<span class="n">${dlong(new Date(t).toISOString().slice(0,10))}</span> · `+at(t);
+  };
+  hit.addEventListener('pointerdown',move);hit.addEventListener('pointermove',move);
+  out.innerHTML='<span class="flat">גע בגרף כדי לראות תאריך</span>';
+}
 function spark(vs,color){if(vs.length<2)return '';const lo=Math.min(...vs),hi=Math.max(...vs),sp=hi-lo||1;
   const p=vs.map((v,i)=>(3+i*54/(vs.length-1)).toFixed(1)+','+(19-(v-lo)*16/sp).toFixed(1)).join(' ');
   const last=p.split(' ').pop().split(',');
   return `<svg class="spark" viewBox="0 0 60 22" aria-hidden="true"><polyline fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${p}"/><circle cx="${last[0]}" cy="${last[1]}" r="2.6" fill="${color}"/></svg>`}
-function readoutText(p,prev,fmt){let t=`<span class="n">${dlong(p.d)}</span> · <b class="n">${fmt(p.v)}</b>`;if(prev){const d=p.v-prev.v;t+=` · <span class="n ${cls(d)}">${arrow(d)} ${magBy(d,fmt)}</span>`}return t}
+function readoutText(p,prev,fmt){let t=`<span class="n">${dlong(p.d)}</span> · <b class="n">${fmt(p.v)}</b>`;if(prev){const d=p.v-prev.v;t+=` · <span class="n ${cls(d,prev.v)}">${arrow(d,prev.v)} ${magBy(d,fmt)}</span>`}return t}
 function wireChart(box,pts,fmt){
   if(!box||offscreen)return;
+  pts=sampleEven(pts);
   const svg=box.querySelector('svg.chart'),out=box.querySelector('.readout');if(!svg||!out)return;
   const hit=svg.querySelector('.hit'),cross=svg.querySelector('.cross');const xs=hit.dataset.xs.split(',').map(Number);
   const show=i=>{out.innerHTML=readoutText(pts[i],pts[i-1],fmt)};
@@ -752,14 +872,14 @@ function viewHome(){
   if(!U.length){view.innerHTML=`<div class="pagehead"><h1>מעקב כספים</h1><p>הנתונים נשמרים במכשיר הזה בלבד</p></div>`+emptyState();setTop('מעקב כספים');return}
   const C=U.map(calc),n=U.length,last=C[n-1],prev=C[n-2],first=C[0];
   const dPrev=prev?last.total-prev.total:0,dFirst=last.total-first.total;
-  const win=U.slice(-12),winC=C.slice(-12);
+  const win=U,winC=C;
   let h=`<div class="hero"><h1>הון כולל${PRIV()?' '+PMARK:''}</h1><div class="total" data-roll="total" data-rv="${last.total}">${ils(last.total)}</div>
   <div class="deltas"><div><small>מהעדכון הקודם</small>${prev?`<b class="${cls(dPrev)}">${arrow(dPrev)} ${magIls(dPrev)}</b> <span class="n ${cls(dPrev)}">${prev.total?pct(dPrev/prev.total,2):''}</span>`:'<b class="flat">—</b>'}</div>
   <div><small>מתחילת המעקב</small>${n>1?`<b class="${cls(dFirst)}">${arrow(dFirst)} ${magIls(dFirst)}</b> <span class="n ${cls(dFirst)}">${first.total?pct(dFirst/first.total,2):''}</span>`:'<b class="flat">—</b>'}</div></div>
   <div id="ch-total" class="panel pad">${lineChart(win.map((u,i)=>({d:u.date,v:winC[i].total})),chartInk(),{label:'סה״כ הון לאורך זמן',anim:firstPaint})}<p class="readout"></p></div></div>`;
   const m=meta();const days=m.lastBackup?Math.floor((Date.now()-m.lastBackup)/864e5):null;
   if(days===null||days>30)h+=`<div class="note"><span>${days===null?'עוד לא נשמר גיבוי.':'עברו '+days+' ימים מהגיבוי האחרון.'} הנתונים קיימים רק במכשיר הזה.</span><button data-act="backup">גיבוי עכשיו</button></div>`;
-  h+=`<section><h2>לפי חשבון</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="חלוקת ההון לפי חשבון">${visAcc().map(a=>`<i style="flex:${Math.max(last.acc[a.id],0)} 0 0;background:${acol(a.color)}" title="${esc(a.name)}"></i>`).join('')}</div></div>`;
+  h+=`<section><h2>לפי חשבון</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="חלוקת ההון לפי חשבון">${visAcc().filter(a=>last.acc[a.id]>0).map(a=>`<i style="flex:${last.acc[a.id]} 0 0;background:${acol(a.color)}" title="${esc(a.name)}"></i>`).join('')}</div></div>`;
   for(const a of visAcc()){const v=last.acc[a.id],d=prev?v-prev.acc[a.id]:0;
     h+=`<button class="row" data-acc="${a.id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${share(v,last.total)}%</span> מההון</div></span>
     <span class="val"><b data-roll="acc:${a.id}" data-rv="${v}">${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
@@ -890,7 +1010,8 @@ function openForm(date,pre){
   const rateAcc=(ACCOUNTS.find(a=>a.cur==='USD')||{}).id;
   for(const a of ACCOUNTS){
     h+=`<div class="grp" style="--c:${acol(a.color)}"><h3>${esc(a.name)}${a.cur==='USD'?'<small>בדולרים</small>':'<small>בש״ח</small>'}</h3>`;
-    for(const [k,nm] of a.fields)h+=`<div class="fld"><label for="f-${k}">${esc(nm)}</label><input id="f-${k}" data-k="${k}" inputmode="decimal" autocomplete="off" value="${f.vals[k]===''?'':f.vals[k]}" placeholder="0"></div>`;
+    /* the iOS decimal pad has no minus key, and an overdraft is a real balance */
+    for(const [k,nm] of a.fields)h+=`<div class="fld"><label for="f-${k}">${esc(nm)}</label><div class="inl"><input id="f-${k}" data-k="${k}" inputmode="decimal" autocomplete="off" value="${f.vals[k]===''?'':f.vals[k]}" placeholder="0"><button type="button" class="neg" data-neg="${k}" aria-label="החלפת סימן ל${esc(nm)}">±</button></div></div>`;
     if(a.id===rateAcc)h+=`<div class="fld"><label for="f-rate">שער דולר<small>USD/ILS ביום העדכון</small></label><div class="inl"><input id="f-rate" inputmode="decimal" autocomplete="off" value="${f.rate||''}" placeholder="3.160"><button type="button" id="getrate">רענון</button></div></div><p class="hint" id="ratehint">השער נמשך לבד לפי התאריך. שער נוכחי: <b id="liverate2" class="n">—</b></p>`;
     if(plinkOf(a.id).length){
       /* an update being edited may already carry a holdings snapshot of that date; it is named here,
@@ -908,17 +1029,25 @@ function openForm(date,pre){
   const upd=()=>roll($('#fsum'),'fsum',calc(read()).total,ILSROLL,{stagger:0,response:.34});
   rollMem.fsum=undefined;upd();
   layer.querySelector('#frm').addEventListener('input',upd);
+  layer.querySelectorAll('[data-neg]').forEach(b=>b.onclick=()=>{
+    const i=$('#f-'+b.dataset.neg);if(!i)return;
+    const t=i.value.trim();
+    i.value=!t||t==='0'?'-':t.startsWith('-')?t.slice(1):'-'+t;
+    i.dispatchEvent(new Event('input',{bubbles:true}));i.focus();
+  });
   showLiveRate('#liverate2');
   let rateTouched=!!f.rate;
   const rateInput=$('#f-rate');
   if(rateInput)rateInput.addEventListener('input',()=>{rateTouched=true});
+  let rateSeq=0;
   const pullRate=async force=>{
     const d=$('#f-date').value,hint=$('#ratehint');if(!rateInput||!d)return;
     if(rateTouched&&!force)return;
+    const my=++rateSeq;                              /* a slower answer for an older date is dropped */
     hint.innerHTML='מושך שער…';
-    try{const r=await fetchRate(d);rateInput.value=String(Math.round(r.rate*1e4)/1e4);rateTouched=false;
+    try{const r=await fetchRate(d);if(my!==rateSeq)return;rateInput.value=String(Math.round(r.rate*1e4)/1e4);rateTouched=false;
       hint.innerHTML=`שער ${esc(r.src)} ל-<span class="n">${dlong(r.date||d)}</span> · שער נוכחי: <b id="liverate2" class="n">—</b>`;upd()}
-    catch(e){hint.innerHTML='לא הצלחתי למשוך שער. הקלידו אותו ידנית · שער נוכחי: <b id="liverate2" class="n">—</b>'}
+    catch(e){if(my!==rateSeq)return;hint.innerHTML='לא הצלחתי למשוך שער. הקלידו אותו ידנית · שער נוכחי: <b id="liverate2" class="n">—</b>'}
     showLiveRate('#liverate2');
   };
   if($('#getrate'))$('#getrate').onclick=()=>pullRate(true);
@@ -974,7 +1103,18 @@ function openForm(date,pre){
     else if(usdSum!==0&&!(u.rate>=2&&u.rate<=6))msg='יש יתרה בדולרים, אז צריך שער דולר בין 2 ל-6.';
     else if(layer.querySelector('input[data-k]')&&[...layer.querySelectorAll('input[data-k]')].some(i=>i.value.trim()!==''&&!/^-?[\d,]*\.?\d*$/.test(i.value.trim())))msg='באחד השדות יש ערך שאינו מספר.';
     if(msg){err.textContent=msg;err.hidden=false;layer.querySelector('.body').scrollTo({top:0,behavior:'smooth'});return}
-    if(editing)S.updates=S.updates.filter(x=>x.date!==editing.date);
+    if(editing){
+      S.updates=S.updates.filter(x=>x.date!==editing.date);
+      if(editing.date!==u.date)for(const id in S.ports){        /* the snapshot moves with the update */
+        const list=S.ports[id];if(!list)continue;
+        const i=list.findIndex(p=>p.date===editing.date);
+        if(i<0)continue;
+        S.ports[id]=list.filter(p=>p.date!==u.date);
+        const sn=S.ports[id].find(p=>p.date===editing.date);
+        if(sn)sn.date=u.date;
+        S.ports[id].sort((a,b)=>a.date<b.date?-1:1);
+      }
+    }
     S.updates.push(u);
     for(const id in drop){                          /* a snapshot dropped here goes with the date it was filed under */
       if(attach[id])continue;
@@ -1003,6 +1143,58 @@ async function fetchRate(d){
   throw new Error('no rate');
 }
 
+/* every holding of every account, converted to shekels with the rate of its own update, so two
+   accounts in two currencies can be ranked against each other */
+function allHoldings(){
+  const U=sorted(),last=U[U.length-1];
+  const out=[];
+  for(const a of ACCOUNTS){
+    if(isHidden(a.id))continue;
+    const snap=portsOf(a.id).slice(-1)[0];
+    if(!snap||!snap.hold)continue;
+    const m=a.cur==='USD'?num(last&&last.rate)||0:1;
+    for(const h of snap.hold)out.push({...h,ils:h.v*m,acc:a,
+      where:a.short+(h.acct&&(snap.hold.some(o=>o.acct&&o.acct!==h.acct))?' · '+subShort(h.acct):'')});
+  }
+  return out.sort((x,y)=>y.ils-x.ils);
+}
+/* what is held in a currency other than the shekel: a dollar account in full, and the
+   dollar-quoted securities sitting inside a shekel account */
+function fxExposure(){
+  const U=sorted(),last=U[U.length-1];if(!last)return null;
+  const C=calc(last);
+  let fx=0;const by={};
+  for(const a of ACCOUNTS){
+    if(isHidden(a.id))continue;
+    if(a.cur==='USD'){fx+=C.acc[a.id];by[a.id]=C.acc[a.id];continue}
+    const snap=portsOf(a.id).slice(-1)[0];
+    if(!snap||!snap.hold)continue;
+    const v=snap.hold.filter(h=>h.cur&&h.cur!=='שקל').reduce((n,h)=>n+h.v,0);
+    if(v>0){fx+=v;by[a.id]=v}
+  }
+  return {fx,total:C.total,by};
+}
+const SPYCOL='#6D4AC4';
+/* the percent chart's menu: the total, each account, and the index when a key is set */
+function cmpSeries(){
+  const U=sorted(),C=U.map(calc);
+  const out=[{id:'total',name:'סה״כ הון',color:chartInk(),wide:true,pts:U.map((u,i)=>({d:u.date,v:C[i].total}))}];
+  for(const a of visAcc())out.push({id:a.id,name:a.short,color:acol(a.color),
+    pts:U.map((u,i)=>({d:u.date,v:a.cur==='USD'?(C[i].usdAcc[a.id]||0):C[i].acc[a.id]}))});
+  const spy=PX.SPY&&PX.SPY.pts;
+  if(spy&&U.length){
+    const from=U[0].date,to=U[U.length-1].date;
+    const win=spy.filter(p=>p.d>=from&&p.d<=to);
+    if(win.length>1)out.push({id:'SPY',name:'S&P 500',color:acol(SPYCOL),dash:true,pts:win});
+  }
+  return out;
+}
+/* re-based: each series starts at zero and is read as its change in percent since then */
+const toPct=se=>{
+  const base=se.pts.find(p=>p.v)||se.pts[0];
+  if(!base||!base.v)return null;
+  return {...se,pts:se.pts.map(p=>({d:p.d,v:(p.v/base.v-1)*100}))};
+};
 function viewCompare(){
   const U=sorted();let h=`<div class="pagehead"><h1>השוואה</h1><p>שני תאריכים, זה מול זה</p></div>`;
   if(U.length<2){view.innerHTML=h+`<div class="empty"><h2>צריך לפחות שני עדכונים</h2><p>אחרי העדכון השני אפשר יהיה להשוות ביניהם.</p><button class="btn" data-act="new">עדכון חדש</button></div>`;return}
@@ -1016,10 +1208,68 @@ function viewCompare(){
     const d=sb-sa;return t+`<tr class="tot"><td>סה״כ</td><td class="n">${compact(sa)}</td><td class="n">${compact(sb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}</span><small class="n ${cls(d)}">${sa?pct(d/sa,2):''}</small></td></tr></tbody></table></div></section>`};
   h+=tbl('לפי חשבון',visAcc().map(a=>[esc(a.short),ca.acc[a.id],cb.acc[a.id],acol(a.color)]));
   h+=`<section><div class="panel facts"><div><small>ימים בין התאריכים</small><b>${Math.round((new Date(B.date)-new Date(A.date))/864e5)}</b></div><div><small>שער דולר</small><b>${A.rate?A.rate.toFixed(3):'—'} → ${B.rate?B.rate.toFixed(3):'—'}</b></div></div></section>`;
+  /* ---- the percent chart: any number of series, each from its own starting point ---- */
+  const all=cmpSeries();
+  if(!st.sel||!st.sel.length)st.sel=['total',...visAcc().slice(0,1).map(a=>a.id)];
+  const pick=all.filter(x=>st.sel.includes(x.id)).map(toPct).filter(Boolean);
+  h+=`<section><h2>מי צמח יותר <small>הכול באחוזים</small></h2>
+  <div class="chiprow">${all.map(x=>`<button data-cmp="${esc(x.id)}" aria-pressed="${st.sel.includes(x.id)}"><span class="spine" style="background:${x.color}"></span>${esc(x.name)}</button>`).join('')}
+  ${!PX.SPY&&S.td?`<button data-spy="1">+ S&amp;P 500</button>`:''}</div>
+  <div class="panel pad" id="ch-pct">${pick.length?pctChart(pick,{label:'שינוי באחוזים'}):'<p class="hint" style="padding:18px 0;text-align:center;margin:0">בחרו לפחות סדרה אחת.</p>'}<p class="readout"></p></div>`;
+  if(pick.length){
+    const span=pick[0].pts;
+    h+=`<div class="panel" style="margin-top:10px">${pick.map(se=>{
+      const v=se.pts[se.pts.length-1].v;
+      return `<div class="row dotted"><span class="spine" style="background:${se.color}"></span><span class="nm">${esc(se.name)}</span><span class="val"><b class="n ${cls(v,100)}">${pct(v/100,1)}</b><span class="n flat">מ-${dshort(se.pts[0].d)}</span></span></div>`}).join('')}</div>`;
+  }
+  h+=`<p class="hint">כל סדרה מתחילה מאפס בנקודה הראשונה שלה, כך שאפשר להשוות ביניהן בלי קשר לגודל. ${S.td?'':'להוספת מדד S&P 500 צריך מפתח Twelve Data בהגדרות.'}</p></section>`;
+  /* ---- what is not in shekels ---- */
+  const fx=fxExposure();
+  if(fx&&fx.total>0&&fx.fx>0){
+    const share=fx.fx/fx.total*100;
+    h+=`<section><h2>חשיפה מטבעית</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="חשיפה למטבע חוץ ${share.toFixed(0)}%">
+      <i style="flex:${fx.total-fx.fx} 0 0;background:${acol('#2F9E6E')}"></i><i style="flex:${fx.fx} 0 0;background:${acol('#3B82F6')}"></i></div></div>
+      <div class="row dotted"><span class="spine" style="background:${acol('#2F9E6E')}"></span><span class="nm">שקל</span><span class="val"><b>${ils(fx.total-fx.fx)}</b><span class="n flat">${(100-share).toFixed(1)}%</span></span></div>
+      <div class="row dotted"><span class="spine" style="background:${acol('#3B82F6')}"></span><span><span class="nm">מטבע חוץ</span><div class="sub">${Object.keys(fx.by).map(id=>esc((ACCOUNTS.find(a=>a.id===id)||{}).short||'')).join(' · ')}</div></span><span class="val"><b>${ils(fx.fx)}</b><span class="n flat">${share.toFixed(1)}%</span></span></div>
+      </div><p class="hint">חשבון דולרי נספר במלואו, ובחשבון שקלי נספרים ניירות שנקובים במטבע חוץ. שינוי של <span class="n">1%</span> בשער הדולר מזיז את ההון בכ-<b class="n">${ils(fx.fx*0.01)}</b>.</p></section>`;
+  }
+  /* ---- how much of everything sits in a few names ---- */
+  const hs=allHoldings().filter(h=>!isCash(h));
+  if(hs.length>2){
+    const tot=hs.reduce((n,h)=>n+h.ils,0);
+    const top=hs.slice(0,5);
+    const t5=top.reduce((n,h)=>n+h.ils,0);
+    h+=`<section><h2>ריכוזיות <small>כל החשבונות יחד</small></h2><div class="panel">
+    ${top.map(x=>`<div class="row dotted">${dot(catOf(x))}<span><span class="nm">${esc(short(dispName(x)))}</span><div class="sub">${esc(x.where)}${x.sym&&x.sym.toUpperCase()!==dispName(x).toUpperCase()?' · <span class="n">'+esc(x.sym)+'</span>':''}</div></span><span class="val"><b>${ils(x.ils)}</b><span class="n flat">${(x.ils/tot*100).toFixed(1)}%</span></span></div>`).join('')}
+    </div><div class="panel facts" style="margin-top:10px">
+    <div><small>5 הגדולות מתוך ניירות הערך</small><b class="n">${(t5/tot*100).toFixed(1)}%</b></div>
+    <div><small>הגדולה ביותר</small><b class="n">${(hs[0].ils/tot*100).toFixed(1)}%</b></div>
+    <div><small>מספר ניירות</small><b class="n">${hs.length}</b></div></div>
+    <p class="hint">נספרו <span class="n">${hs.length}</span> ניירות מכל החשבונות שיש להם קובץ אחזקות, לפי שער הדולר של העדכון האחרון. אותו נייר שמוחזק בשני חשבונות מופיע פעמיים.</p>
+    <div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="treemap">מפת כל האחזקות</button></div></section>`;
+  }
   view.innerHTML=h;
   setTop('השוואה');
   if(offscreen)return;
   $('#ca').onchange=e=>{st.a=e.target.value;viewCompare()};$('#cb').onchange=e=>{st.b=e.target.value;viewCompare()};
+  view.querySelectorAll('[data-cmp]').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.cmp;
+    st.sel=st.sel.includes(k)?st.sel.filter(x=>x!==k):[...st.sel,k];
+    viewCompare();
+  });
+  const sp=view.querySelector('[data-spy]');
+  if(sp)sp.onclick=async()=>{
+    sp.textContent='מושך…';
+    try{
+      PX.SPY=await fetchPx('SPY');
+      const U2=sorted();
+      const hit=PX.SPY.pts.some(x=>x.d>=U2[0].date&&x.d<=U2[U2.length-1].date);
+      if(!hit){toast('אין נתוני מדד בתקופת המעקב');sp.textContent='+ S&P 500';return}
+      st.sel=[...new Set([...st.sel,'SPY'])];viewCompare();
+    }
+    catch(e){sp.textContent='+ S&P 500';toast(e.message==='rate'?'חריגה ממגבלת הבקשות לדקה':e.message==='key'?'מפתח Twelve Data נדחה':'לא הצלחתי למשוך את המדד')}
+  };
+  if(pick.length)wirePct($('#ch-pct'),pick);
 }
 
 /* ---------- the account book ----------
@@ -1036,10 +1286,12 @@ function accDraft(a){
   const used=new Set();
   const rows=PARTS.map(([lbl,t])=>{
     const f=(a?a.fields:[]).find(x=>x[1]===lbl&&!used.has(x[0]));
-    if(f)used.add(f[0]);
-    return {key:f?f[0]:fresh('f'),label:lbl,type:t,on:!!f,trend:f?!!f[3]:false,std:true};
+    const g=f?null:(a?a.gone:[]).find(x=>x[1]===lbl&&!used.has(x[0]));
+    const k=f||g;if(k)used.add(k[0]);
+    return {key:k?k[0]:fresh('f'),label:lbl,type:t,on:!!f,trend:k?!!k[3]:false,std:true};
   });
-  for(const f of (a?a.fields:[]))if(!used.has(f[0]))rows.push({key:f[0],label:f[1],type:f[2],on:true,trend:!!f[3],std:false});
+  for(const f of (a?a.fields:[]))if(!used.has(f[0])){used.add(f[0]);rows.push({key:f[0],label:f[1],type:f[2],on:true,trend:!!f[3],std:false})}
+  for(const f of (a?a.gone:[]))if(!used.has(f[0])){used.add(f[0]);rows.push({key:f[0],label:f[1],type:f[2],on:false,trend:!!f[3],std:false})}
   return {id:a?a.id:fresh('a'),name:a?a.name:'',short:a?a.short:'',cur:a?a.cur:'ILS',
     color:a?a.color:PALETTE[ACCOUNTS.length%PALETTE.length],rows,link:a?(plinkOf(a.id)[0]||''):'',focus:''};
 }
@@ -1055,7 +1307,7 @@ function accBody(d,editing){
   ${d.rows.map((r,i)=>`<div class="row plain"><span>${r.std?`<span class="nm">${esc(r.label)}</span>`
     :`<input class="lblin" data-lbl="${i}" value="${esc(r.label)}" placeholder="שם הרכיב" maxlength="24" autocomplete="off" aria-label="שם הרכיב">`}</span>
   <span class="val"><button class="sw" data-row="${i}" role="switch" aria-checked="${r.on}" aria-label="${esc(r.label)||'רכיב'}"><i></i></button></span></div>`).join('')}
-  <button class="row plain" id="ac-other"><span><span class="nm" style="color:var(--tink)">אחר</span></span><span class="val" style="color:var(--tink);font-size:22px;line-height:1">+</span></button>
+  <button class="row plain" id="ac-other"><span><span class="nm" style="color:var(--tink)">אחר</span></span><span class="val" style="color:var(--tink);font-size:1.2941rem;line-height:1">+</span></button>
   </div><p class="hint">כל רכיב מסומן הופך לשדה בעדכון ולשורה בפירוט היתרות. ״אחר״ מוסיף רכיב בשם שתכתבו.</p></section>
   <section><h2>קובץ מהבנק</h2><div class="panel">
   <div class="row plain"><span><span class="nm">העלאת קובץ אחזקות</span><div class="sub">${d.link?'מופעל':'הזנה ידנית בלבד'}</div></span>
@@ -1100,6 +1352,8 @@ function openAccEditor(id){
     if(del)del.onclick=async()=>{
       if(!confirm('למחוק את החשבון? הסכומים שהוזנו עבורו יימחקו מכל העדכונים.'))return;
       delete S.ports[a.id];delete S.plink[a.id];delete S.pmask[a.id];
+      const keys=[...a.fields,...a.gone].map(f=>f[0]);
+      for(const u of S.updates)for(const k of keys)delete u.vals[k];
       setConfig(ACCOUNTS.filter(x=>x.id!==a.id));S.updates=clean(S.updates);
       closeLayer();setTimeout(render,340);save();toast('החשבון נמחק');
     };
@@ -1110,7 +1364,8 @@ function openAccEditor(id){
       const on=d.rows.filter(r=>r.on&&r.label);if(!on.length){toast('בחרו מה יש בחשבון');return}
       if(d.rows.some(r=>r.on&&!r.label)){toast('תנו שם לרכיב שהוספתם');return}
       const rec={id:d.id,name,short:(d.short.trim()||name).slice(0,18),color:d.color,cur:d.cur,
-        fields:on.map(r=>[r.key,r.label,r.type,!!r.trend])};
+        fields:on.map(r=>[r.key,r.label,r.type,!!r.trend]),
+        gone:d.rows.filter(r=>!r.on&&r.label&&S.updates.some(u=>u.vals&&r.key in u.vals)).map(r=>[r.key,r.label,r.type,!!r.trend])};
       const list=ACCOUNTS.slice();const i=list.findIndex(x=>x.id===d.id);
       if(i<0)list.push(rec);else list[i]=rec;
       setConfig(list);
@@ -1167,12 +1422,12 @@ function viewSettings(){
   <div class="fld wide"><label for="tdkey">מפתח API</label><input id="tdkey" type="password" value="${esc(S.td)}" placeholder="twelvedata.com" autocomplete="off" spellcheck="false"></div>
   </div>
   <p class="hint">מפתח חינמי מ-twelvedata.com, גם הוא מוצפן במכשיר בלבד. הוא מביא שנה של מחירי סגירה יומיים לניירות הנסחרים בארה״ב, ונמשך כשנכנסים לנייר. לכל יתר הניירות הגרף נבנה מהקבצים שהעלית.</p></section>`}
-  <section><h2>גיבוי</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">הנתונים נשמרים רק במכשיר הזה. מחיקת האפליקציה ממסך הבית או ניקוי נתוני Safari מוחקים אותם, אז כדאי לשמור גיבוי אחרי כל עדכון.${m.lastBackup?` גיבוי אחרון: <span class="n">${new Date(m.lastBackup).toLocaleDateString('he-IL')}</span>.`:''}</p>
+  <section><h2>גיבוי</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:0.8529rem;color:var(--ink2)">הנתונים נשמרים רק במכשיר הזה. מחיקת האפליקציה ממסך הבית או ניקוי נתוני Safari מוחקים אותם, אז כדאי לשמור גיבוי אחרי כל עדכון.${m.lastBackup?` גיבוי אחרון: <span class="n">${new Date(m.lastBackup).toLocaleDateString('he-IL')}</span>.`:''}</p>
   <div class="stackbtns"><button class="btn" data-act="backup">שמירת גיבוי</button><button class="btn ghost" data-act="csv">ייצוא לאקסל (CSV)</button><button class="btn ghost" data-act="import">טעינת גיבוי</button></div></div></section>
-  <section><h2>נעילה</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">${locked?'האפליקציה נעולה בקוד, והנתונים שמורים מוצפנים במכשיר. הקוד נדרש בפתיחה, ושוב אחרי שהאפליקציה הייתה ברקע יותר משתי דקות.':'אפשר לנעול את האפליקציה בקוד. הנתונים יישמרו מוצפנים, ובלי הקוד אי אפשר לשחזר אותם.'}</p>
+  <section><h2>נעילה</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:0.8529rem;color:var(--ink2)">${locked?'האפליקציה נעולה בקוד, והנתונים שמורים מוצפנים במכשיר. הקוד נדרש בפתיחה, ושוב אחרי שהאפליקציה הייתה ברקע יותר משתי דקות.':'אפשר לנעול את האפליקציה בקוד. הנתונים יישמרו מוצפנים, ובלי הקוד אי אפשר לשחזר אותם.'}</p>
   <div class="stackbtns">${locked?'<button class="btn ghost" data-act="locknow">נעילה עכשיו</button><button class="btn ghost" data-act="setpass">החלפת קוד</button><button class="btn ghost" data-act="rmpass">ביטול הנעילה</button>':'<button class="btn ghost" data-act="setpass">הגדרת קוד נעילה</button>'}</div></div></section>
   <section><h2>נתונים</h2><div class="panel pad"><button class="btn danger" data-act="wipe">מחיקת כל הנתונים מהמכשיר</button></div></section>
-  <section><p style="font-size:13px;color:var(--muted);text-align:center;margin:0 12px">שום נתון לא נשלח לשרת. הפעולה היחידה שפונה לאינטרנט היא ״משיכה״ של שער הדולר, והיא שולחת רק תאריך.</p></section>`;
+  <section><p style="font-size:0.7647rem;color:var(--muted);text-align:center;margin:0 12px">היתרות, האחזקות והסכומים לא עוזבים את המכשיר. מה שכן יוצא לאינטרנט: תאריך — למשיכת שער הדולר; טיקר של נייר — למשיכת המלצות ומחירים, אם הזנת מפתח; ובפעם הראשונה שקוראים דוח PDF, הורדה של קורא ה-PDF.</p></section>`;
 }
 
 /* ---------- a holding's own price history ----------
@@ -1246,8 +1501,8 @@ function wireScrub(box,pts){
   const show=i=>{
     const p=pts[i],d=p.v-first;
     val.textContent=fmt(p.v);
-    dl.textContent=arrow(d)+' '+magBy(d,fmt)+(first?' · '+pct(d/first,1):'');
-    dl.className='n pxdelta '+cls(d);
+    dl.textContent=arrow(d,first)+' '+magBy(d,fmt)+(first?' · '+pct(d/first,1):'');
+    dl.className='n pxdelta '+cls(d,first);
     when.textContent=dlong(p.d);
     const vb=svg.viewBox.baseVal,y=parseFloat(svg.querySelector('polyline').getAttribute('points').split(' ')[i].split(',')[1]);
     cross.setAttribute('x1',xs[i]);cross.setAttribute('x2',xs[i]);cross.setAttribute('opacity','1');
@@ -1255,7 +1510,7 @@ function wireScrub(box,pts){
   };
   const rest=()=>{
     const p=pts[pts.length-1],d=p.v-first;
-    val.textContent=fmt(p.v);dl.textContent=base;dl.className='n pxdelta '+cls(d);
+    val.textContent=fmt(p.v);dl.textContent=base;dl.className='n pxdelta '+cls(d,first);
     when.textContent=baseWhen;cross.setAttribute('opacity','0');knob.setAttribute('opacity','0');
   };
   const at=cx=>{
@@ -1313,14 +1568,14 @@ function priceBlock(x,accId){
     const fmt=pxUsd;
     const win=pxSlice(pts,pxRange);
     const first=win[0].v,last=win[win.length-1].v,d=last-first;
-    const col=d>0?'var(--up)':d<0?'var(--down)':'var(--muted)';
+    const col=cls(d,first)==='up'?'var(--up)':cls(d,first)==='down'?'var(--down)':'var(--muted)';
     const at=PX[t]?new Date(PX[t].ts).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}):'';
     const tabs=PXR.map(r=>`<button type="button" data-pxr="${r[0]}" aria-selected="${r[0]===pxRange}">${r[1]}</button>`).join('');
     return head+`
     <div class="pxwrap" id="pxbox" data-col="${col}">
       <div class="pxhead">
         <b class="n pxval">${fmt(last)}</b>
-        <span class="n pxdelta ${cls(d)}">${arrow(d)} ${magBy(d,fmt)}${first?' · '+pct(d/first,1):''}</span>
+        <span class="n pxdelta ${cls(d,first)}">${arrow(d,first)} ${magBy(d,fmt)}${first?' · '+pct(d/first,1):''}</span>
         <span class="pxwhen">${esc(dlong(win[0].d))} — היום</span>
       </div>
       ${pxChart(win,col,'מחיר '+x.name)}
@@ -1329,10 +1584,10 @@ function priceBlock(x,accId){
     <p class="hint pxnote"><span>סגירה יומית · <span class="n">Twelve&nbsp;Data</span> · <span class="n">${at}</span></span><button type="button" data-pxload="1">${pxBusy.has(t)?'מושך…':'רענון'}</button></p></section>`;
   }
   const first=pts[0].v,last=pts[pts.length-1].v,d=last-first;
-  const col=d>0?'var(--up)':d<0?'var(--down)':'var(--muted)';
+  const col=cls(d,first)==='up'?'var(--up)':cls(d,first)==='down'?'var(--down)':'var(--muted)';
   return head+`
   <div class="panel pad chartbox" id="pxbox">
-    <div class="chart-top"><b class="n">${fmt(last)}</b><span class="n ${cls(d)}">${arrow(d)} ${magBy(d,fmt)}${first?' · '+pct(d/first,1):''}</span></div>
+    <div class="chart-top"><b class="n">${fmt(last)}</b><span class="n ${cls(d,first)}">${arrow(d,first)} ${magBy(d,fmt)}${first?' · '+pct(d/first,1):''}</span></div>
     <div class="readout"></div>
     ${lineChart(pts,col,{h:150,label:'מחיר '+x.name,anim:true})}
   </div>
@@ -1461,11 +1716,11 @@ function recBlock(x){
     ${r.s||r.ss?`<span><b style="background:var(--down)"></b>מכירה <span class="n">${r.s+r.ss}</span></span>`:''}
   </div></div>`;
   if(r.tm)h+=`<div class="panel facts" style="margin-top:10px">
-    ${r.px?`<div><small>מחיר נוכחי</small><b class="n">${r.px.toFixed(2)}</b></div>`:''}
-    <div><small>יעד ממוצע</small><b class="n ${r.px&&r.tm>r.px?'up':r.px?'down':''}">${r.tm.toFixed(2)}</b></div>
-    ${r.tl&&r.th?`<div><small>היעד הנמוך</small><b class="n">${r.tl.toFixed(2)}</b></div><div><small>היעד הגבוה</small><b class="n">${r.th.toFixed(2)}</b></div>`:''}
+    ${r.px?`<div><small>מחיר נוכחי</small><b class="n">${pxUsd(r.px)}</b></div>`:''}
+    <div><small>יעד ממוצע</small><b class="n ${r.px&&r.tm>r.px?'up':r.px?'down':''}">${pxUsd(r.tm)}</b></div>
+    ${r.tl&&r.th?`<div><small>היעד הנמוך</small><b class="n">${pxUsd(r.tl)}</b></div><div><small>היעד הגבוה</small><b class="n">${pxUsd(r.th)}</b></div>`:''}
     </div>`;
-  h+=`<p class="hint">${r.period?'נכון לחודש '+esc(hmonth(r.period))+'. ':''}נמשך ${dlong(new Date(r.ts).toISOString().slice(0,10))}. המלצות אנליסטים הן דעה ולא תחזית, והן נוטות להיות אופטימיות ולהגיב באיחור.</p>
+  h+=`<p class="hint">${r.period?'נכון לחודש '+esc(hmonth(r.period))+'. ':''}נמשך ${dlong(dayOf(r.ts))}. המלצות אנליסטים הן דעה ולא תחזית, והן נוטות להיות אופטימיות ולהגיב באיחור.</p>
   <div class="stackbtns"><button class="btn ghost" data-recload="${esc(t)}">${busy?'מושך…':'רענון'}</button></div></section>`;
   return h;
 }
@@ -1497,7 +1752,7 @@ async function shareFile(name,text,type){
   const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);return true;
 }
 async function doBackup(){if(!S.updates.length){toast('אין עדיין נתונים לגיבוי');return}
-  const ok=await shareFile(`finance-backup-${today()}.json`,JSON.stringify({app:'finance-tracker',v:3,exported:new Date().toISOString(),accounts:ACCOUNTS,updates:sorted(),ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,td:S.td,tick:S.tick,rec:S.rec},null,1),'application/json');
+  const ok=await shareFile(`finance-backup-${today()}.json`,JSON.stringify({app:'finance-tracker',v:4,exported:new Date().toISOString(),accounts:ACCOUNTS,updates:sorted(),ports:S.ports,ptype:S.ptype,plink:S.plink,priv:S.priv,pmask:S.pmask,fh:S.fh,td:S.td,tick:S.tick,rec:S.rec},null,1),'application/json');
   if(ok){setMeta({lastBackup:Date.now()});toast('הגיבוי נוצר');render()}}
 async function doCsv(){if(!S.updates.length){toast('אין עדיין נתונים לייצוא');return}
   const head=['תאריך',...ACCOUNTS.flatMap(a=>a.fields.map(f=>a.short+' – '+f[1])),'שער דולר','סה״כ הון (₪)'];
@@ -1506,9 +1761,9 @@ async function doCsv(){if(!S.updates.length){toast('אין עדיין נתוני
 function openImport(){
   openLayer(`<div class="sheet modal" role="dialog" aria-label="טעינת גיבוי"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>טעינת גיבוי</h2><span></span></header><div class="body">
   <div class="err" id="ierr" hidden role="alert"></div>
-  <section><h2>מקובץ</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:14.5px;color:var(--ink2)">בחרו קובץ גיבוי (‎.json‎) מ״קבצים״.</p><label class="btn" style="cursor:pointer">בחירת קובץ<input id="ifile" type="file" accept=".json,application/json,text/plain" hidden></label></div></section>
+  <section><h2>מקובץ</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:0.8529rem;color:var(--ink2)">בחרו קובץ גיבוי (‎.json‎) מ״קבצים״.</p><label class="btn" style="cursor:pointer">בחירת קובץ<input id="ifile" type="file" accept=".json,application/json,text/plain" hidden></label></div></section>
   <section><h2>או בהדבקה</h2><div class="panel pad"><textarea id="itext" placeholder='{"app":"finance-tracker", ...}' aria-label="תוכן הגיבוי"></textarea><button class="btn ghost" id="ipaste" style="margin-top:10px">טעינה מהטקסט</button></div></section>
-  <section><p style="font-size:13px;color:var(--muted);margin:0 6px">עדכונים מהגיבוי יתווספו לקיימים. אם קיים עדכון באותו תאריך, הגרסה מהגיבוי תחליף אותו.</p></section></div></div>`);
+  <section><p style="font-size:0.7647rem;color:var(--muted);margin:0 6px">הגיבוי מתמזג עם מה שקיים: עדכונים וצילומי אחזקות מתווספים, ומה שיש בשני התאריכים נלקח מהגיבוי. מה שאין בגיבוי — צילום חדש יותר, מפתח API — נשאר.</p></section></div></div>`);
   const run=async txt=>{try{const j=JSON.parse(txt);if(Array.isArray(j.accounts)&&j.accounts.length)setConfig(j.accounts);if(j.ports||j.ptype||j.plink)loadPorts(j);if(!ACCOUNTS.length)throw 0;S.updates=clean(S.updates);const list=clean(j.updates);if(!list.length&&!S.updates.length&&!j.accounts)throw 0;
       const map=new Map(S.updates.map(u=>[u.date,u]));list.forEach(u=>map.set(u.date,u));S.updates=[...map.values()];closeLayer();tab='home';render();save();toast('נטענו '+list.length+' עדכונים')}
     catch(e){const el=$('#ierr');el.textContent='הקובץ אינו גיבוי תקין של האפליקציה.';el.hidden=false}};
@@ -1727,8 +1982,34 @@ function lockScreen(){
   };
   paint();
 }
-function setPass(){
+/* changing or removing the lock asks for the code in force, so a phone left unlocked for a
+   moment cannot be stripped of it */
+function askCode(title){
+  return new Promise(res=>{
+    if(!cryptoKey){res(true);return}
+    openLayer(`<div class="sheet modal" role="dialog" aria-label="${esc(title)}"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>${esc(title)}</h2><span></span></header><div class="body"><form id="cfrm">
+    <div class="err" id="cerr" hidden role="alert"></div>
+    <div class="grp"><div class="fld"><label for="c0">הקוד הנוכחי</label><input id="c0" type="password" inputmode="numeric" maxlength="8" autocomplete="current-password"></div></div>
+    <section><button class="btn">אישור</button></section></form></div></div>`);
+    let done=false;
+    const L=stack[stack.length-1];
+    const sc=L&&L.sc;
+    const finish=v=>{if(done)return;done=true;res(v)};
+    if(sc){const mo=new MutationObserver(()=>{if(!L.el.isConnected){mo.disconnect();finish(false)}});mo.observe(layer,{childList:true})}
+    $('#cfrm').onsubmit=async e=>{
+      e.preventDefault();
+      const v=$('#c0').value,err=$('#cerr'),raw=readRaw()||{};
+      try{
+        const k=await deriveKey(v,unb64(raw.salt));
+        await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(raw.iv)},k,unb64(raw.ct));
+      }catch(x){err.textContent='הקוד שגוי.';err.hidden=false;return}
+      done=true;closeLayer();setTimeout(()=>res(true),280);
+    };
+  });
+}
+async function setPass(){
   if(!(window.crypto&&crypto.subtle)){toast('נעילה בקוד זמינה רק כשהאפליקציה נטענת ב-https');return}
+  if(cryptoKey&&!await askCode('החלפת קוד'))return;
   openLayer(`<div class="sheet modal" role="dialog" aria-label="קוד נעילה"><header><span class="grab" aria-hidden="true"></span><button data-close>ביטול</button><h2>קוד נעילה</h2><span></span></header><div class="body"><form id="pfrm">
   <div class="err" id="perr" hidden role="alert"></div>
   <div class="grp"><div class="fld"><label for="p1">קוד חדש<small>6 ספרות</small></label><input id="p1" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password"></div>
@@ -1740,7 +2021,13 @@ function setPass(){
     if(msg){err.textContent=msg;err.hidden=false;return}
     const salt=crypto.getRandomValues(new Uint8Array(16));cryptoKey=await deriveKey(a,salt);encMeta={salt:b64(salt),pinLen:a.length};await save();closeLayer();render();toast('הנעילה הופעלה')};
 }
-async function rmPass(){if(!confirm('לבטל את הנעילה? הנתונים יישמרו במכשיר בלי הצפנה.'))return;cryptoKey=null;encMeta=null;await save();render();toast('הנעילה בוטלה')}
+async function rmPass(){
+  if(!await askCode('ביטול הנעילה'))return;
+  if(!confirm('לבטל את הנעילה? הנתונים יישמרו במכשיר בלי הצפנה.'))return;
+  const k=cryptoKey,m=encMeta;cryptoKey=null;encMeta=null;plainOK=true;
+  try{await save()}finally{plainOK=false}
+  if((readRaw()||{}).enc){cryptoKey=k;encMeta=m;toast('לא הצלחתי לבטל את הנעילה');return}
+  render();toast('הנעילה בוטלה')}
 
 /* ---------- reading a spreadsheet: .xlsx unzipped by the browser itself, or .csv ---------- */
 const TD=new TextDecoder();
@@ -1843,8 +2130,9 @@ function guessType(h){
   return 'stock';
 }
 const TYPECOL={stock:'#3B82F6',bond:'#2F9E6E',fund:'#E2571C',cash:'#8A8A8E'};
+const PTLBL={stock:'מניה',bond:'אג״ח',fund:'קרן סל',cash:'מזומן'};
 /* ---------- a brokerage statement in PDF ----------
-   The Israeli banks hand out a spreadsheet of holdings; J.P. Morgan hands out a 30-page PDF.
+   Some banks hand out a spreadsheet of holdings; some brokers hand out a long PDF.
    PDF.js is 1.7MB, so it is fetched from a CDN only on the first statement and pinned by hash:
    a tampered file is refused by the browser before any of it runs. The file itself is read in
    the page and never leaves the phone. */
@@ -1916,7 +2204,7 @@ function parseStatement(pages){
       if(!inHold||!cur)continue;
       /* the running head and foot repeat on every page and would otherwise be read as part of
          the name of whichever holding is still open across the break */
-      if(/Acct #|Statement Period|^Page \d+ of|J\.P\. Morgan|Please read|STATEMENT SUMMARY|IMPORTANT INFORMATION|Self-Directed|disclosure/i.test(t))continue;
+      if(/Acct #|Statement Period|^Page \d+ of|^[A-Z]\.[A-Z]\. [A-Z][a-z]+ ?(?:Securities|LLC)?$|Please read|STATEMENT SUMMARY|IMPORTANT INFORMATION|Self-Directed|disclosure/i.test(t))continue;
       if(/^(Activity|Total Account Value)/.test(t)){flush();inHold=false;continue}
       if(/^(TOTAL|Description|Acquisition|Est\.|\.+|I WILL SHOW|CASH & MONEY|EQUITY|Unless|\*|See additional|A - Average|M - Margin|MT - Mixed|AI Pricing)/.test(t)){
         if(t.startsWith('TOTAL'))flush();continue;
@@ -1938,7 +2226,7 @@ function parseStatement(pages){
       }
     }
   }
-  if(!accs.length)throw new Error('לא זיהיתי דוח של Chase. ודאו שזה קובץ ה-PDF המקורי של הדוח החודשי.');
+  if(!accs.length)throw new Error('לא זיהיתי את מבנה הדוח. ודאו שזה קובץ ה-PDF המקורי של הדוח החודשי מהברוקר.');
   /* a position line is quantity, price, market value, then unit cost, cost basis, gain;
      the cash sweep has only its balance */
   for(const a of accs){
@@ -1946,7 +2234,7 @@ function parseStatement(pages){
       const n=h.n,cash=/SWEEP|DEPOSIT SWEEP/i.test(h.name+' '+(h.name2||''));
       const v=cash?n[0]:n[2];
       const full=(h.name+(h.name2?' '+h.name2:'')).replace(/\s+/g,' ').replace(/\s+EST$/,'').trim();
-      return {id:'chase:'+h.sym,name:full,sym:h.sym,
+      return {id:'bk:'+h.sym,name:full,sym:h.sym,
         qty:cash?v:n[0],price:cash?1:n[1],v,vc:v,cur:'דולר',cash,
         gain:cash?0:(n.length>5?n[5]:0),tg:cash?0:(n.length>5?n[5]:0),tx:0};
     });
@@ -1985,6 +2273,7 @@ const NAMENOISE=/^(COMMON|ORDINARY|ORD|STOCK|STK|SHARE|SHARES|SHS|SH|UNIT|UNITS|
 function coName(raw){
   let w=String(raw||'').replace(/[-/]/g,' ').replace(/[.,]/g,'').split(/\s+/).filter(Boolean);
   while(w.length>1&&NAMENOISE.test(w[w.length-1].toUpperCase()))w.pop();
+  while(w.length>1&&/^[&+]$/.test(w[w.length-1]))w.pop();      /* no "& " left dangling at the end */
   while(w.length>1&&/^THE$/i.test(w[0]))w.shift();
   const t=w.join(' ');
   /* an all-caps name reads as shouting in a list; initials, tickers and ampersands stay as they are */
@@ -2018,6 +2307,12 @@ function guessKeys(acc,subs){
   const prev=plinkOf(acc.id),fields=acc.fields;
   const base=prev[0]||((fields.find(([,nm])=>/שוק ההון|קרנות|השקעות|invest/i.test(nm))||fields[fields.length-1])||[])[0];
   return (subs||[]).map((x,i)=>prev[i]||(x.kind==='ira'&&(fields.find(([,nm])=>/IRA|גמל|פנסי|השתלמות/i.test(nm))||[])[0])||base);
+}
+/* the holdings list and a holding's own page must divide by the same thing: the securities,
+   without the cash, which is not a holding */
+function pctOfSec(x,hold){
+  const t=hold.filter(h=>!isCash(h)).reduce((n,h)=>n+h.v,0);
+  return t?(x.v/t*100).toFixed(1):'0.0';
 }
 function summarize(hold){
   const s={total:0,cur:{},cat:{},count:{},gain:0,loss:0,tax:0,shield:0};
@@ -2122,7 +2417,7 @@ function portfolioBody(accId){
   if(subs.length>1&&!av){
     const tot=k=>allHold.filter(x=>x.acct===k).reduce((n,x)=>n+x.v,0);
     h+=`<section><h2>לפי חשבון <small>לחיצה מסננת</small></h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="התפלגות לפי חשבון">${
-      subs.map(k=>`<i style="flex:${tot(k)} 0 0;background:${subCol(k)}"></i>`).join('')}</div></div>`;
+      subs.filter(k=>tot(k)>0).map(k=>`<i style="flex:${tot(k)} 0 0;background:${subCol(k)}"></i>`).join('')}</div></div>`;
     for(const k of subs){
       const sec=allHold.filter(x=>x.acct===k&&!isCash(x)).length,c=cashOf(allHold.filter(x=>x.acct===k));
       h+=`<button class="row dotted" data-acct="${k}"><span class="spine" style="background:${subCol(k)}"></span><span><span class="nm">${esc(subLbl(k))}</span><div class="sub"><span class="n">${sec}</span> אחזקות${c?' · מזומן <span class="n">'+pf(c)+'</span>':''}</div></span><span class="val"><b>${pf(tot(k))}</b><span class="n flat">${(tot(k)/vtot*100).toFixed(1)}%</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
@@ -2135,13 +2430,16 @@ function portfolioBody(accId){
   for(const k of curs)h+=`<div class="row dotted"><span class="spine" style="background:${CURCOL[k]||acol('#8A2D0C')}"></span><span class="nm">${esc(k)}</span><span class="val"><b>${pf(s.cur[k])}</b><span class="n flat">${(s.cur[k]/s.total*100).toFixed(1)}%</span></span></div>`;
   h+=`</div></section>`;
   const taxOpen=!!openPortfolio.taxOpen;
-  h+=`<section>${foldHead('taxp','מס על הנייר',' <small>לפי חישוב הבנק</small>',taxOpen)}
+  /* only what the file actually carries: some statements have the tax figures, some only the gain */
+  const hasTax=!!(s.tax||s.shield);
+  if(s.gain||s.loss||hasTax)
+  h+=`<section>${foldHead('taxp',hasTax?'מס על הנייר':'רווח והפסד על הנייר',hasTax?' <small>לפי חישוב הבנק</small>':'',taxOpen)}
   <div id="taxp"${taxOpen?'':' hidden'}><div class="panel facts">
   <div><small>רווח שטרם מומש</small><b class="up">${sgn(s.gain)}</b></div>
   <div><small>הפסד שטרם מומש</small><b class="${s.loss?'down':''}">${sgn(s.loss)}</b></div>
-  <div><small>מס תיאורטי על הרווח</small><b>${pf(s.tax)}</b></div>
-  <div><small>מגן מס מההפסד</small><b>${pf(Math.abs(s.shield))}</b></div></div>
-  <p class="hint">הסכומים הם על הנייר. הפסד מקוזז לצורכי מס רק אחרי מכירה בפועל.</p></div></section>`;
+  ${hasTax?`<div><small>מס תיאורטי על הרווח</small><b>${pf(s.tax)}</b></div>
+  <div><small>מגן מס מההפסד</small><b>${pf(Math.abs(s.shield))}</b></div>`:''}</div>
+  <p class="hint">הסכומים הם על הנייר${hasTax?'. הפסד מקוזז לצורכי מס רק אחרי מכירה בפועל':', כפי שהם מופיעים בקובץ. הקובץ הזה לא כולל חישובי מס'}.</p></div></section>`;
   // holdings, filtered
   const shown=filt?hold.filter(x=>catOf(x)===filt):hold;
   const sub=filt?shown.reduce((t,x)=>t+x.v,0):s.total;
@@ -2201,18 +2499,20 @@ function openHolding(accId,id){
   const ac=ACCOUNTS.find(y=>y.id===accId),af=ac&&ac.cur==='USD'?usd:ils,asg=v=>signedBy(v,af);
   const dn=dispName(x);
   openLayer(`<div class="sheet modal" role="dialog" aria-label="${esc(x.name)}"><header><span class="grab" aria-hidden="true"></span><button data-close>סגירה</button><h2>${esc(dn)}</h2><span></span></header><div class="body">
-  <div class="acc-head"><div class="big">${af(x.v)}</div><div class="meta">${esc(CATLBL[c])} · <span class="n">${(x.v/summarize(last.hold).total*100).toFixed(1)}%</span> מהתיק${x.sym?' · '+esc(x.sym):''}</div></div>
+  <div class="acc-head"><div class="big">${af(x.v)}</div><div class="meta">${esc(CATLBL[c])} · <span class="n">${pctOfSec(x,last.hold)}%</span> מניירות הערך${x.sym?' · '+esc(x.sym):''}</div></div>
   ${priceBlock(x,accId)}
   <section><div class="panel facts">
-  <div><small>כמות</small><b>${nf0.format(x.qty)}</b></div>
-  <div><small>שער אחרון</small><b>${nf0.format(Math.round(x.price*100)/100)}</b></div>
+  <div><small>כמות</small><b>${qtyF(x.qty)}</b></div>
+  <div><small>שער אחרון</small><b>${priceF(x.price)}</b></div>
   ${x.cur!=='שקל'?`<div><small>שווי במטבע</small><b>${f(x.vc)}</b></div>`:''}
-  <div><small>רווח מרכישה</small><b class="${cls(x.gain)}">${asg(x.gain)}</b></div>
-  <div><small>רווח הון על הנייר</small><b class="${cls(x.tg)}">${asg(x.tg)}</b></div>
-  <div><small>מס תיאורטי</small><b class="${cls(x.tx)}">${asg(x.tx)}</b></div>
+  ${x.gain?`<div><small>רווח מרכישה</small><b class="${cls(x.gain)}">${asg(x.gain)}</b></div>`:''}
+  ${x.tg||x.tx?`<div><small>רווח הון על הנייר</small><b class="${cls(x.tg)}">${asg(x.tg)}</b></div>`:''}
+  ${x.tx?`<div><small>מס תיאורטי</small><b class="${cls(x.tx)}">${asg(x.tx)}</b></div>`:''}
   ${old?`<div><small>שינוי מהצילום הקודם</small><b class="${cls(x.v-old.v)}">${asg(x.v-old.v)}</b></div>`:''}
   </div></section>
-  <p class="hint">${dn!==x.name?'<b>'+esc(x.name)+'</b>. ':''}${esc(CATLBL[c])}. הסיווג נקבע לפי שם הנייר, והשיוך לישראל או לחו״ל לפי שפת השם והמטבע.</p>
+  <section><div class="panel"><div class="fld"><label for="ptsel">סוג הנכס<small>${S.ptype[x.id]?'נקבע ידנית':'זוהה אוטומטית'}</small></label>
+  <select id="ptsel" class="pick1">${[['','אוטומטי ('+esc(PTLBL[guessType(x)])+')'],['stock','מניה'],['fund','קרן סל / ETF'],['bond','אג״ח'],['cash','מזומן']].map(([k,l])=>`<option value="${k}" ${k===(S.ptype[x.id]||'')?'selected':''}>${esc(l)}</option>`).join('')}</select></div></div></section>
+  <p class="hint">${dn!==x.name?'<b>'+esc(x.name)+'</b>. ':''}${esc(CATLBL[c])}. הסיווג נקבע לפי שם הנייר, והשיוך לישראל או לחו״ל לפי שפת השם והמטבע. הבחירה נשמרת לפי מספר הנייר ושורדת העלאת קובץ חדש.</p>
   ${recBlock(x)}</div></div>`);
   const L=stack[stack.length-1];
   const mine=()=>stack[stack.length-1]===L&&L.el.isConnected;      /* the sheet may be gone by the time a fetch lands */
@@ -2224,6 +2524,11 @@ function openHolding(accId,id){
     sec.replaceWith(neu);wire();
   };
   const wire=()=>{
+    const ps=L.el.querySelector('#ptsel');
+    if(ps)ps.onchange=()=>{
+      if(ps.value)S.ptype[x.id]=ps.value;else delete S.ptype[x.id];
+      save();closeLayer();setTimeout(()=>paintPortfolio(accId,true),300);
+    };
     const tk=L.el.querySelector('[data-tick]');if(tk)tk.onclick=()=>openTicker(x.id,accId);
     const rl=L.el.querySelector('[data-recload]');
     if(rl)rl.onclick=()=>pull(true);
@@ -2301,7 +2606,7 @@ async function importPortfolio(accId,file){
     const fields=a.fields.map(([k,nm])=>[k,nm]);
     const guess=plinkOf(accId)[0]||(fields.find(([k,nm])=>/שוק ההון|קרנות|השקעות/.test(nm))||fields[fields.length-1])[0];
     const prev=plinkOf(accId);
-    const pick=(k,sel)=>`<select id="pfld-${k}" style="min-height:44px;border:0;background:transparent;color:var(--tink);font-size:17px">${fields.map(([fk,nm])=>`<option value="${fk}" ${fk===sel?'selected':''}>${esc(nm)}</option>`).join('')}</select>`;
+    const pick=(k,sel)=>`<select id="pfld-${k}" style="min-height:44px;border:0;background:transparent;color:var(--tink);font-size:1rem">${fields.map(([fk,nm])=>`<option value="${fk}" ${fk===sel?'selected':''}>${esc(nm)}</option>`).join('')}</select>`;
     const subRows=subs?subs.map((x,i)=>{
       const want=guessKeys(a,subs)[i]||guess;
       return `<div class="fld"><label for="pfld-${x.kind}">${esc(subLbl(x.kind))}<small>${pf(x.total)} · <span class="n">${x.n}</span> אחזקות${x.cash?' · מזומן <span class="n">'+pf(x.cash)+'</span>':''}</small></label>${pick(x.kind,want)}</div>`;
@@ -2336,6 +2641,101 @@ async function importPortfolio(accId,file){
       },260);
     };
   }catch(err){toast(err.message||'לא הצלחתי לקרוא את הקובץ')}
+}
+
+/* ---------- the map of everything held ----------
+   One rectangle per security, its area its share of the money. Squarified: the algorithm lays a
+   row across the shorter side and keeps adding to it while the worst aspect ratio in that row
+   improves, which is what keeps the tiles close to square and therefore readable. */
+function squarify(items,x,y,w,h,out){
+  if(!items.length)return out;
+  const sum=a=>a.reduce((n,i)=>n+i.v,0);
+  const total=sum(items);
+  if(total<=0||w<=0||h<=0)return out;
+  const short=Math.min(w,h);
+  const worst=(row,len)=>{
+    const s=sum(row),side=s/len;
+    let bad=1;
+    for(const it of row){const a=it.v/side;bad=Math.max(bad,Math.max(a/side,side/a))}
+    return bad;
+  };
+  /* work in units of area: one unit of value is (w*h/total) of pixel area */
+  const scale=w*h/total;
+  const sc=items.map(i=>({...i,a:i.v*scale}));
+  let row=[],best=Infinity,i=0;
+  const place=(row,x,y,w,h,horiz)=>{
+    const s=row.reduce((n,i)=>n+i.a,0),side=horiz?s/h:s/w;
+    let off=0;
+    for(const it of row){
+      const len=it.a/side;
+      out.push(horiz?{x,y:y+off,w:side,h:len,it}:{x:x+off,y,w:len,h:side,it});
+      off+=len;
+    }
+    return side;
+  };
+  while(i<sc.length){
+    const horiz=w<=h?false:true;        /* lay the row along the longer side */
+    const len=horiz?h:w;
+    const cand=[...row,sc[i]];
+    const wr=(r)=>{const s=r.reduce((n,k)=>n+k.a,0),side=s/len;let bad=1;
+      for(const it of r){const other=it.a/side;bad=Math.max(bad,Math.max(side/other,other/side))}return bad};
+    const now=row.length?wr(row):Infinity;
+    if(!row.length||wr(cand)<=now){row=cand;i++;continue}
+    const side=place(row,x,y,w,h,horiz);
+    if(horiz){x+=side;w-=side}else{y+=side;h-=side}
+    row=[];
+  }
+  if(row.length)place(row,x,y,w,h,w<=h?false:true);
+  return out;
+}
+let treeBy='sec';        /* sec: one tile per security · cat: grouped by kind · acc: by account */
+function treemapBody(){
+  const hs=allHoldings();
+  if(hs.length<2)return `<div class="empty"><h2>אין מספיק אחזקות</h2><p>המפה נבנית מקובצי האחזקות של כל החשבונות. אחרי שמעלים קובץ אחד לפחות היא תופיע כאן.</p></div>`;
+  const tot=hs.reduce((n,h)=>n+h.ils,0);
+  const groups={
+    sec:()=>hs.map(h=>({k:h.id+'|'+h.acc.id,label:isCash(h)?'מזומן':dispName(h),sub:h.where,v:h.ils,
+      col:catCol(catOf(h)),hollow:catHollow(catOf(h)),full:(isCash(h)?'מזומן':h.name)+' · '+h.where})),
+    cat:()=>CATS.map(([k,l])=>({k,label:l,sub:'',v:hs.filter(h=>catOf(h)===k).reduce((n,h)=>n+h.ils,0),col:catCol(k),hollow:catHollow(k)})).filter(g=>g.v>0),
+    acc:()=>visAcc().map(a=>({k:a.id,label:a.short,sub:'',v:hs.filter(h=>h.acc.id===a.id).reduce((n,h)=>n+h.ils,0),col:acol(a.color)})).filter(g=>g.v>0)
+  };
+  const items=groups[treeBy]().filter(g=>g.v>0).sort((a,b)=>b.v-a.v);
+  const W=100,H=treeBy==='sec'?118:76;      /* a percentage box, so it fills whatever width it gets */
+  const tiles=squarify(items.map(g=>({v:g.v,g})),0,0,W,H,[]);
+  const fmtp=v=>(v/tot*100);
+  let h=`<div class="pagehead" style="padding-top:6px"><h1>מפת האחזקות</h1><p>שטח כל מלבן הוא חלקו מתוך <span class="n">${ils(tot)}</span></p></div>
+  <section><div class="segbar" role="tablist">${[['sec','לפי נייר'],['cat','לפי סוג'],['acc','לפי חשבון']].map(([k,t])=>`<button role="tab" data-tree="${k}" aria-selected="${k===treeBy}">${t}</button>`).join('')}</div>
+  <div class="treewrap" style="--ar:${(H/W*100).toFixed(2)}%">`;
+  for(const t of tiles){
+    const g=t.it.g,p=fmtp(g.v);
+    const small=t.w<13||t.h<9;
+    h+=`<button class="tile" data-tile="${esc(g.k)}" style="left:${t.x.toFixed(3)}%;top:${(t.y/H*100).toFixed(3)}%;width:${t.w.toFixed(3)}%;height:${(t.h/H*100).toFixed(3)}%;--tc:${g.col}${g.hollow?';--ho:1':''}" title="${esc((g.full||g.label)+' · '+ils(g.v))}">
+      ${small?'':`<span class="tl-n">${esc(short(g.label,Math.max(4,Math.round(t.w/2.6))))}</span><span class="tl-p n">${p.toFixed(p<1?1:0)}%</span>`}</button>`;
+  }
+  h+=`</div><p class="hint">המפה מראה את כל מה שיש בחשבונות עם קובץ אחזקות, מזומן כלול, לפי שער הדולר של העדכון האחרון. ${treeBy==='sec'?'לחיצה על מלבן פותחת את הנייר; מלבן קטן מדי לא נושא תווית, והלחיצה עדיין עובדת.':''}</p></section>`;
+  // the long tail, in words
+  if(treeBy==='sec'){
+    const big=hs.filter(x=>!isCash(x)).slice(0,8);
+    h+=`<section><h2>הגדולים ביותר</h2><div class="panel">`;
+    for(const x of big)h+=`<div class="row dotted">${dot(catOf(x))}<span><span class="nm">${esc(short(dispName(x)))}</span><div class="sub">${esc(x.where)}</div></span><span class="val"><b>${ils(x.ils)}</b><span class="n flat">${(x.ils/tot*100).toFixed(1)}%</span></span></div>`;
+    h+=`</div></section>`;
+  }
+  return h;
+}
+function openTreemap(){
+  const hs=allHoldings();
+  openLayer(`<div class="sheet push" role="dialog" aria-label="מפת האחזקות"><header><button data-close><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2.5 2.5l7.5 7.5-7.5 7.5"/></svg><span>חזרה</span></button><h2>מפת האחזקות</h2><span></span></header><div class="body"></div></div>`,true);
+  const paintTree=()=>{
+    const L=stack[stack.length-1];if(!L)return;
+    const b=L.el.querySelector('.body');b.innerHTML=treemapBody();
+    b.querySelectorAll('[data-tree]').forEach(x=>x.onclick=()=>{treeBy=x.dataset.tree;paintTree()});
+    b.querySelectorAll('[data-tile]').forEach(x=>x.onclick=()=>{
+      const [hid,aid]=x.dataset.tile.split('|');
+      if(!aid)return;
+      openHolding(aid,hid);
+    });
+  };
+  paintTree();
 }
 
 /* ---------- drag sideways between the four pages ----------
@@ -2478,6 +2878,7 @@ document.addEventListener('click',e=>{
   else if('close' in t.dataset)closeLayer();
   else ({new:()=>ACCOUNTS.length?openForm():openImport(),backup:doBackup,csv:doCsv,import:openImport,setpass:setPass,rmpass:rmPass,locknow:lockNow,
     privcfg:openPrivCfg,
+    treemap:openTreemap,
     recall:async()=>{const k=$('#fhkey');if(k)S.fh=k.value.trim().slice(0,80);
       if(!S.fh){toast('צריך מפתח');return}
       await save();toast('מושך…');const n=await refreshRecs(true);
@@ -2487,7 +2888,9 @@ document.addEventListener('click',e=>{
       if(!S.priv&&!anyMask()){openPrivCfg();toast('בחרו קודם מה יוסתר');return}
       S.priv=!S.priv;closeAllLayers();render();save();toast(S.priv?'מצב פרטי מופעל':'מצב פרטי כבוי');
     },
-    wipe:async()=>{if(!confirm('למחוק את כל הנתונים מהמכשיר? אי אפשר לבטל את הפעולה.'))return;if(!confirm('בטוחים? ודאו שיש לכם גיבוי.'))return;S.updates=[];S.ports={};S.ptype={};S.plink={};setConfig([]);await save();tab='home';render();toast('הנתונים נמחקו')}})[t.dataset.act]?.();
+    wipe:async()=>{if(!confirm('למחוק את כל הנתונים מהמכשיר? אי אפשר לבטל את הפעולה.'))return;if(!confirm('בטוחים? ודאו שיש לכם גיבוי.'))return;
+      S.updates=[];S.ports={};S.ptype={};S.plink={};S.pmask={};S.tick={};S.rec={};S.fh='';S.td='';S.priv=false;PX={};pxErr={};
+      setConfig([]);await save();tab='home';render();toast('הנתונים נמחקו')}})[t.dataset.act]?.();
 });
 function start(){$('#tabbar').hidden=false;render();
   /* quietly top up anything stale, once the screen is up and idle */
@@ -2495,7 +2898,7 @@ function start(){$('#tabbar').hidden=false;render();
 (function boot(){
   const raw=readRaw();
   if(raw&&raw.enc){lockScreen();return}
-  if(raw&&raw.data){setConfig(raw.data.accounts);S.updates=clean(raw.data.updates);loadPorts(raw.data)}
+  if(raw&&raw.data){setConfig(raw.data.accounts);S.updates=clean(raw.data.updates);loadPorts(raw.data,true)}
   start();
 })();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{
