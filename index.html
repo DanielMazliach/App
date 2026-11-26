@@ -169,6 +169,8 @@ button.row.plain{grid-template-columns:1fr auto 8px}
 .sheet .row.dotted{grid-template-columns:10px 1fr auto}
 .sheet button.row.dotted{grid-template-columns:10px 1fr auto 8px}
 .sheet .row.dotted .spine{display:block}
+.sheet .row.ind{padding-inline-start:34px;min-height:44px}
+.sheet .row.ind::before{inset-inline-start:34px}
 /* a row inside a sheet that leads somewhere needs a track for its chevron, or the chevron
    wraps onto a line of its own */
 .sheet button.row{grid-template-columns:1fr auto 8px}
@@ -1245,7 +1247,12 @@ function viewCompare(){
   /* ---- the percent chart: any number of series, each from its own starting point ---- */
   const all=cmpSeries();
   if(!st.sel||!st.sel.length)st.sel=['total',...visAcc().slice(0,1).map(a=>a.id)];
-  const pick=all.filter(x=>st.sel.includes(x.id)).map(toPct).filter(Boolean);
+  /* the chart answers the question the two pickers ask, so it covers exactly the chosen window
+     and every line is re-based to its first point inside it */
+  const from=A.date<B.date?A.date:B.date,to=A.date<B.date?B.date:A.date;
+  const clip=se=>{const pts=se.pts.filter(p=>p.d>=from&&p.d<=to);return pts.length>1?{...se,pts}:null};
+  const pick=all.filter(x=>st.sel.includes(x.id)).map(clip).filter(Boolean).map(toPct).filter(Boolean);
+  const thin=!pick.length&&st.sel.length;
   /* everything together is the line the rest are read against, so it gets a row of its own;
      the others share two rows, as many to a row as that takes */
   const rest=all.slice(1),cols=Math.min(4,Math.max(2,Math.ceil(rest.length/2)));
@@ -1254,7 +1261,7 @@ function viewCompare(){
   <div class="chipwrap"><div class="chipall">${chip(all[0])}</div>
   <div class="chipgrid" style="--cols:${cols}">${rest.map(chip).join('')}</div>
   ${!PX.SPY&&S.td?`<div class="chipadd"><button data-spy="1">+ S&amp;P 500</button></div>`:''}</div>
-  <div class="panel pad" id="ch-pct">${pick.length?pctChart(pick,{label:'שינוי באחוזים'}):'<p class="hint" style="padding:18px 0;text-align:center;margin:0">בחרו לפחות סדרה אחת.</p>'}<p class="readout"></p></div>`;
+  <div class="panel pad" id="ch-pct">${pick.length?pctChart(pick,{label:'שינוי באחוזים'}):`<p class="hint" style="padding:18px 0;text-align:center;margin:0">${thin?'בין שני התאריכים שנבחרו אין מספיק נקודות לגרף.':'בחרו לפחות סדרה אחת.'}</p>`}<p class="readout"></p></div>`;
   if(pick.length){
     const span=pick[0].pts;
     h+=`<div class="panel" style="margin-top:10px">${pick.map(se=>{
@@ -2366,6 +2373,17 @@ function addSnapshot(accId,date,hold){
 /* colour carries the asset type only; Israel vs abroad is carried by the label and a hollow dot,
    so the six buckets stay apart for anyone, including colour-blind readers */
 const marketOf=h=>/[א-ת]/.test(h.name)?'il':(h.cur==='שקל'?'il':'intl');
+/* for the exposure question a basket counts as the market it tracks: a Tel Aviv-listed fund on
+   the S&P is American money. Israeli index names win first, so "סל ת״א 125" stays Israeli. */
+const ILIDX=/ת"א|תל אביב|ישראל|תל בונד|מעו"ף|מעוף/;
+const FOREIGNIDX=/S&P|SP ?500|500|נאסד|NASDAQ|MSCI|עולמ|גלובל|GLOBAL|WORLD|ארה"ב|ארהב|אמריק|דאו ?ג'ונס|DOW|אירופ|EUROPE|יפן|סין|הודו|מתעורר|אול קאנטרי|ACWI/i;
+function eqMarket(h){
+  if(ptypeOf(h)!=='fund')return marketOf(h);
+  const n=norm(h.name);
+  if(ILIDX.test(n))return 'il';
+  if(FOREIGNIDX.test(n)||(h.cur&&h.cur!=='שקל'))return 'intl';
+  return marketOf(h);
+}
 const catOf=h=>{const t=ptypeOf(h);return t==='stock'?'stock-'+marketOf(h):t};
 const CATS=[['stock-il','מניות ישראל'],['stock-intl','מניות חו״ל'],['fund','קרנות סל ו-ETF'],['bond','אג״ח'],['cash','מזומן']];
 const CATLBL=Object.fromEntries(CATS);
@@ -2751,6 +2769,29 @@ function spreadBody(){
       <div class="row dotted"><span class="spine" style="background:${acol('#2F9E6E')}"></span><span class="nm">שקל</span><span class="val"><b>${ils(fx.total-fx.fx)}</b><span class="n flat">${(100-share).toFixed(1)}%</span></span></div>
       <div class="row dotted"><span class="spine" style="background:${acol('#3B82F6')}"></span><span><span class="nm">מטבע חוץ</span><div class="sub">${Object.keys(fx.by).map(id=>esc((ACCOUNTS.find(a=>a.id===id)||{}).short||'')).join(' · ')}</div></span><span class="val"><b>${ils(fx.fx)}</b><span class="n flat">${share.toFixed(1)}%</span></span></div>
       </div><p class="hint">חשבון דולרי נספר במלואו, ובחשבון שקלי נספרים ניירות שנקובים במטבע חוץ. שינוי של <span class="n">1%</span> בשער הדולר מזיז את ההון בכ-<b class="n">${ils(fx.fx*0.01)}</b>.</p></section>`;
+  }
+  /* ---- equities, bonds and cash, and where the equities are listed ----
+     a fund is equity too, so what matters for this answer is the market it tracks, not whether
+     it is a share or a basket of shares */
+  const hsa=allHoldings();
+  if(hsa.length){
+    const tot=hsa.reduce((n,x)=>n+x.ils,0);
+    const sum=f=>hsa.filter(f).reduce((n,x)=>n+x.ils,0);
+    const isEq=x=>['stock','fund'].includes(ptypeOf(x));
+    const eqIl=sum(x=>isEq(x)&&eqMarket(x)==='il'),eqIntl=sum(x=>isEq(x)&&eqMarket(x)!=='il');
+    const bond=sum(x=>ptypeOf(x)==='bond'),cash=sum(isCash);
+    const eq=eqIl+eqIntl;
+    const pc=v=>tot?(v/tot*100):0;
+    const parts=[[eqIl,catCol('stock-il'),false],[eqIntl,catCol('stock-intl'),true],[bond,catCol('bond'),false],[cash,catCol('cash'),false]];
+    const row=(lbl,sub,v,c,hollow,ind)=>`<div class="row dotted${ind?' ind':''}"><span class="spine${hollow?' hollow':''}" style="--c:${c};background:${c}"></span><span><span class="nm"${ind?' style="font-weight:400"':''}>${lbl}</span>${sub?`<div class="sub">${sub}</div>`:''}</span><span class="val"><b>${ils(v)}</b><span class="n flat">${pc(v).toFixed(1)}%</span></span></div>`;
+    h+=`<section><h2>לפי סוג נכס</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="מנייתי ${pc(eq).toFixed(0)}%, אג״ח ${pc(bond).toFixed(0)}%, מזומן ${pc(cash).toFixed(0)}%">${
+      parts.filter(([v])=>v>0).map(([v,c,ho])=>`<i style="flex:${v} 0 0;background:${c}${ho?';opacity:.55':''}"></i>`).join('')}</div></div>
+      ${eq>0?row('מנייתי','מניות וקרנות סל',eq,catCol('stock-il'),false,false):''}
+      ${eqIl>0?row('ישראלי','',eqIl,catCol('stock-il'),false,true):''}
+      ${eqIntl>0?row('אמריקאי וחו״ל','',eqIntl,catCol('stock-intl'),true,true):''}
+      ${bond>0?row('אג״ח','',bond,catCol('bond'),false,false):''}
+      ${cash>0?row('מזומן','',cash,catCol('cash'),false,false):''}
+    </div><p class="hint">קרן סל נספרת כמנייתית${eq>0?', ולכן <span class="n">'+pc(eq).toFixed(1)+'%</span> מהכסף חשוף לשוק המניות':''}. קרן נספרת לפי המדד שבשמה — קרן ישראלית על S&amp;P 500 נספרת כאמריקאית — ומניה לפי שפת שמה והמטבע שלה.</p></section>`;
   }
   /* ---- how much of everything sits in a few names ---- */
   const hs=allHoldings().filter(h=>!isCash(h));
