@@ -2876,9 +2876,8 @@ function spreadBody(){
     const tot=hs.reduce((n,h)=>n+h.ils,0);
     const top=hs.slice(0,5);
     const t5=top.reduce((n,h)=>n+h.ils,0);
-    h+=`<section><h2>ריכוזיות <small>כל החשבונות יחד</small></h2><div class="panel">
-    ${top.map(x=>`<div class="row dotted">${dot(catOf(x))}<span><span class="nm">${esc(short(dispName(x)))}</span><div class="sub">${esc(x.where)}${x.sym&&x.sym.toUpperCase()!==dispName(x).toUpperCase()?' · <span class="n">'+esc(x.sym)+'</span>':''}</div></span><span class="val"><b>${ils(x.ils)}</b><span class="n flat">${(x.ils/tot*100).toFixed(1)}%</span></span></div>`).join('')}
-    </div><div class="panel facts" style="margin-top:10px">
+    h+=`<section><h2>ריכוזיות <small>כל החשבונות יחד</small></h2>
+    <div class="panel facts">
     <div><small>5 הגדולות מתוך ניירות הערך</small><b class="n">${(t5/tot*100).toFixed(1)}%</b></div>
     <div><small>הגדולה ביותר</small><b class="n">${(hs[0].ils/tot*100).toFixed(1)}%</b></div>
     <div><small>מספר ניירות</small><b class="n">${hs.length}</b></div></div>
