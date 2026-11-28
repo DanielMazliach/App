@@ -65,18 +65,18 @@ button{cursor:pointer;border:0;background:none;padding:0}
 /* overview header: the total is the title */
 .hero{padding:calc(var(--sat) + 20px) 16px 0}
 .hero h1{margin:0 4px;font-size:0.8824rem;font-weight:600;color:var(--muted)}
-.hero .total{font-family:var(--num);font-size:2.7059rem;font-weight:700;letter-spacing:-.024em;line-height:1.08;margin:2px 4px 0;direction:ltr;text-align:right}
+.hero .total{font-family:var(--num);font-size:min(2.7059rem,12.6vw);font-weight:700;letter-spacing:-.024em;line-height:1.08;margin:2px 4px 0;direction:ltr;text-align:right}
 .hero .asof{font-size:0.8824rem;color:var(--muted);margin:2px 4px 0}
 .hero .deltas{display:flex;gap:10px;margin:18px 0 10px}
-.hero .deltas div,.chips div{flex:1;min-width:0;background:var(--surface);border-radius:14px;padding:11px 14px}
-.hero .deltas div>b,.chips div>b{margin-inline-end:6px}
-/* the figure and its percentage read as one statement, so they stay on one line and shrink
-   together rather than wrapping */
-.hero .deltas div,.chips div{white-space:nowrap}
-.hero .deltas b,.chips b{font-size:clamp(0.88rem,4.4vw,1.1176rem)}
+.hero .deltas div,.chips div{flex:1;min-width:0;background:var(--surface);border-radius:14px;padding:11px 12px}
+.hero .deltas div>b,.chips div>b{margin-inline-end:4px}
+/* the figure and its percentage read as one statement: one line at the usual text size, and
+   only at a larger one does the percentage drop below rather than spill out of the card */
+.hero .deltas div>b,.chips div>b,.hero .deltas div>span,.chips div>span{white-space:nowrap}
 .hero .deltas small,.chips small{display:block;font-size:0.7647rem;color:var(--muted)}
-.hero .deltas b,.chips b{font-family:var(--num);font-size:1.1176rem;font-weight:600;direction:ltr;display:inline-block}
-.hero .deltas span,.chips span{font-size:0.7647rem}
+.hero .deltas b,.chips b{font-family:var(--num);font-weight:600;direction:ltr;display:inline-block;
+  font-size:min(1.1176rem,4.1vw)}        /* sized to share one line with its percentage on any phone width */
+.hero .deltas span,.chips span{font-size:min(0.7647rem,3.1vw)}
 .readout{font-size:0.7647rem;min-height:18px;color:var(--muted);margin:4px 0 0;text-align:center}
 
 .pagehead{padding:calc(var(--sat) + 20px) 20px 2px}
@@ -252,7 +252,7 @@ button.row[aria-pressed="true"] .nm{font-weight:600}
 .acc-head{padding:6px 20px 0}
 .acc-head h1{margin:0;font-size:2rem;font-weight:700;letter-spacing:-.022em;line-height:1.15}
 .acc-head h1 span{font-size:.5em;vertical-align:middle}
-.acc-head .big{font-family:var(--num);font-size:2rem;font-weight:600;letter-spacing:-.02em;direction:ltr;text-align:right;margin-top:14px;line-height:1.1}
+.acc-head .big{font-family:var(--num);font-size:min(2rem,9.6vw);font-weight:600;letter-spacing:-.02em;direction:ltr;text-align:right;margin-top:14px;line-height:1.1}
 .acc-head .meta{color:var(--muted);font-size:0.8824rem;margin-top:2px}
 .chips{display:flex;gap:10px;margin:18px 16px 0}
 
@@ -285,6 +285,7 @@ button.row[aria-pressed="true"] .nm{font-weight:600}
 .err{margin:16px 16px 0;background:var(--errbg);color:var(--errink);border-radius:12px;padding:11px 14px;font-size:0.8824rem}
 
 table.cmp{width:100%;border-collapse:collapse;font-size:0.8824rem}
+.panel.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table.cmp th{font-weight:400;color:var(--muted);font-size:0.7647rem;text-align:left;padding:12px 8px 6px}
 table.cmp th:first-child,table.cmp td:first-child{text-align:right;padding-inline-start:16px}
 table.cmp td{padding:12px 8px;box-shadow:inset 0 .5px 0 var(--sep);text-align:left}
@@ -435,8 +436,11 @@ svg.pxchart .pxknob{stroke:var(--surface);stroke-width:2;vector-effect:non-scali
 /* ---------- model ---------- */
 /* accounts are not part of the code: they arrive with the backup file and live only on the device */
 let ACCOUNTS=[],FIELDS=[];
-const cleanFields=l=>(Array.isArray(l)?l:[]).filter(f=>Array.isArray(f)&&f[0]).map(f=>[String(f[0]),String(f[1]||f[0]),['cur','fx','cap','sav'].includes(f[2])?f[2]:'cap',!!f[3]]);
-function setConfig(list){const ok=[];for(const a of Array.isArray(list)?list:[]){if(!a||!a.id||!Array.isArray(a.fields))continue;ok.push({id:String(a.id),name:String(a.name||a.id),short:String(a.short||a.name||a.id),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#44566A',cur:a.cur==='USD'?'USD':'ILS',fields:cleanFields(a.fields),
+const cleanFields=l=>(Array.isArray(l)?l:[]).filter(f=>Array.isArray(f)&&SAFEID.test(String(f[0]))).map(f=>[String(f[0]),String(f[1]||f[0]),['cur','fx','cap','sav'].includes(f[2])?f[2]:'cap',!!f[3]]);
+/* ids and keys become attribute values and object keys all over the page, so a backup may only
+   use the shape the app itself makes: letters, digits, _ and -. anything else is dropped. */
+const SAFEID=/^[A-Za-z0-9_-]{1,40}$/;
+function setConfig(list){const ok=[];for(const a of Array.isArray(list)?list:[]){if(!a||!SAFEID.test(String(a.id))||!Array.isArray(a.fields))continue;ok.push({id:String(a.id),name:String(a.name||a.id),short:String(a.short||a.name||a.id),color:/^#[0-9a-f]{6}$/i.test(a.color)?a.color:'#44566A',cur:a.cur==='USD'?'USD':'ILS',fields:cleanFields(a.fields),
   /* components switched off: their keys, so switching one back on reuses the key its history sits under */
   gone:cleanFields(a.gone)})}ACCOUNTS=ok;FIELDS=ok.flatMap(a=>a.fields.map(f=>f[0]))}
 const KEY='ft.data.v1', META='ft.meta.v1';
@@ -508,7 +512,6 @@ const nf0=new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
 const ils=v=>(v<0?'−':'')+'₪'+nf0.format(Math.abs(Math.round(v)));
 const usd=v=>(v<0?'−':'')+'$'+nf0.format(Math.abs(Math.round(v)));
 const signedBy=(v,f)=>(v>0?'+':v<0?'−':'')+f(Math.abs(v));   // e.g. +₪40,873 / −$1,989
-const signedIls=v=>signedBy(v,ils);
 /* beside an arrow the sign is the third thing saying the same thing, after the arrow and the
    colour; the magnitude alone reads cleaner and is shorter */
 const magIls=v=>ils(Math.abs(v));
@@ -531,8 +534,11 @@ const pct=(v,d=1)=>(v>0?'+':v<0?'−':'')+Math.abs(v*100).toFixed(d)+'%';
 const eps=base=>base?Math.max(Math.abs(base)*0.001,0.005):0.5;
 const cls=(v,base)=>{const e=eps(base);return v>e?'up':v<-e?'down':'flat'};
 const arrow=(v,base)=>{const e=eps(base);return v>e?'▲':v<-e?'▼':'●'};
-const dshort=d=>{const [y,m,dd]=d.split('-');return +dd+'/'+ +m+'/'+y.slice(2)};
-const dlong=d=>{const [y,m,dd]=d.split('-');return +dd+'/'+ +m+'/'+y};
+/* these go into the page as markup, and one of the dates comes from an outside service: anything
+   that is not exactly YYYY-MM-DD comes out as nothing */
+const ISODAY=/^\d{4}-\d{2}-\d{2}$/;
+const dshort=d=>{if(!ISODAY.test(String(d)))return '';const [y,m,dd]=d.split('-');return +dd+'/'+ +m+'/'+y.slice(2)};
+const dlong=d=>{if(!ISODAY.test(String(d)))return '';const [y,m,dd]=d.split('-');return +dd+'/'+ +m+'/'+y};
 const dayOf=ts=>{const t=new Date(ts);return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')};
 const today=()=>{const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -628,7 +634,7 @@ function loadPorts(d,fresh){
   for(const id in (d.pmask||{}))if(ok.has(id)&&['half','hide'].includes(d.pmask[id]))S.pmask[id]=d.pmask[id];
   for(const id in (d.ports||{})){
     if(!ok.has(id))continue;
-    const list=(d.ports[id]||[]).filter(p=>p&&/^\d{4}-\d{2}-\d{2}$/.test(p.date));
+    const list=(Array.isArray(d.ports[id])?d.ports[id]:[]).filter(p=>p&&/^\d{4}-\d{2}-\d{2}$/.test(p.date)).map(cleanSnap);
     if(!list.length)continue;
     const have=new Map((S.ports[id]||[]).map(p=>[p.date,p]));
     for(const p of list)have.set(p.date,p);                  /* same date: the file wins */
@@ -642,13 +648,32 @@ function loadPorts(d,fresh){
     else if(Array.isArray(v))S.plink[id]=[];          /* switched off on purpose */
   }
 }
+const str=(v,n)=>String(v??'').slice(0,n);
+function cleanHold(h){
+  if(!h||typeof h!=='object')return null;
+  const o={id:str(h.id,40),name:str(h.name,140),sym:str(h.sym,24),cur:str(h.cur||'שקל',12),
+    qty:num(h.qty),price:num(h.price),v:num(h.v),vc:num(h.vc),gain:num(h.gain),tg:num(h.tg),tx:num(h.tx)};
+  if(h.cash===true)o.cash=true;
+  if(h.acct==='ind'||h.acct==='ira')o.acct=h.acct;
+  return o.id?o:null;
+}
+function cleanSnap(p){
+  const o={date:p.date};
+  if(Array.isArray(p.hold))o.hold=p.hold.map(cleanHold).filter(Boolean);
+  if(p.sum&&typeof p.sum==='object'){
+    const m=x=>{const r={};for(const k in (x||{}))r[str(k,24)]=num(x[k]);return r};
+    o.sum={total:num(p.sum.total),gain:num(p.sum.gain),loss:num(p.sum.loss),tax:num(p.sum.tax),shield:num(p.sum.shield),
+      cur:m(p.sum.cur),cat:m(p.sum.cat),count:m(p.sum.count)};
+  }
+  return o;
+}
 function clean(list){
   const out=[];const seen=new Set();
   for(const u of Array.isArray(list)?list:[]){
     if(!u||!/^\d{4}-\d{2}-\d{2}$/.test(u.date)||seen.has(u.date))continue;seen.add(u.date);
     /* values of a component that is switched off stay in the update, unseen, so switching it
        back on brings its history back. only deleting the account removes them. */
-    const vals={};for(const k in (u.vals||{}))if(/^[\w-]{1,40}$/.test(k))vals[k]=num(u.vals[k]);
+    const vals={};for(const k in (u.vals||{}))if(SAFEID.test(k))vals[k]=num(u.vals[k]);
     for(const k of FIELDS)if(!(k in vals))vals[k]=0;
     out.push({date:u.date,vals,rate:num(u.rate)});
   }
@@ -782,17 +807,24 @@ function wirePct(box,series){
   if(!box||offscreen)return;
   const svg=box.querySelector('svg.chart'),out=box.querySelector('.readout');if(!svg||!out)return;
   const hit=svg.querySelector('.hit'),cross=svg.querySelector('.cross');
-  const t0=+hit.dataset.t0,t1=+hit.dataset.t1,AX=50,R=330;
+  const t0=+hit.dataset.t0,t1=+hit.dataset.t1,AX=50,R=320;        /* the plot runs x=50..320 */
+  const valAt=(pts,t)=>{
+    const ts=pts.map(p=>Date.parse(p.d));
+    if(t<ts[0]-864e5/2||t>ts[ts.length-1]+864e5/2)return null;     /* outside this line: say nothing */
+    if(t<=ts[0])return pts[0].v;
+    for(let i=1;i<ts.length;i++)if(t<=ts[i]){const f=(t-ts[i-1])/(ts[i]-ts[i-1]||1);return pts[i-1].v+(pts[i].v-pts[i-1].v)*f}
+    return pts[pts.length-1].v;
+  };
   const at=t=>series.map(se=>{
-    let best=null;for(const p of se.pts){const d=Math.abs(Date.parse(p.d)-t);if(!best||d<best.d)best={d,p}}
-    return best?`<span class="n" style="color:${se.color}">${se.name} ${pct(best.p.v/100,1)}</span>`:'';
+    const v=valAt(se.pts,t);
+    return v==null?'':`<span class="n" style="color:${se.color}">${esc(se.name)} ${pct(v/100,1)}</span>`;
   }).filter(Boolean).join(' · ');
   const move=e=>{
     const r=svg.getBoundingClientRect();
     const vx=(e.clientX-r.left)*340/r.width;
     const f=Math.max(0,Math.min(1,(vx-AX)/(R-AX)));
-    const t=t0+(t1-t0)*f;
-    cross.setAttribute('x1',vx.toFixed(1));cross.setAttribute('x2',vx.toFixed(1));cross.setAttribute('visibility','visible');
+    const t=t0+(t1-t0)*f,cx=AX+f*(R-AX);
+    cross.setAttribute('x1',cx.toFixed(1));cross.setAttribute('x2',cx.toFixed(1));cross.setAttribute('visibility','visible');
     out.innerHTML=`<span class="n">${dlong(new Date(t).toISOString().slice(0,10))}</span> · `+at(t);
   };
   hit.addEventListener('pointerdown',move);hit.addEventListener('pointermove',move);
@@ -861,7 +893,8 @@ function paintRolls(){
 }
 
 /* ---------- views ---------- */
-const $=s=>document.querySelector(s);let view=$('#view');const layer=$('#layer');
+const $=s=>document.querySelector(s);
+const byId=id=>document.getElementById(id);let view=$('#view');const layer=$('#layer');
 let offscreen=false;   /* true while a page is being built for the strip, not for the screen */
 function toast(msg){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
 let firstPaint=true,shownTab=null,topText='',topNum=false;
@@ -931,8 +964,8 @@ function viewHome(){
   if(days===null||days>30)h+=`<div class="note"><span>${days===null?'עוד לא נשמר גיבוי.':'עברו '+days+' ימים מהגיבוי האחרון.'} הנתונים קיימים רק במכשיר הזה.</span><button data-act="backup">גיבוי עכשיו</button></div>`;
   h+=`<section><h2>לפי חשבון</h2><div class="panel"><div class="pad"><div class="stack" role="img" aria-label="חלוקת ההון לפי חשבון">${visAcc().filter(a=>last.acc[a.id]>0).map(a=>`<i style="flex:${last.acc[a.id]} 0 0;background:${acol(a.color)}" title="${esc(a.name)}"></i>`).join('')}</div></div>`;
   for(const a of visAcc()){const v=last.acc[a.id],d=prev?v-prev.acc[a.id]:0;
-    h+=`<button class="row" data-acc="${a.id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${share(v,last.total)}%</span> מההון</div></span>
-    <span class="val"><b data-roll="acc:${a.id}" data-rv="${v}">${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
+    h+=`<button class="row" data-acc="${esc(a.id)}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub"><span class="n">${share(v,last.total)}%</span> מההון</div></span>
+    <span class="val"><b data-roll="acc:${esc(a.id)}" data-rv="${v}">${ils(v)}</b>${prev?`<span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}</span>`:''}</span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
   h+=`</div>`;
   if(ACCOUNTS.some(a=>portsOf(a.id).some(p=>p.hold)))
     h+=`<button class="row link" data-act="spread" style="border-radius:14px;margin-top:12px"><span></span><span class="nm">פיזור וחשיפה</span><span class="val"><span class="n flat">מטבע · ריכוזיות · מפה</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
@@ -980,7 +1013,7 @@ function portCard(id,nm,val,delta,snap,f){
     mix=`<span class="pc-leg">${cats.map(([k,l])=>`<span><i style="background:${catCol(k)};${catHollow(k)?'opacity:.55':''}"></i>${l}<b class="n">${pc(k).toFixed(0)}%</b></span>`).join('')}</span>`;
   }
   const top=hold?`<span class="n">${hold.filter(x=>!isCash(x)).length}</span> אחזקות · <span class="n">${dshort(snap.date)}</span>`:'';
-  return `<button type="button" class="pcard" data-port="${id}">
+  return `<button type="button" class="pcard" data-port="${esc(id)}">
     <span class="pc-top"><span class="pc-nm">${esc(nm)}</span><span class="pc-cnt">${top}${chev}</span></span>
     <span class="pc-val"><b class="n">${val}</b>${delta}</span>
     ${mix||'<span class="pc-hint">העלאת קובץ אחזקות מהבנק</span>'}
@@ -1062,7 +1095,7 @@ function openForm(date,pre){
   for(const a of ACCOUNTS){
     h+=`<div class="grp" style="--c:${acol(a.color)}"><h3>${esc(a.name)}${a.cur==='USD'?'<small>בדולרים</small>':'<small>בש״ח</small>'}</h3>`;
     /* the iOS decimal pad has no minus key, and an overdraft is a real balance */
-    for(const [k,nm] of a.fields)h+=`<div class="fld"><label for="f-${k}">${esc(nm)}</label><div class="inl"><input id="f-${k}" data-k="${k}" inputmode="decimal" autocomplete="off" value="${f.vals[k]===''?'':f.vals[k]}" placeholder="0"><button type="button" class="neg" data-neg="${k}" aria-label="החלפת סימן ל${esc(nm)}">±</button></div></div>`;
+    for(const [k,nm] of a.fields)h+=`<div class="fld"><label for="f-${esc(k)}">${esc(nm)}</label><div class="inl"><input id="f-${esc(k)}" data-k="${esc(k)}" inputmode="decimal" autocomplete="off" value="${f.vals[k]===''?'':num(f.vals[k])}" placeholder="0"><button type="button" class="neg" data-neg="${esc(k)}" aria-label="החלפת סימן ל${esc(nm)}">±</button></div></div>`;
     if(a.id===rateAcc)h+=`<div class="fld"><label for="f-rate">שער דולר<small>USD/ILS ביום העדכון</small></label><div class="inl"><input id="f-rate" inputmode="decimal" autocomplete="off" value="${f.rate||''}" placeholder="3.160"><button type="button" id="getrate">רענון</button></div></div><p class="hint" id="ratehint">השער נמשך לבד לפי התאריך. שער נוכחי: <b id="liverate2" class="n">—</b></p>`;
     if(plinkOf(a.id).length){
       /* an update being edited may already carry a holdings snapshot of that date; it is named here,
@@ -1070,18 +1103,22 @@ function openForm(date,pre){
       const sv=editing?(S.ports[a.id]||[]).find(x=>x.date===editing.date):null;
       const svh=sv&&sv.hold,svf=a.cur==='USD'?usd:ils;
       const svtxt=sv?(svh?svh.filter(x=>!isCash(x)).length+' אחזקות · '+svf(summarize(svh).total):'צילום שמור'):'';
-      h+=`<input type="file" id="af-${a.id}" accept=".xlsx,.csv,.txt,.pdf" hidden><div class="fld"><label for="af-${a.id}">קובץ אחזקות<small id="as-${a.id}"${sv?' class="on"':''}>${sv?esc(svtxt):'לא חובה'}</small></label><div class="inl"><label class="atbtn" for="af-${a.id}" id="al-${a.id}">${sv?'החלפה':'צירוף קובץ'}</label><button type="button" class="atrm" id="ar-${a.id}"${sv?'':' hidden'}>מחיקה</button></div></div>`;
+      h+=`<input type="file" id="af-${esc(a.id)}" accept=".xlsx,.csv,.txt,.pdf" hidden><div class="fld"><label for="af-${esc(a.id)}">קובץ אחזקות<small id="as-${esc(a.id)}"${sv?' class="on"':''}>${sv?esc(svtxt):'לא חובה'}</small></label><div class="inl"><label class="atbtn" for="af-${esc(a.id)}" id="al-${esc(a.id)}">${sv?'החלפה':'צירוף קובץ'}</label><button type="button" class="atrm" id="ar-${esc(a.id)}"${sv?'':' hidden'}>מחיקה</button></div></div>`;
     }
     h+=`</div>`}
   if(editing)h+=`<section><button type="button" class="btn danger" id="del">מחיקת העדכון</button></section>`;
   h+=`</form></div><footer><div class="sum"><small>סה״כ הון בעדכון הזה</small><b id="fsum">—</b></div><button class="btn" id="fsave">שמירה</button></footer></div>`;
   openLayer(h);
-  const read=()=>{const u={date:$('#f-date').value,rate:$('#f-rate')?num($('#f-rate').value):0,vals:{}};layer.querySelectorAll('input[data-k]').forEach(i=>u.vals[i.dataset.k]=num(i.value));return u};
+  const read=()=>{
+    /* values the form does not show (a component switched off) ride along untouched */
+    const keep={};if(editing)for(const k in editing.vals)if(!FIELDS.includes(k))keep[k]=editing.vals[k];
+    const u={date:$('#f-date').value,rate:$('#f-rate')?num($('#f-rate').value):0,vals:keep};
+    layer.querySelectorAll('input[data-k]').forEach(i=>u.vals[i.dataset.k]=num(i.value));return u};
   const upd=()=>roll($('#fsum'),'fsum',calc(read()).total,ILSROLL,{stagger:0,response:.34});
   rollMem.fsum=undefined;upd();
   layer.querySelector('#frm').addEventListener('input',upd);
   layer.querySelectorAll('[data-neg]').forEach(b=>b.onclick=()=>{
-    const i=$('#f-'+b.dataset.neg);if(!i)return;
+    const i=byId('f-'+b.dataset.neg);if(!i)return;
     const t=i.value.trim();
     i.value=!t||t==='0'?'-':t.startsWith('-')?t.slice(1):'-'+t;
     i.dispatchEvent(new Event('input',{bubbles:true}));i.focus();
@@ -1107,8 +1144,8 @@ function openForm(date,pre){
   if(rateInput&&!f.rate)pullRate(false);
   const attach={},drop={};                          // optional holdings file, per account that has a portfolio
   for(const a of ACCOUNTS){
-    const inp=$('#af-'+a.id);if(!inp)continue;
-    const rm=$('#ar-'+a.id),sm=$('#as-'+a.id),lab=$('#al-'+a.id);
+    const inp=byId('af-'+a.id);if(!inp)continue;
+    const rm=byId('ar-'+a.id),sm=byId('as-'+a.id),lab=byId('al-'+a.id);
     const had=sm&&sm.classList.contains('on'),txt0=sm?sm.textContent:'';
     /* three states for the row: nothing attached, a file in hand, and one marked for deletion */
     const row=(txt,cls,btn)=>{sm.textContent=txt;sm.className=cls;lab.textContent=cls?'החלפה':'צירוף קובץ';
@@ -1137,9 +1174,9 @@ function openForm(date,pre){
         if(subs&&keys.length>=subs.length){
           const vals={};
           subs.forEach((x,i)=>{vals[keys[i]]=(vals[keys[i]]||0)+x.total});
-          for(const k in vals)if($('#f-'+k))$('#f-'+k).value=Math.round(vals[k]);
-        }else if(keys[0]&&$('#f-'+keys[0])){
-          $('#f-'+keys[0]).value=Math.round(summarize(hold).total);
+          for(const k in vals)if(byId('f-'+k))byId('f-'+k).value=Math.round(vals[k]);
+        }else if(keys[0]&&byId('f-'+keys[0])){
+          byId('f-'+keys[0]).value=Math.round(summarize(hold).total);
         }
         upd();
         keptTxt=hold.filter(x=>!isCash(x)).length+' אחזקות · '+pf(summarize(hold).total);
@@ -1190,7 +1227,8 @@ function findRate(j){let found=null;(function walk(o,key){if(found!==null||o==nu
 async function fetchRate(d){
   const srcs=[[`https://api.frankfurter.dev/v2/rate/usd/ils?date=${d}&providers=boi`,'יציג (בנק ישראל)'],[`https://api.frankfurter.dev/v1/${d}?base=USD&symbols=ILS`,'אירופי (ECB)']];
   for(const [url,src] of srcs){try{const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),7000);const r=await fetch(url,{signal:ctl.signal});clearTimeout(t);if(!r.ok)continue;const j=await r.json();const rate=findRate(j);
-    if(rate)return {rate,src,date:(Array.isArray(j)?j[0]&&j[0].date:j.date)||d}}catch(e){}}
+    const dd=String((Array.isArray(j)?j[0]&&j[0].date:j.date)||'');
+    if(rate)return {rate,src,date:ISODAY.test(dd)?dd:d}}catch(e){}}
   throw new Error('no rate');
 }
 
@@ -1231,7 +1269,8 @@ function cmpSeries(){
   const U=sorted(),C=U.map(calc);
   const out=[{id:'total',name:'כל החשבונות',color:chartInk(),wide:true,pts:U.map((u,i)=>({d:u.date,v:C[i].total}))}];
   for(const a of visAcc())out.push({id:a.id,name:a.short,color:acol(a.color),
-    pts:U.map((u,i)=>({d:u.date,v:a.cur==='USD'?(C[i].usdAcc[a.id]||0):C[i].acc[a.id]}))});
+    /* in shekels, like the table above it, so both say the same percent */
+    pts:U.map((u,i)=>({d:u.date,v:C[i].acc[a.id]}))});
   const spy=PX.SPY&&PX.SPY.pts;
   if(spy&&U.length){
     const from=U[0].date,to=U[U.length-1].date;
@@ -1242,9 +1281,11 @@ function cmpSeries(){
 }
 /* re-based: each series starts at zero and is read as its change in percent since then */
 const toPct=se=>{
-  const base=se.pts.find(p=>p.v)||se.pts[0];
-  if(!base||!base.v)return null;
-  return {...se,pts:se.pts.map(p=>({d:p.d,v:(p.v/base.v-1)*100}))};
+  const i=se.pts.findIndex(p=>p.v>0);
+  if(i<0)return null;
+  const pts=se.pts.slice(i),base=pts[0].v;
+  if(pts.length<2)return null;
+  return {...se,pts:pts.map(p=>({d:p.d,v:(p.v/base-1)*100}))};
 };
 function viewCompare(){
   const U=sorted();let h=`<div class="pagehead"><h1>השוואה</h1><p>שני תאריכים, זה מול זה</p></div>`;
@@ -1256,7 +1297,7 @@ function viewCompare(){
   const A=U.find(u=>u.date===st.a),B=U.find(u=>u.date===st.b),ca=calc(A),cb=calc(B);
   const opts=s=>U.map(u=>`<option value="${u.date}" ${u.date===s?'selected':''}>${dlong(u.date)}</option>`).join('');
   h+=`<section><div class="pick"><div><label for="ca">תאריך בסיס</label><select id="ca">${opts(st.a)}</select></div><div><label for="cb">תאריך להשוואה</label><select id="cb">${opts(st.b)}</select></div></div></section>`;
-  const tbl=(title,rows)=>{let t=`<section><h2>${title}</h2><div class="panel"><table class="cmp"><thead><tr><th></th><th class="n">${dshort(A.date)}</th><th class="n">${dshort(B.date)}</th><th>שינוי</th></tr></thead><tbody>`;
+  const tbl=(title,rows)=>{let t=`<section><h2>${title}</h2><div class="panel tblwrap"><table class="cmp"><thead><tr><th></th><th class="n">${dshort(A.date)}</th><th class="n">${dshort(B.date)}</th><th>שינוי</th></tr></thead><tbody>`;
     let sa=0,sb=0;for(const [nm,va,vb,col] of rows){sa+=va;sb+=vb;const d=vb-va;
       t+=`<tr><td>${col?`<span style="color:${col}">●</span> `:''}${nm}</td><td class="n">${compact(va)}</td><td class="n">${compact(vb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}</span><small class="n ${cls(d)}">${va?pct(d/va):''}</small></td></tr>`}
     const d=sb-sa;return t+`<tr class="tot"><td>סה״כ</td><td class="n">${compact(sa)}</td><td class="n">${compact(sb)}</td><td class="d"><span class="n ${cls(d)}">${arrow(d)} ${magIls(d)}</span><small class="n ${cls(d)}">${sa?pct(d/sa,2):''}</small></td></tr></tbody></table></div></section>`};
@@ -1280,13 +1321,12 @@ function viewCompare(){
   ${!PX.SPY&&S.td?`<div class="chipadd"><button data-spy="1">+ S&amp;P 500</button></div>`:''}</div>
   <div class="panel pad" id="ch-pct">${pick.length?pctChart(pick,{label:'שינוי באחוזים'}):`<p class="hint" style="padding:18px 0;text-align:center;margin:0">${thin?'בין שני התאריכים שנבחרו אין מספיק נקודות לגרף.':'בחרו לפחות סדרה אחת.'}</p>`}<p class="readout"></p></div>`;
   if(pick.length){
-    const span=pick[0].pts;
     h+=`<div class="panel" style="margin-top:10px">${pick.map(se=>{
       const v=se.pts[se.pts.length-1].v;
       return `<div class="row dotted"><span class="spine" style="background:${se.color}"></span><span class="nm">${esc(se.name)}</span><span class="val"><b class="n ${cls(v,100)}">${pct(v/100,1)}</b><span class="n flat">מ-${dshort(se.pts[0].d)}</span></span></div>`}).join('')}</div>`;
   }
   h+=`</section>`;
-  h+=`<section><div class="panel facts"><div><small>ימים בין התאריכים</small><b>${Math.round((new Date(B.date)-new Date(A.date))/864e5)}</b></div><div><small>שער דולר</small><b>${A.rate?A.rate.toFixed(3):'—'} → ${B.rate?B.rate.toFixed(3):'—'}</b></div></div></section>`;
+  h+=`<section><div class="panel facts"><div><small>ימים בין התאריכים</small><b>${Math.abs(Math.round((new Date(B.date)-new Date(A.date))/864e5))}</b></div><div><small>שער דולר</small><b>${A.rate?A.rate.toFixed(3):'—'} → ${B.rate?B.rate.toFixed(3):'—'}</b></div></div></section>`;
   view.innerHTML=h;
   setTop('השוואה');
   if(offscreen)return;
@@ -1429,7 +1469,7 @@ function openPrivCfg(){
   openLayer(`<div class="sheet modal" role="dialog" aria-label="מה מוסתר"><header><span class="grab" aria-hidden="true"></span><button data-close>סגירה</button><h2>מה מוסתר</h2><span></span></header><div class="body">
   <section><p class="hint" style="padding:0 4px 12px">לכל חשבון אפשר לקבוע מה יוצג כשמצב פרטי מופעל. ההגדרה נשמרת, והיא לא משנה דבר כל עוד המצב כבוי.</p>
   ${ACCOUNTS.map(a=>`<div class="panel" style="margin-bottom:10px"><div class="row dotted"><span class="spine" style="background:${acol(a.color)}"></span><span class="nm">${esc(a.name)}</span></div>
-  <div class="pad" style="padding-top:2px"><div class="segbar" role="tablist" aria-label="${esc(a.short)}">${opt.map(([k,t])=>`<button role="tab" data-pm="${a.id}|${k}" aria-selected="${maskOf(a.id)===k}">${t}</button>`).join('')}</div></div></div>`).join('')}
+  <div class="pad" style="padding-top:2px"><div class="segbar" role="tablist" aria-label="${esc(a.short)}">${opt.map(([k,t])=>`<button role="tab" data-pm="${esc(a.id)}|${k}" aria-selected="${maskOf(a.id)===k}">${t}</button>`).join('')}</div></div></div>`).join('')}
   </section></div></div>`);
   layer.querySelectorAll('[data-pm]').forEach(b=>b.onclick=async()=>{
     const i=b.dataset.pm.lastIndexOf('|'),id=b.dataset.pm.slice(0,i),k=b.dataset.pm.slice(i+1);
@@ -1450,7 +1490,7 @@ function viewSettings(){
   ${p?'':`<button class="row plain" data-act="privcfg"><span><span class="nm">מה מוסתר</span></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`}
   </div></section>
   ${p?'':`<section><h2>חשבונות</h2><div class="panel">
-  ${ACCOUNTS.map(a=>`<button class="row" data-acced="${a.id}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub">${a.fields.length===1?'רכיב אחד':a.fields.length+' רכיבים'}${a.cur==='USD'?' · דולר':''}${plinkOf(a.id).length?' · קובץ מהבנק':''}</div></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`).join('')}
+  ${ACCOUNTS.map(a=>`<button class="row" data-acced="${esc(a.id)}"><span class="spine" style="background:${acol(a.color)}"></span><span><span class="nm">${esc(a.name)}</span><div class="sub">${a.fields.length===1?'רכיב אחד':a.fields.length+' רכיבים'}${a.cur==='USD'?' · דולר':''}${plinkOf(a.id).length?' · קובץ מהבנק':''}</div></span><span class="val"></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`).join('')}
   ${ACCOUNTS.length?'':'<div class="row plain"><span class="nm flat">עוד לא הוגדרו חשבונות</span></div>'}
   </div><div class="stackbtns" style="margin-top:10px"><button class="btn ghost" data-act="accnew">הוספת חשבון</button></div></section>`}
   ${p?'':`<section><h2>המלצות אנליסטים</h2><div class="panel">
@@ -1654,7 +1694,6 @@ const autoTick=x=>{
 };
 const tickOf=x=>S.tick[x.id]||autoTick(x);
 const tickMan=x=>!!S.tick[x.id];
-const recOf=x=>{const t=tickOf(x);return t?S.rec[t]:null};
 function recScore(r){
   const n=r.sb+r.b+r.h+r.s+r.ss;
   if(!n)return null;
@@ -1803,7 +1842,12 @@ function openImport(){
   <section><h2>מקובץ</h2><div class="panel pad"><p style="margin:0 0 12px;font-size:0.8529rem;color:var(--ink2)">בחרו קובץ גיבוי (‎.json‎) מ״קבצים״.</p><label class="btn" style="cursor:pointer">בחירת קובץ<input id="ifile" type="file" accept=".json,application/json,text/plain" hidden></label></div></section>
   <section><h2>או בהדבקה</h2><div class="panel pad"><textarea id="itext" placeholder='{"app":"finance-tracker", ...}' aria-label="תוכן הגיבוי"></textarea><button class="btn ghost" id="ipaste" style="margin-top:10px">טעינה מהטקסט</button></div></section>
   <section><p style="font-size:0.7647rem;color:var(--muted);margin:0 6px">הגיבוי מתמזג עם מה שקיים: עדכונים וצילומי אחזקות מתווספים, ומה שיש בשני התאריכים נלקח מהגיבוי. מה שאין בגיבוי — צילום חדש יותר, מפתח API — נשאר.</p></section></div></div>`);
-  const run=async txt=>{try{const j=JSON.parse(txt);if(Array.isArray(j.accounts)&&j.accounts.length)setConfig(j.accounts);if(j.ports||j.ptype||j.plink)loadPorts(j);if(!ACCOUNTS.length)throw 0;S.updates=clean(S.updates);const list=clean(j.updates);if(!list.length&&!S.updates.length&&!j.accounts)throw 0;
+  const run=async txt=>{try{const j=JSON.parse(txt);
+      if(Array.isArray(j.accounts)&&j.accounts.length){
+        /* same id: the backup's version; an account only this device has stays */
+        const ids=new Set(j.accounts.map(a=>a&&String(a.id)));
+        setConfig([...j.accounts,...ACCOUNTS.filter(a=>!ids.has(a.id))]);
+      }if(j.ports||j.ptype||j.plink)loadPorts(j);if(!ACCOUNTS.length)throw 0;S.updates=clean(S.updates);const list=clean(j.updates);if(!list.length&&!S.updates.length&&!j.accounts)throw 0;
       const map=new Map(S.updates.map(u=>[u.date,u]));list.forEach(u=>map.set(u.date,u));S.updates=[...map.values()];closeLayer();tab='home';render();save();toast('נטענו '+list.length+' עדכונים')}
     catch(e){const el=$('#ierr');el.textContent='הקובץ אינו גיבוי תקין של האפליקציה.';el.hidden=false}};
   $('#ifile').onchange=async e=>{const f=e.target.files[0];if(f)run(await f.text())};
@@ -2003,13 +2047,31 @@ function lockScreen(){
     dots.setAttribute('aria-label','הוקלדו '+code.length+' מתוך '+len+' ספרות');
     if(code.length)msg.textContent='';
   };
+  /* five misses are free; after that each one doubles a wait, from half a minute to a quarter of
+     an hour, and the wait survives closing the app. it stops hands, not a copy of the data. */
+  const pad=[...el.querySelectorAll('.pad button')];
+  let tick=0;
+  const hold=()=>{
+    clearInterval(tick);
+    const left=()=>Math.max(0,(meta().lockUntil||0)-Date.now());
+    if(!left()){pad.forEach(b=>b.disabled=false);return false}
+    pad.forEach(b=>b.disabled=true);
+    const show=()=>{const t=Math.ceil(left()/1000);
+      if(t<=0){clearInterval(tick);pad.forEach(b=>b.disabled=false);msg.textContent='';return}
+      msg.textContent='יותר מדי ניסיונות. נסו שוב בעוד '+(t>=60?Math.ceil(t/60)+' דק׳':t+' שנ׳');};
+    show();tick=setInterval(show,1000);
+    return true;
+  };
   const fail=m=>{
     code='';busy=false;paint();
-    el.querySelectorAll('.pad button').forEach(b=>b.disabled=false);
+    const n=(meta().lockFails||0)+1;
+    setMeta({lockFails:n,lockUntil:n>=5?Date.now()+Math.min(15*60e3,30e3*2**(n-5)):0});
     msg.textContent=m;
     dots.classList.add('shake');setTimeout(()=>dots.classList.remove('shake'),460);
+    if(!hold())pad.forEach(b=>b.disabled=false);
   };
-  const done=()=>{bar.forEach(([m,v])=>m.content=v);el.remove();start()};
+  hold();
+  const done=()=>{clearInterval(tick);setMeta({lockFails:0,lockUntil:0});bar.forEach(([m,v])=>m.content=v);el.remove();start()};
   const go=async pass=>{
     if(busy)return;busy=true;
     el.querySelectorAll('.pad button').forEach(b=>b.disabled=true);
@@ -2017,7 +2079,7 @@ function lockScreen(){
     catch(err){fail('הקוד שגוי. נסו שוב.')}
   };
   el.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{
-    if(busy)return;
+    if(busy||(meta().lockUntil||0)>Date.now())return;
     const k=b.dataset.k;
     if(k==='⌫'){code=code.slice(0,-1);paint();return}
     if(code.length>=len)return;
@@ -2298,7 +2360,7 @@ function parsePortfolio(rows){
     const name=norm(row[m.name]);if(!name)continue;
     const v=num(row[m.value]);
     out.push({id:String(id),name,sym:m.sym!=null?norm(row[m.sym]):'',qty:num(row[m.qty]),price:num(row[m.price]),
-      v,vc:m.valueCur!=null?num(row[m.valueCur]):v,cur:m.cur!=null?norm(row[m.cur])||'שקל':'שקל',
+      v,vc:m.valueCur!=null?num(row[m.valueCur]):v,cur:m.cur!=null?(norm(row[m.cur])||'שקל').slice(0,12):'שקל',
       gain:m.gain!=null?num(row[m.gain]):0,tg:m.taxGain!=null?num(row[m.taxGain]):0,tx:m.tax!=null?num(row[m.tax]):0});
   }
   if(!out.length)throw new Error('לא נמצאו אחזקות בקובץ.');
@@ -2343,7 +2405,6 @@ function plinkOf(id){
   const a=ACCOUNTS.find(x=>x.id===id),cap=a&&a.fields.find(f=>f[2]==='cap');
   return cap?[cap[0]]:[];
 }
-const plinkHas=(id,k)=>plinkOf(id).includes(k);
 /* which balance field each sub-account of a statement fills: what was chosen last time, else a
    guess by the field's name, else the account's main investments field */
 function guessKeys(acc,subs){
@@ -2451,7 +2512,7 @@ function portfolioBody(accId){
   let h=inp+`<div class="acc-head"><h1>תיק ניירות ערך</h1><div class="big">${pf(vtot)}</div>
   <div class="meta">${av?esc(subLbl(av))+' · ':''}<span class="n">${hold.length}</span> אחזקות${cash?' · מזומן <span class="n">'+pf(cash)+'</span>':''}</div></div>`;
   if(subs.length>1)
-    h+=`<div class="segbar" role="tablist" aria-label="בחירת חשבון">${[['','הכול']].concat(subs.map(k=>[k,subLbl(k)])).map(([k,t])=>`<button role="tab" data-acct="${k}" aria-selected="${av===k}">${esc(t)}</button>`).join('')}</div>`;
+    h+=`<div class="segbar" role="tablist" aria-label="בחירת חשבון">${[['','הכול']].concat(subs.map(k=>[k,subLbl(k)])).map(([k,t])=>`<button role="tab" data-acct="${esc(k)}" aria-selected="${av===k}">${esc(t)}</button>`).join('')}</div>`;
   if(ps)h+=`<div class="chips"><div><small>מהצילום הקודם</small><b class="${cls(d)}">${arrow(d)} ${mag(d)}</b> <span class="n ${cls(d)}">${ptot?pct(d/ptot,2):''}</span></div>
   <div><small>רווח על הנייר</small><b class="${cls(s.gain+s.loss)}">${sgn(s.gain+s.loss)}</b></div></div>`;
   // allocation — tapping a row filters the list below
@@ -2474,7 +2535,7 @@ function portfolioBody(accId){
       subs.filter(k=>tot(k)>0).map(k=>`<i style="flex:${tot(k)} 0 0;background:${subCol(k)}"></i>`).join('')}</div></div>`;
     for(const k of subs){
       const sec=allHold.filter(x=>x.acct===k&&!isCash(x)).length,c=cashOf(allHold.filter(x=>x.acct===k));
-      h+=`<button class="row dotted" data-acct="${k}"><span class="spine" style="background:${subCol(k)}"></span><span><span class="nm">${esc(subLbl(k))}</span><div class="sub"><span class="n">${sec}</span> אחזקות${c?' · מזומן <span class="n">'+pf(c)+'</span>':''}</div></span><span class="val"><b>${pf(tot(k))}</b><span class="n flat">${(tot(k)/vtot*100).toFixed(1)}%</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
+      h+=`<button class="row dotted" data-acct="${esc(k)}"><span class="spine" style="background:${subCol(k)}"></span><span><span class="nm">${esc(subLbl(k))}</span><div class="sub"><span class="n">${sec}</span> אחזקות${c?' · מזומן <span class="n">'+pf(c)+'</span>':''}</div></span><span class="val"><b>${pf(tot(k))}</b><span class="n flat">${(tot(k)/vtot*100).toFixed(1)}%</span></span><svg class="chev" viewBox="0 0 9 15" aria-hidden="true"><path d="M7.5 1.5l-6 6 6 6"/></svg></button>`;
     }
     h+=`</div></section>`;
   }
@@ -2549,7 +2610,7 @@ function openHolding(accId,id){
   const list=portsOf(accId),last=list[list.length-1];if(!last||!last.hold)return;
   const x=last.hold.find(y=>y.id===id);if(!x)return;
   const prev=list[list.length-2],old=prev&&prev.hold?prev.hold.find(y=>y.id===id):null;
-  const t=ptypeOf(x),c=catOf(x),f=x.cur==='שקל'?ils:v=>nf0.format(Math.round(v))+' '+x.cur;
+  const t=ptypeOf(x),c=catOf(x),f=x.cur==='שקל'?ils:v=>nf0.format(Math.round(v))+' '+esc(x.cur);
   const ac=ACCOUNTS.find(y=>y.id===accId),af=ac&&ac.cur==='USD'?usd:ils,asg=v=>signedBy(v,af);
   const dn=dispName(x);
   openLayer(`<div class="sheet modal" role="dialog" aria-label="${esc(x.name)}"><header><span class="grab" aria-hidden="true"></span><button data-close>סגירה</button><h2>${esc(dn)}</h2><span></span></header><div class="body">
@@ -2676,7 +2737,7 @@ async function importPortfolio(accId,file){
       if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast('בחרו תאריך');return}
       /* one figure per field: a field chosen twice gets the sum of both sub-accounts */
       const vals={},keys=[];
-      if(subs){for(const x of subs){const k=$('#pfld-'+x.kind).value;
+      if(subs){for(const x of subs){const k=byId('pfld-'+x.kind).value;
         vals[k]=(vals[k]||0)+x.total;if(!keys.includes(k))keys.push(k)}}
       else{const k=$('#pfld-one').value;vals[k]=s.total;keys.push(k)}
       addSnapshot(accId,date,hold);
@@ -2707,17 +2768,10 @@ function squarify(items,x,y,w,h,out){
   const sum=a=>a.reduce((n,i)=>n+i.v,0);
   const total=sum(items);
   if(total<=0||w<=0||h<=0)return out;
-  const short=Math.min(w,h);
-  const worst=(row,len)=>{
-    const s=sum(row),side=s/len;
-    let bad=1;
-    for(const it of row){const a=it.v/side;bad=Math.max(bad,Math.max(a/side,side/a))}
-    return bad;
-  };
   /* work in units of area: one unit of value is (w*h/total) of pixel area */
   const scale=w*h/total;
   const sc=items.map(i=>({...i,a:i.v*scale}));
-  let row=[],best=Infinity,i=0;
+  let row=[],i=0;
   const place=(row,x,y,w,h,horiz)=>{
     const s=row.reduce((n,i)=>n+i.a,0),side=horiz?s/h:s/w;
     let off=0;
@@ -2750,7 +2804,7 @@ function treemapBody(){
   const tot=hs.reduce((n,h)=>n+h.ils,0);
   const groups={
     sec:()=>hs.map(h=>({k:h.id+'|'+h.acc.id,label:isCash(h)?'מזומן':dispName(h),sub:h.where,v:h.ils,
-      col:catCol(catOf(h)),hollow:catHollow(catOf(h)),full:(isCash(h)?'מזומן':h.name)+' · '+h.where})),
+      col:catCol(catOf(h)),hollow:catHollow(catOf(h)),full:(isCash(h)?'מזומן':h.name)+' · '+h.where,cash:isCash(h)})),
     cat:()=>CATS.map(([k,l])=>({k,label:l,sub:'',v:hs.filter(h=>catOf(h)===k).reduce((n,h)=>n+h.ils,0),col:catCol(k),hollow:catHollow(k)})).filter(g=>g.v>0),
     acc:()=>visAcc().map(a=>({k:a.id,label:a.short,sub:'',v:hs.filter(h=>h.acc.id===a.id).reduce((n,h)=>n+h.ils,0),col:acol(a.color)})).filter(g=>g.v>0)
   };
@@ -2764,7 +2818,7 @@ function treemapBody(){
   for(const t of tiles){
     const g=t.it.g,p=fmtp(g.v);
     const small=t.w<13||t.h<9;
-    h+=`<button class="tile" data-tile="${esc(g.k)}" style="left:${t.x.toFixed(3)}%;top:${(t.y/H*100).toFixed(3)}%;width:${t.w.toFixed(3)}%;height:${(t.h/H*100).toFixed(3)}%;--tc:${g.col}${g.hollow?';--ho:1':''}" title="${esc((g.full||g.label)+' · '+ils(g.v))}">
+    h+=`<button class="tile" data-tile="${esc(g.k)}"${g.cash?' data-cash="1"':''} style="left:${t.x.toFixed(3)}%;top:${(t.y/H*100).toFixed(3)}%;width:${t.w.toFixed(3)}%;height:${(t.h/H*100).toFixed(3)}%;--tc:${g.col}${g.hollow?';--ho:1':''}" title="${esc((g.full||g.label)+' · '+ils(g.v))}">
       ${small?'':`<span class="tl-n">${esc(short(g.label,Math.max(4,Math.round(t.w/2.6))))}</span><span class="tl-p n">${p.toFixed(p<1?1:0)}%</span>`}</button>`;
   }
   h+=`</div></section>`;
@@ -2844,7 +2898,7 @@ function openTreemap(){
     b.querySelectorAll('[data-tree]').forEach(x=>x.onclick=()=>{treeBy=x.dataset.tree;paintTree()});
     b.querySelectorAll('[data-tile]').forEach(x=>x.onclick=()=>{
       const [hid,aid]=x.dataset.tile.split('|');
-      if(!aid)return;
+      if(!aid||x.dataset.cash)return;
       openHolding(aid,hid);
     });
   };
@@ -3000,9 +3054,12 @@ document.addEventListener('click',e=>{
     accnew:()=>openAccEditor(null),
     privtog:async()=>{
       if(!S.priv&&!anyMask()){openPrivCfg();toast('בחרו קודם מה יוסתר');return}
+      /* private mode is for a phone in someone else's hands, so only the owner can end it */
+      if(S.priv&&!await askCode('יציאה ממצב פרטי')){render();return}
       S.priv=!S.priv;closeAllLayers();render();save();toast(S.priv?'מצב פרטי מופעל':'מצב פרטי כבוי');
     },
-    wipe:async()=>{if(!confirm('למחוק את כל הנתונים מהמכשיר? אי אפשר לבטל את הפעולה.'))return;if(!confirm('בטוחים? ודאו שיש לכם גיבוי.'))return;
+    wipe:async()=>{if(!await askCode('מחיקת כל הנתונים'))return;
+      if(!confirm('למחוק את כל הנתונים מהמכשיר? אי אפשר לבטל את הפעולה.'))return;if(!confirm('בטוחים? ודאו שיש לכם גיבוי.'))return;
       S.updates=[];S.ports={};S.ptype={};S.plink={};S.pmask={};S.tick={};S.rec={};S.fh='';S.td='';S.priv=false;PX={};pxErr={};
       setConfig([]);await save();tab='home';render();toast('הנתונים נמחקו')}})[t.dataset.act]?.();
 });
