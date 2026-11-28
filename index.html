@@ -315,7 +315,7 @@ table.cmp .d small{display:block;font-size:0.7059rem}
 @keyframes ldrift2{0%{transform:translate(10%,6%) scale(1.1)}50%{transform:translate(-12%,-8%) scale(.9)}100%{transform:translate(10%,6%) scale(1.1)}}
 .lock .in{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
   width:100%;max-width:330px;height:100%}
-.lock .lmark{width:40px;height:40px;overflow:visible}
+.lock .lmark{width:64px;height:64px;overflow:visible}
 .lock .lmark line{stroke:#fff;stroke-width:2.2;stroke-linecap:round}
 .lock h1{font-size:1.5294rem;font-weight:700;letter-spacing:-.02em;margin:16px 0 0}
 .lock p{margin:5px 0 0;color:#CFE2F7;font-size:0.8824rem;text-align:center}
@@ -2036,11 +2036,11 @@ function lockScreen(){
   /* the bars rise and fall on their own clocks. Done by moving each bar's top in script, because
      Safari on iPhone does not animate a CSS transform on an SVG line */
   {const bars=[...el.querySelectorAll('.lmark line')].map((ln,i)=>({ln,h:20-+ln.getAttribute('y2'),
-      T:[3100,4300,2700,3800][i],ph:[.4,1.9,1.1,2.6][i]*1000}));
+      T:[1300,1800,1100,1600][i],ph:[.4,1.9,1.1,2.6][i]*400}));
     const t0=performance.now();
     const step=now=>{if(!el.isConnected)return;
       for(const b of bars){const k=.5-.5*Math.cos(2*Math.PI*(now-t0+b.ph)/(2*b.T));
-        b.ln.setAttribute('y2',(20-b.h*(.74+.4*k)).toFixed(2))}
+        b.ln.setAttribute('y2',(20-b.h*(.6+.6*k)).toFixed(2))}
       requestAnimationFrame(step)};
     requestAnimationFrame(step)}
   const dots=el.querySelector('.dots'),msg=el.querySelector('.msg');
